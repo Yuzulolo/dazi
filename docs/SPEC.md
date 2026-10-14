@@ -95,7 +95,9 @@
 - **Security:** two-account test (no reading others' invites/messages, no chat before acceptance, no uploading into someone else's photo folder); incognito test on live URL; `/security-scan` clean.
 
 ## 9. Course requirements checklist
+- [ ] `README.md` with **live Vercel URL at the top** + demo login for reviewers
 - [ ] `README.md` with goal / problem / how it works
+- [ ] `CLAUDE.md` updated at the end to match the finished app
 - [ ] `CLAUDE.md` with project rules
 - [ ] At least one skill, slash command or subagent (e.g. `/seed-demo` command, RLS-check subagent)
 - [ ] At least one PR reviewed before merge (one PR per phase)

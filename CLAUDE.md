@@ -53,6 +53,12 @@ Full product spec: `docs/SPEC.md` — read it before starting any phase.
 - Small, descriptive commits. Run `npm run lint` and `npm run build` before opening a PR.
 - Every PR is reviewed (ai-code-reviewer subagent + me) before merging.
 
+### Documentation (graders check these)
+- `README.md` must show the **live Vercel URL at the very top**, plus a demo login (test account email + password) so reviewers can get past the sign-in page. Add the URL as soon as the first deploy works (phase 1) and keep it current.
+- `README.md` also explains the goal, the problem it solves and how it works (course requirement).
+- At the end of every phase: update this `CLAUDE.md` if structure, rules or commands changed, and tick the phase in `docs/SPEC.md`.
+- Before final submission: do a full pass to make `CLAUDE.md` and `README.md` match the finished app.
+
 ## Out of scope (do not build unless I ask)
 Payments, push notifications, native mobile app, ID verification, ratings/reviews, likes/comments on stories, maps.
 Group activities are a "should have" — build only after phases 1–5 are done.
