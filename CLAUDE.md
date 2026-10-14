@@ -44,6 +44,8 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 
 ### Database
 - All schema changes are SQL migration files in `supabase/migrations/`, committed to git. Show me the SQL before applying it.
+- The project has automatic RLS enabled on new `public` tables — RLS on with no policy = everything denied. If a query unexpectedly returns nothing, check for a missing policy first.
+- Views do **not** inherit RLS by default: create every view with `with (security_invoker = true)`.
 - Use the **same embedding model** (`openai/text-embedding-3-small`, 1536 dims) at insert time and at query time.
 - After applying a migration, verify the actual state (tables, policies) and show me the result.
 
@@ -63,6 +65,11 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 - `README.md` also explains the goal, the problem it solves and how it works (course requirement).
 - At the end of every phase: update this `CLAUDE.md` if structure, rules or commands changed, and tick the phase in `docs/SPEC.md`.
 - Before final submission: do a full pass to make `CLAUDE.md` and `README.md` match the finished app.
+
+### Visual design
+- The visual design is made separately by me (with GPT) and will be added as `docs/DESIGN.md` (+ reference images).
+- **Until `docs/DESIGN.md` exists:** keep UI minimal and functional (plain layout, default Tailwind). Do not invent a visual style, colours or fonts.
+- Before starting phase 2, remind me: "Design checkpoint — is `docs/DESIGN.md` ready?"
 
 ## Out of scope (do not build unless I ask)
 Payments, push/email notifications, native mobile app, ID verification, star ratings / public reviews, likes/comments on stories, maps, LinkedIn.

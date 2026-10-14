@@ -112,6 +112,7 @@
 
 ## 10. Build phases (one branch + PR each)
 1. **Scaffold & auth:** Supabase, sign-in (email + Google), 18+ check, `profiles` + RLS, deploy to Vercel, live URL in README
+   - 🎨 **Design checkpoint (before phase 2):** visual design made with GPT → saved as `docs/DESIGN.md` + reference images. Phase 1 stays unstyled.
 2. **Onboarding & profile:** basics, travel style quiz, profile page, stories + photos (Storage + policies)
 3. **Posting:** one-sentence input → AI extraction → trip photo (vision check + mood) or preset cover → save; edit rules
 4. **Matching:** embeddings, match function, "For you" with AI reasons, seed data, **homepage guest search** (anonymised + rate limit)
