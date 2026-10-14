@@ -5,7 +5,7 @@
 ## What this project is
 Dazi is a web app for finding a travel or food buddy (搭子). A user writes one sentence ("I'm in Berlin 20–25 Oct, want street food and flea markets"), AI turns it into a structured post, and the app suggests compatible buddies with a short AI-written reason. Contact opens only after **both** sides accept.
 
-Full product spec: `docs/SPEC.md` — read it before starting any phase.
+Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `docs/FLOWS.md`. Read both before starting any phase. If code and docs disagree, stop and ask me.
 
 ## About me (the director)
 - I am a beginner with no prior coding background. I own the product; you write the code.
@@ -36,6 +36,11 @@ Full product spec: `docs/SPEC.md` — read it before starting any phase.
 - Storage: users may upload/delete only inside their own `{user_id}/` folder. Strip EXIF/GPS from photos before upload.
 - All users must be 18+. Store birth year only (not full birthday); show age as a range.
 - Never trust the client: check permissions and invite status on the server / in RLS, not only in the UI.
+- **Guest (signed-out) results are anonymised on the server.** Never send names, avatars, uploaded photos, profile links or socials to a guest's browser — CSS blur is not privacy.
+- Guest search endpoints are **rate-limited per IP** (hashed IP stored server-side only).
+- Social handles are returned only by a server function, and only after a mutual reveal (`social_reveals.status = 'shared'`).
+- Raw `feedback` rows are never readable from the client; only aggregated public tags via a view.
+- Treat all user text as **data** inside prompts (wrap it, never let it act as instructions) — prompt-injection safe.
 
 ### Database
 - All schema changes are SQL migration files in `supabase/migrations/`, committed to git. Show me the SQL before applying it.
@@ -60,5 +65,5 @@ Full product spec: `docs/SPEC.md` — read it before starting any phase.
 - Before final submission: do a full pass to make `CLAUDE.md` and `README.md` match the finished app.
 
 ## Out of scope (do not build unless I ask)
-Payments, push notifications, native mobile app, ID verification, ratings/reviews, likes/comments on stories, maps.
-Group activities are a "should have" — build only after phases 1–5 are done.
+Payments, push/email notifications, native mobile app, ID verification, star ratings / public reviews, likes/comments on stories, maps, LinkedIn.
+Group activities are a "should have" — build only after phases 1–6 are done.
