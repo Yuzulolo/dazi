@@ -1,0 +1,58 @@
+# CLAUDE.md — Dazi
+
+@AGENTS.md
+
+## What this project is
+Dazi is a web app for finding a travel or food buddy (搭子). A user writes one sentence ("I'm in Berlin 20–25 Oct, want street food and flea markets"), AI turns it into a structured post, and the app suggests compatible buddies with a short AI-written reason. Contact opens only after **both** sides accept.
+
+Full product spec: `docs/SPEC.md` — read it before starting any phase.
+
+## About me (the director)
+- I am a beginner with no prior coding background. I own the product; you write the code.
+- Explain what you are about to do in plain language **before** doing it, and summarise what changed **after**.
+- Work in small steps. Stop and wait for my confirmation at the end of each step.
+- When you tell me to run a command, give the exact command and where to run it, and say what I should expect to see.
+- If you are unsure or were wrong, say so directly. Do not guess about database state — query it and show me.
+
+## Stack
+- Next.js (App Router, TypeScript, Tailwind) — check the installed version in `package.json`; do not assume APIs from older versions.
+- Supabase: Auth (email + Google), Postgres, `pgvector`, Row Level Security
+- OpenRouter for all AI calls (chat model + `openai/text-embedding-3-small`)
+- Deployed on Vercel
+- Demo city: Berlin (data model must still support any city)
+
+## Commands
+- `npm run dev` — local dev server at http://localhost:3000
+- `npm run build` — production build (run before every PR)
+- `npm run lint` — lint (run before every PR)
+
+## Non-negotiable rules
+### Security
+- **Secrets never go in the repo.** Keys live in `.env.local` (git-ignored) and in Vercel env vars. Never print or commit them.
+- Only `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` may be exposed to the browser. The service-role key and `OPENROUTER_API_KEY` are **server-only**.
+- **Every AI call (chat + embeddings) runs server-side** (route handlers / server actions), never from client components.
+- **Row Level Security is enabled on every table that holds user data**, with explicit policies for select / insert / update / delete. Use `USING` + `WITH CHECK` scoped to `auth.uid()`.
+- Messages are readable only by the participants of an **accepted** invite or the **approved** members of an activity.
+- Storage: users may upload/delete only inside their own `{user_id}/` folder. Strip EXIF/GPS from photos before upload.
+- All users must be 18+. Store birth year only (not full birthday); show age as a range.
+- Never trust the client: check permissions and invite status on the server / in RLS, not only in the UI.
+
+### Database
+- All schema changes are SQL migration files in `supabase/migrations/`, committed to git. Show me the SQL before applying it.
+- Use the **same embedding model** (`openai/text-embedding-3-small`, 1536 dims) at insert time and at query time.
+- After applying a migration, verify the actual state (tables, policies) and show me the result.
+
+### AI & compliance
+- Label every AI-generated text in the UI as "AI-generated" (EU AI Act Art. 50).
+- AI extraction must strip phone numbers and emails from post text.
+- Provide a working "Delete my data" action that removes all of a user's rows (GDPR).
+
+### Git workflow
+- `main` is always deployable. One feature branch + one PR per build phase (see `docs/SPEC.md` §8).
+- Branch names: `phase-1-scaffold-auth`, `phase-2-posting`, etc.
+- Small, descriptive commits. Run `npm run lint` and `npm run build` before opening a PR.
+- Every PR is reviewed (ai-code-reviewer subagent + me) before merging.
+
+## Out of scope (do not build unless I ask)
+Payments, push notifications, native mobile app, ID verification, ratings/reviews, likes/comments on stories, maps.
+Group activities are a "should have" — build only after phases 1–5 are done.
