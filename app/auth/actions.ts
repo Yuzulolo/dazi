@@ -1,0 +1,112 @@
+"use server";
+
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+
+export type SignUpState = {
+  error?: string;
+  done?: boolean;
+  // Echoed back so the form keeps what the user typed (never the password).
+  fields?: { displayName: string; birthYear: string; email: string };
+};
+
+export type SignInState = {
+  error?: string;
+  email?: string;
+};
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Strict 18+ rule (FLOWS 2.0): we only know the birth year, so require
+// birth year <= current year - 19. Must match the database trigger.
+function latestAllowedBirthYear() {
+  return new Date().getFullYear() - 19;
+}
+
+export async function signUp(
+  _prevState: SignUpState,
+  formData: FormData,
+): Promise<SignUpState> {
+  const displayName = String(formData.get("displayName") ?? "").trim();
+  const birthYearRaw = String(formData.get("birthYear") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const password = String(formData.get("password") ?? "");
+  const fields = { displayName, birthYear: birthYearRaw, email };
+
+  if (displayName.length < 1 || displayName.length > 50) {
+    return { error: "Please enter a display name (1–50 characters).", fields };
+  }
+  if (!/^\d{4}$/.test(birthYearRaw)) {
+    return { error: "Please enter your birth year as 4 digits, e.g. 1995.", fields };
+  }
+  const birthYear = Number(birthYearRaw);
+  if (birthYear < 1900) {
+    return { error: "Please enter a valid birth year.", fields };
+  }
+  if (birthYear > latestAllowedBirthYear()) {
+    // Refused before contacting Supabase: nothing is stored.
+    return { error: "You must be 18 or older to use Dazi.", fields };
+  }
+  if (!EMAIL_PATTERN.test(email)) {
+    return { error: "Please enter a valid email address.", fields };
+  }
+  if (password.length < 8) {
+    return { error: "Password must be at least 8 characters.", fields };
+  }
+
+  const siteUrl = process.env.SITE_URL;
+  if (!siteUrl) {
+    console.error("SITE_URL is not set");
+    return { error: "Sign-up is temporarily unavailable. Please try again later.", fields };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      // Copied into public.profiles by the handle_new_user trigger.
+      data: { display_name: displayName, birth_year: birthYear },
+      emailRedirectTo: `${siteUrl}/auth/callback`,
+    },
+  });
+
+  if (error) {
+    console.error("signUp failed:", error.code ?? error.message);
+    return { error: "Could not create your account. Please try again.", fields };
+  }
+
+  // Same message whether or not the email was already registered,
+  // so the form can't be used to find out who has an account.
+  return { done: true };
+}
+
+export async function signIn(
+  _prevState: SignInState,
+  formData: FormData,
+): Promise<SignInState> {
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const password = String(formData.get("password") ?? "");
+
+  if (!email || !password) {
+    return { error: "Please enter your email and password.", email };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+  if (error) {
+    if (error.code === "email_not_confirmed") {
+      return { error: "Please confirm your email first — check your inbox.", email };
+    }
+    return { error: "Invalid email or password.", email };
+  }
+
+  redirect("/home");
+}
+
+export async function signOut() {
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+  redirect("/");
+}
