@@ -14,7 +14,7 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 ## About me (the director)
 - I am a beginner with no prior coding background. I own the product; you write the code.
 - Explain what you are about to do in plain language **before** doing it, and summarise what changed **after**.
-- Work in small steps. Stop and wait for my confirmation at the end of each step.
+- Work through a whole phase in one go, then stop for one round of testing with me. Always stop and wait for my confirmation before applying any SQL to the database and before merging a PR.
 - When you tell me to run a command, give the exact command and where to run it, and say what I should expect to see.
 - If you are unsure or were wrong, say so directly. Do not guess about database state — query it and show me.
 - Never stop, kill or restart processes you did not start yourself (e.g. my dev server). If a port is busy, use another port or ask me first.
