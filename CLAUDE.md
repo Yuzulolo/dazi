@@ -13,6 +13,7 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 - Work in small steps. Stop and wait for my confirmation at the end of each step.
 - When you tell me to run a command, give the exact command and where to run it, and say what I should expect to see.
 - If you are unsure or were wrong, say so directly. Do not guess about database state — query it and show me.
+- Never stop, kill or restart processes you did not start yourself (e.g. my dev server). If a port is busy, use another port or ask me first.
 
 ## Stack
 - Next.js (App Router, TypeScript, Tailwind) — check the installed version in `package.json`; do not assume APIs from older versions.

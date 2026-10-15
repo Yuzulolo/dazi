@@ -13,6 +13,7 @@
 - **Traveller:** "I'm in Berlin 20–25 Oct, want street food and flea markets."
 - **Local / resident:** "I live in Berlin, happy to grab dinner or show a flea market at weekends."
 - All registered users must be **18+**. Guests can search but cannot contact anyone.
+- **Birth year is required before using any feature.** Email sign-up asks for it (strict rule: birth year ≤ current year − 19). Google sign-up has no birth year → the user is sent to `/onboarding` to enter it first (FLOWS 2.0).
 
 ## 3. Core concepts
 | Concept | What it is |
@@ -112,8 +113,10 @@
 
 ## 10. Build phases (one branch + PR each)
 1. **Scaffold & auth:** Supabase, sign-in (email + Google), 18+ check, `profiles` + RLS, deploy to Vercel, live URL in README
+   - Google step: users with `birth_year = null` are redirected to `/onboarding` (server-side, FLOWS 2.0); minimal birth-year form if phase 2 onboarding isn't built yet
    - 🎨 **Design checkpoint (before phase 2):** visual design made with GPT → saved as `docs/DESIGN.md` + reference images. Phase 1 stays unstyled.
 2. **Onboarding & profile:** basics, travel style quiz, profile page, stories + photos (Storage + policies)
+   - Every insert/update RLS policy on feature tables requires the user's `profiles.birth_year is not null` (FLOWS 2.0)
 3. **Posting:** one-sentence input → AI extraction → trip photo (vision check + mood) or preset cover → save; edit rules
 4. **Matching:** embeddings, match function, "For you" with AI reasons, seed data, **homepage guest search** (anonymised + rate limit)
 5. **Connecting:** invites, chat, block/report, social verification & mutual reveal

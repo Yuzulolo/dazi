@@ -15,7 +15,7 @@
 6. The guest's search text is kept in the browser (sessionStorage) so it can become their first post after sign-up. Nothing about the guest is stored in the database except a rate-limit log.
 
 ### 1.2 Sign-up → first match
-1. Sign up (email or Google) → confirm 18+
+1. Sign up (email or Google) → confirm 18+ (Google users enter birth year on `/onboarding` first, see 2.0)
 2. Onboarding (required): basics (name, birth year, gender optional, languages, home city, avatar) → travel style quiz
 3. Guest search auto-fills the first post → user confirms
 4. Full recommendations recalculated (all hard filters + trip + style + personality)
@@ -49,6 +49,14 @@ Pending invites · my active post · latest recommendations
 - **Nothing social is ever shown** until the reveal flow in 2.4 succeeds. Only the *badge* ("Facebook verified") is visible on the profile.
 
 ## 2. States & rules (confirmed)
+
+### 2.0 Birth year gate (18+)
+- A signed-in user with `profiles.birth_year = null` (e.g. new Google sign-up) must enter their birth year on `/onboarding` **before using any feature**. Only `/onboarding`, sign-out, `/privacy` and `/safety` are reachable until then.
+- Same strict rule as email sign-up: birth year ≤ current year − 19. Under 18 → account and all its data are deleted, message *"You must be 18 or older to use Dazi."*
+- **Enforced on the server, not only in the UI:**
+  - `getCurrentUser()` (used by every protected page and server action) redirects to `/onboarding` when `birth_year` is null
+  - From phase 2 on, every insert/update RLS policy on feature tables also requires `birth_year is not null`, so direct API calls are refused too
+  - The database never lets `birth_year` go back to null once set, and rejects any under-18 value (trigger)
 <!-- invite statuses: pending, accepted, declined, expired, cancelled, ended_trip_changed -->
 
 ### 2.1 Post
@@ -120,7 +128,8 @@ none ──► requested (A asks in chat) ──► shared   (B agrees → BOTH 
 |---|---|
 | No city or dates in the sentence | Fields left empty and highlighted; search disabled until filled |
 | Dates in the past / end before start | Validation error, cannot save |
-| Birth year shows under 18 | Sign-up refused, nothing stored |
+| Birth year shows under 18 | Sign-up refused, nothing stored (email). Google user entering an under-18 year on onboarding → account deleted (2.0) |
+| Signed in but no birth year (Google) | Redirected to `/onboarding` from every page and action until it is entered (2.0) |
 | AI down or timeout | Fall back to a manual form; recommendations still shown without AI reasons |
 | Phone numbers / emails / abusive text in a post | AI strips contact details; clearly abusive content is rejected |
 | Prompt injection in user text ("ignore previous instructions…") | User text is always treated as data inside the prompt, never as instructions |

@@ -7,9 +7,13 @@ export type CurrentUser = {
   displayName: string;
 };
 
-// The one place protected pages get the signed-in user.
+// The one place protected pages and server actions get the signed-in user.
 // Reads the session cookie, so call it inside a <Suspense> boundary.
-export async function getCurrentUser(): Promise<CurrentUser> {
+// Users without a birth year (e.g. Google sign-up) are sent to /onboarding
+// first (FLOWS 2.0). Only the onboarding page itself passes allowMissingBirthYear.
+export async function getCurrentUser(
+  { allowMissingBirthYear = false }: { allowMissingBirthYear?: boolean } = {},
+): Promise<CurrentUser> {
   const supabase = await createClient();
 
   const { data } = await supabase.auth.getClaims();
@@ -18,10 +22,11 @@ export async function getCurrentUser(): Promise<CurrentUser> {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("display_name")
+    .select("display_name, birth_year")
     .eq("id", userId)
     .single();
   if (!profile) redirect("/login");
+  if (profile.birth_year === null && !allowMissingBirthYear) redirect("/onboarding");
 
   return { id: userId, displayName: profile.display_name };
 }
