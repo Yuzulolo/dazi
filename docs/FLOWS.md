@@ -1,6 +1,8 @@
 # Dazi — User Flows, States & Rules (v1.0)
 
 > Companion to `docs/SPEC.md`. SPEC says *what* we build; this file says *how users move through it* and *what rules apply*.
+>
+> **Capstone scope (SPEC §0):** sections 1.5 (social verification), 2.4 (social reveal), 2.6b (match-break limit), 2.7 (trip photo upload — preset covers only) and 2.8 (feedback) are **Roadmap**, not built for the capstone. Google sign-up is also Roadmap. "Chat" in this file = simple message thread without realtime.
 
 ## 1. User journey (confirmed)
 
@@ -51,7 +53,7 @@ Pending invites · my active post · latest recommendations
 ## 2. States & rules (confirmed)
 
 ### 2.0 Birth year gate (18+)
-- A signed-in user with `profiles.birth_year = null` (e.g. new Google sign-up) must enter their birth year on `/onboarding` **before using any feature**. Only `/onboarding`, sign-out, `/privacy` and `/safety` are reachable until then.
+- A signed-in user with `profiles.birth_year = null` (e.g. a Google sign-up — Roadmap; today only possible via direct database edits) must enter their birth year on `/onboarding` **before using any feature**. Only `/onboarding`, sign-out, `/privacy` and `/safety` are reachable until then.
 - Same strict rule as email sign-up: birth year ≤ current year − 19. Under 18 → account and all its data are deleted, message *"You must be 18 or older to use Dazi."*
 - **Enforced on the server, not only in the UI:**
   - `getCurrentUser()` (used by every protected page and server action) redirects to `/onboarding` when `birth_year` is null
