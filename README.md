@@ -2,7 +2,7 @@
 
 **🔗 Live app:** https://dazi-five-tau.vercel.app
 
-**🔑 Demo login for reviewers:** email `xiangquyuanfang+demo@hotmail.com` · password `DEMO_PASSWORD_HERE` (a dedicated demo account, 18+, already confirmed)
+**🔑 Demo login for reviewers:** email `xiangquyuanfang+demo@hotmail.com` · password `k5nNGUEfygEgPLF` (a dedicated demo account, 18+, already confirmed)
 
 ---
 
