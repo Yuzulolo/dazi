@@ -92,6 +92,38 @@ begin
 end;
 $$;
 
+-- ============ email sign-ups must include a birth year (closes the PR #2 review gap) ============
+-- Our sign-up form always sends one, but a direct Auth API call could omit it.
+-- Raising here rolls back the whole sign-up: no auth user, no profile, no email.
+-- Only email sign-ups are checked; OAuth (Roadmap) would enter it on /onboarding instead.
+-- Unchanged from phase 1 apart from the new check and an updated comment.
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if coalesce(new.raw_app_meta_data ->> 'provider', 'email') = 'email'
+     and nullif(new.raw_user_meta_data ->> 'birth_year', '') is null then
+    raise exception 'Birth year is required'
+      using errcode = 'check_violation';
+  end if;
+
+  insert into public.profiles (id, display_name, birth_year)
+  values (
+    new.id,
+    left(coalesce(
+      nullif(btrim(new.raw_user_meta_data ->> 'display_name'), ''),
+      nullif(btrim(new.raw_user_meta_data ->> 'full_name'), ''),   -- OAuth providers (Roadmap)
+      'Traveller'
+    ), 50),
+    nullif(new.raw_user_meta_data ->> 'birth_year', '')::smallint
+  );
+  return new;
+end;
+$$;
+
 -- ============ column-level privacy (fixes known issue #3) ============
 -- Revoking table-level SELECT also removes column SELECT grants; we re-grant public columns only.
 revoke select on public.profiles from authenticated;

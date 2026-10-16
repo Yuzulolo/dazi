@@ -38,5 +38,10 @@ select 'function ' || n.nspname || '.' || p.proname,
   join pg_namespace n on n.oid = p.pronamespace
   where (n.nspname, p.proname) in (('private', 'tags_ok'), ('private', 'age_range'), ('public', 'get_my_private_profile'))
 union all
+select 'handle_new_user requires birth year', (pg_get_functiondef('public.handle_new_user()'::regprocedure) like '%Birth year is required%')::text
+union all
+select 'handle_new_user callable from API?', (has_function_privilege('anon', 'public.handle_new_user()'::regprocedure, 'execute')
+         or has_function_privilege('authenticated', 'public.handle_new_user()'::regprocedure, 'execute'))::text
+union all
 select 'profiles: total / onboarded', count(*) || ' / ' || count(onboarding_completed_at)
   from public.profiles;

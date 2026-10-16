@@ -173,6 +173,25 @@ console.log("Row Level Security check: profiles\n");
   }
 }
 
+// 11. Direct sign-up with NO birth year is refused by the database too.
+//     Same + alias approach as check 10.
+{
+  const [local, domain] = env.TEST_A_EMAIL.split("@");
+  const baseLocal = local.split("+")[0];
+  const { data, error } = await anon.auth.signUp({
+    email: `${baseLocal}+nobirth-${Date.now()}@${domain}`,
+    password: crypto.randomUUID(),
+    options: { data: { display_name: "No Birth Year" } },
+  });
+  if (!error) {
+    report(false, "Direct sign-up without birth year is refused", `user was created: ${data.user?.id}`);
+  } else if (/database error/i.test(error.message)) {
+    report(true, "Direct sign-up without birth year is refused", "blocked by the sign-up trigger");
+  } else {
+    console.log(`????  Direct sign-up without birth year: inconclusive  (${error.message}) — try again later`);
+  }
+}
+
 await Promise.all([A.client.auth.signOut(), B.client.auth.signOut()]);
 
 console.log(failures === 0 ? "\nAll checks passed." : `\n${failures} check(s) FAILED.`);
