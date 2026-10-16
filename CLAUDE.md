@@ -7,16 +7,21 @@ Dazi is a web app for finding a travel or food buddy (搭子). A user writes one
 
 Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `docs/FLOWS.md`. Read both before starting any phase. If code and docs disagree, stop and ask me.
 
+**Capstone deadline: 18 Oct 2026. `docs/SPEC.md` §0 defines the capstone scope and overrides the rest of the docs.** Anything listed in §0.4 Roadmap is out of scope — do not build it.
+
+**Pace for the deadline:** do a whole phase in one go, then stop for one round of testing. Always stop and show me (1) any SQL before it is applied to the database and (2) the code review result before a PR is merged.
+
 ## About me (the director)
 - I am a beginner with no prior coding background. I own the product; you write the code.
 - Explain what you are about to do in plain language **before** doing it, and summarise what changed **after**.
-- Work in small steps. Stop and wait for my confirmation at the end of each step.
+- Work through a whole phase in one go, then stop for one round of testing with me. Always stop and wait for my confirmation before applying any SQL to the database and before merging a PR.
 - When you tell me to run a command, give the exact command and where to run it, and say what I should expect to see.
 - If you are unsure or were wrong, say so directly. Do not guess about database state — query it and show me.
+- Never stop, kill or restart processes you did not start yourself (e.g. my dev server). If a port is busy, use another port or ask me first.
 
 ## Stack
 - Next.js (App Router, TypeScript, Tailwind) — check the installed version in `package.json`; do not assume APIs from older versions.
-- Supabase: Auth (email + Google), Postgres, `pgvector`, Row Level Security
+- Supabase: Auth (email + password; Google login is Roadmap, SPEC §0.4), Postgres, `pgvector`, Row Level Security
 - OpenRouter for all AI calls (chat model + `openai/text-embedding-3-small`)
 - Deployed on Vercel
 - Demo city: Berlin (data model must still support any city)
@@ -44,6 +49,8 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 
 ### Database
 - All schema changes are SQL migration files in `supabase/migrations/`, committed to git. Show me the SQL before applying it.
+- The project has automatic RLS enabled on new `public` tables — RLS on with no policy = everything denied. If a query unexpectedly returns nothing, check for a missing policy first.
+- Views do **not** inherit RLS by default: create every view with `with (security_invoker = true)`.
 - Use the **same embedding model** (`openai/text-embedding-3-small`, 1536 dims) at insert time and at query time.
 - After applying a migration, verify the actual state (tables, policies) and show me the result.
 
@@ -63,6 +70,11 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 - `README.md` also explains the goal, the problem it solves and how it works (course requirement).
 - At the end of every phase: update this `CLAUDE.md` if structure, rules or commands changed, and tick the phase in `docs/SPEC.md`.
 - Before final submission: do a full pass to make `CLAUDE.md` and `README.md` match the finished app.
+
+### Visual design
+- The visual design is made separately by me (with GPT) and will be added as `docs/DESIGN.md` (+ reference images).
+- **Until `docs/DESIGN.md` exists:** keep UI minimal and functional (plain layout, default Tailwind). Do not invent a visual style, colours or fonts.
+- Before starting phase 2, remind me: "Design checkpoint — is `docs/DESIGN.md` ready?"
 
 ## Out of scope (do not build unless I ask)
 Payments, push/email notifications, native mobile app, ID verification, star ratings / public reviews, likes/comments on stories, maps, LinkedIn.
