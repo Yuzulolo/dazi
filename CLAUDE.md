@@ -7,7 +7,7 @@ Dazi is a web app for finding a travel or food buddy (搭子). A user writes one
 
 Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `docs/FLOWS.md`. Read both before starting any phase. If code and docs disagree, stop and ask me.
 
-**Capstone deadline: 18 Oct 2026. `docs/SPEC.md` §0 defines the capstone scope and overrides the rest of the docs.** Anything listed in §0.4 Roadmap is out of scope — do not build it.
+**Capstone deadline: 20 Oct 2026 (morning). `docs/SPEC.md` §0 defines the capstone scope and overrides the rest of the docs.** Anything listed in §0.4 Roadmap is out of scope — do not build it. **Quality over quantity:** the core flow (A–F) must work end-to-end and be polished before any stretch work (§0.5).
 
 **Pace for the deadline:** do a whole phase in one go, then stop for one round of testing. Always stop and show me (1) any SQL before it is applied to the database and (2) the code review result before a PR is merged.
 
@@ -26,10 +26,30 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 - Deployed on Vercel
 - Demo city: Berlin (data model must still support any city)
 
+## Live app
+- Production: https://dazi-five-tau.vercel.app (Vercel deploys `main` from the personal repo `Yuzulolo/dazi`; PRs go to the course repo `origin`)
+
+## Project structure
+- `app/` — pages (App Router). `app/auth/` = sign-up/login/sign-out server actions (`actions.ts`), email-confirmation landing (`callback/route.ts`), forced sign-out (`signout/route.ts`)
+- `lib/supabase/client.ts` / `server.ts` — Supabase clients for browser / server code (anon key + user session; RLS does the rest)
+- `lib/supabase/proxy.ts` + `proxy.ts` — session refresh + optimistic redirects on every request. **Next 16: `proxy.ts` replaces `middleware.ts`.**
+- `lib/auth.ts` — `getCurrentUser()`: the single server-side gate for every protected page and server action
+- `supabase/migrations/` — all schema changes (applied by pasting into the Supabase SQL Editor)
+- `scripts/rls-check.mjs` — two-account RLS test via the public Data API
+- `.claude/agents/` — `ai-code-reviewer`, `security-auditor` subagents
+- `next.config.ts` has `cacheComponents: true`: anything that reads cookies, `params` or `searchParams` must render inside `<Suspense>`, or the build fails.
+
+## Environment variables
+- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` — public
+- `SITE_URL` — server-only; where auth emails send people back to (`http://localhost:3000` locally, the Vercel URL in production / the branch URL in preview)
+- Test-only (local `.env.local`): `TEST_A_EMAIL`, `TEST_A_PASSWORD`, `TEST_B_EMAIL`, `TEST_B_PASSWORD`
+- Names (no values) are listed in `.env.example`.
+
 ## Commands
 - `npm run dev` — local dev server at http://localhost:3000
 - `npm run build` — production build (run before every PR)
 - `npm run lint` — lint (run before every PR)
+- `node --env-file=.env.local scripts/rls-check.mjs` — two-account RLS test (run after every migration)
 
 ## Non-negotiable rules
 ### Security

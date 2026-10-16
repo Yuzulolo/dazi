@@ -4,7 +4,7 @@
 > Platform: responsive **web app** (Next.js + Supabase + Vercel). Demo city: **Berlin** (data model supports any city).
 > **User flows, states, rules and edge cases live in `docs/FLOWS.md`** — read both files before each phase.
 
-## ⏱️ 0. CAPSTONE SCOPE — deadline 18 Oct 2026 (this section overrides everything below)
+## ⏱️ 0. CAPSTONE SCOPE — deadline 20 Oct 2026 (morning) (this section overrides everything below)
 Sections 1–10 describe the **full product vision**. For the capstone we build only the scope below. Everything else is **Roadmap** (§0.4) — do not build it unless I ask.
 
 ### 0.1 Demo story (what must work end-to-end)
@@ -13,7 +13,7 @@ Guest types one sentence on the homepage → AI trip card → 5 anonymised simil
 ### 0.2 In scope
 | # | Feature | Notes |
 |---|---|---|
-| A | Email auth + 18+ + `profiles` + RLS + Vercel | Phase 1 (done except deploy/PR). **No Google login.** |
+| A | Email auth + 18+ + `profiles` + RLS + Vercel | ✅ **Done** (PR #1, live). **No Google login.** |
 | B | Onboarding & profile | Display name, birth year, gender (optional), languages, home city, bio, **cities visited**, **hobbies**, matching prefs (age range, gender pref), **travel style quiz** (pace, day rhythm, interests). Profile page = these fields only. **No avatar upload, no stories, no photos.** |
 | C | Intent post | One sentence → AI extraction → editable card → save. Max 1 active post. Pick one of ~8 **preset covers** (no upload, no vision AI). Edit allowed; changing city/dates expires pending invites and ends accepted ones (FLOWS 2.6) — **no monthly limit**. |
 | D | Matching | Hard filters (§5 step 1) + `score = 0.4 × trip + 0.35 × style + 0.25 × personality`. Personality embedding = bio + hobbies + cities visited (no stories). AI reason for top 5. Seed 30 demo users. |
@@ -25,14 +25,20 @@ Guest types one sentence on the homepage → AI trip card → 5 anonymised simil
 ### 0.3 Build order (one branch + PR each)
 | Day | Work |
 |---|---|
-| 15 Oct | Finish phase 1: RLS test, deploy, PR review + merge |
-| 16 Oct | B (onboarding/profile) + C (posting + AI extraction + embeddings) |
-| 17 Oct | D (matching + seed data) + E (guest search) + design |
-| 18 Oct | F (invites + messages) + G (safety/compliance) + H (scan, README, evaluation, presentation) |
-| 19–20 Oct | Buffer only (possible extension) — do not plan work here |
+| 15 Oct | ✅ Phase 1 (A): RLS test, deploy, PR review + merge |
+| 16 Oct | B (onboarding/profile) |
+| 17 Oct | C (posting + AI extraction + embeddings) + D (matching, **30 realistic seed users**) |
+| 18 Oct | E (guest search) + F (invites + messages) + **user testing with 3–5 classmates** |
+| 19 Oct | G (safety/compliance) + full design + one stretch feature (§0.5) |
+| 20 Oct (morning) | H: `/security-scan`, README, evaluation, showcase, presentation |
+
+**Rule: quality over quantity.** The core flow (A–F) must work end-to-end and be polished before any stretch work starts.
 
 ### 0.4 Roadmap (not in capstone — mention in "What's next")
-Google login · avatar & travel stories with photos · trip photo upload with vision-AI check and aesthetic matching · Facebook verification + mutual social reveal · after-meeting feedback (safety check + positive tags) · group activities · match-break limit (2 per 30 days) · realtime chat · email notifications.
+Google login · avatar & travel stories with photos · ~~trip photo upload~~ (now stretch, §0.5) · Facebook verification + mutual social reveal · after-meeting feedback (safety check + positive tags) · group activities · match-break limit (2 per 30 days) · realtime chat · email notifications.
+
+### 0.5 Stretch (only after the core flow A–F works end-to-end)
+- **Trip photo upload** with a vision-AI check + mood description that is added to the post text before embedding, so aesthetics influence matching (FLOWS 2.7). Must follow all storage rules (own `{user_id}/` folder, EXIF/GPS stripped, server-side AI call).
 
 ## 1. Problem (SCR)
 - **Situation:** More and more people travel solo or live in a new city, and look for a "buddy" to explore, eat or sightsee with.
@@ -130,19 +136,19 @@ Google login · avatar & travel stories with photos · trip photo upload with vi
 - **Security:** two-account tests (no reading others' invites/messages/socials/feedback, no uploading to others' folders); guest response contains **no** names/avatars (check network tab); incognito test on live URL; `/security-scan` clean.
 
 ## 9. Course requirements checklist
-- [ ] `README.md` with **live Vercel URL at the top** + demo login for reviewers
-- [ ] `README.md` with goal / problem / how it works
+- [x] `README.md` with **live Vercel URL at the top** + demo login for reviewers
+- [x] `README.md` with goal / problem / how it works
 - [ ] `CLAUDE.md` updated at the end to match the finished app
-- [ ] At least one skill, slash command or subagent (e.g. `/seed-demo`, RLS-check subagent)
-- [ ] At least one PR reviewed before merge (one PR per phase)
-- [ ] Secrets server-side only, not in repo
+- [x] At least one skill, slash command or subagent (e.g. `/seed-demo`, RLS-check subagent)
+- [x] At least one PR reviewed before merge (one PR per phase)
+- [x] Secrets server-side only, not in repo
 - [ ] RLS on every user-data table + storage policies
 - [ ] `/security-scan` pass
 - [ ] AI disclosure (EU AI Act Art. 50) + working "Delete my data" (GDPR)
-- [ ] Live on Vercel
+- [x] Live on Vercel
 
 ## 10. Build phases (one branch + PR each)
-1. **Scaffold & auth:** Supabase, sign-in (email + Google), 18+ check, `profiles` + RLS, deploy to Vercel, live URL in README
+1. ✅ **Scaffold & auth:** Supabase, sign-in (email + Google), 18+ check, `profiles` + RLS, deploy to Vercel, live URL in README
    - Google login → **Roadmap** (§0.4). If added later: users with `birth_year = null` are redirected to `/onboarding` (server-side, FLOWS 2.0); the gate code already exists
    - 🎨 **Design checkpoint (before phase 2):** visual design made with GPT → saved as `docs/DESIGN.md` + reference images. Phase 1 stays unstyled.
 2. **Onboarding & profile:** basics, travel style quiz, profile page, stories + photos (Storage + policies)
