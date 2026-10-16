@@ -73,6 +73,8 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 - Views do **not** inherit RLS by default: create every view with `with (security_invoker = true)`.
 - Use the **same embedding model** (`openai/text-embedding-3-small`, 1536 dims) at insert time and at query time.
 - After applying a migration, verify the actual state (tables, policies) and show me the result.
+- Preview and production share one Supabase database. Every migration must stay compatible with the code currently on main (expand first, remove later). Check this before proposing any migration.
+- Read-only verification queries live in `supabase/checks/` (committed), so they can be copied with `pbcopy < file`.
 
 ### AI & compliance
 - Label every AI-generated text in the UI as "AI-generated" (EU AI Act Art. 50).
