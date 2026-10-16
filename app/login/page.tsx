@@ -2,9 +2,10 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { LoginForm } from "./login-form";
 
-// Messages for problems reported by /auth/callback (e.g. an expired email link).
+// Messages for problems reported by /auth/callback and /auth/signout.
 const CALLBACK_ERRORS: Record<string, string> = {
   link_invalid: "That link is invalid or has expired. Please log in, or sign up again.",
+  account_problem: "We couldn't load your account, so you were signed out. Please log in again.",
 };
 
 export default function LoginPage({ searchParams }: PageProps<"/login">) {
@@ -15,7 +16,6 @@ export default function LoginPage({ searchParams }: PageProps<"/login">) {
         <CallbackError searchParams={searchParams} />
       </Suspense>
       <LoginForm />
-      {/* Google sign-in button goes here (later in phase 1). */}
       <p>
         New to Dazi? <Link href="/signup">Sign up</Link>
       </p>
