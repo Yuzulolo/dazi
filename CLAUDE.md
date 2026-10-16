@@ -21,7 +21,7 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 
 ## Stack
 - Next.js (App Router, TypeScript, Tailwind) — check the installed version in `package.json`; do not assume APIs from older versions.
-- Supabase: Auth (email + Google), Postgres, `pgvector`, Row Level Security
+- Supabase: Auth (email + password; Google login is Roadmap, SPEC §0.4), Postgres, `pgvector`, Row Level Security
 - OpenRouter for all AI calls (chat model + `openai/text-embedding-3-small`)
 - Deployed on Vercel
 - Demo city: Berlin (data model must still support any city)

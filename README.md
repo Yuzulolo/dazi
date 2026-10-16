@@ -1,8 +1,8 @@
 # Dazi — find your travel & food buddy
 
-**🔗 Live app:** _coming soon — added after the first Vercel deploy_
+**🔗 Live app:** https://dazi-five-tau.vercel.app
 
-**🔑 Demo login for reviewers:** _email: TBA · password: TBA_ (a dedicated demo account, 18+, already confirmed)
+**🔑 Demo login for reviewers:** email `xiangquyuanfang+demo@hotmail.com` · password `DEMO_PASSWORD_HERE` (a dedicated demo account, 18+, already confirmed)
 
 ---
 
@@ -12,28 +12,33 @@ Dazi (搭子, "a casual companion for a specific activity") helps solo traveller
 ## The problem
 - **Situation:** more people travel solo or move to a new city and want company for a day of food markets, museums or hiking.
 - **Complication:** today they post in scattered places (Xiaohongshu, Reddit, Facebook groups). Posts are unstructured, scrolling takes ages, most get no reply, and meeting strangers feels unsafe.
-- **Resolution:** write one sentence — *"I'm in Berlin 20–25 Oct, want street food and flea markets"* — and AI turns it into a structured trip card, then suggests compatible buddies with a short AI-written reason. Contact only opens after **both** sides accept; social handles are revealed only by mutual exchange.
+- **Resolution:** write one sentence — *"I'm in Berlin 20–25 Oct, want street food and flea markets"* — and AI turns it into a structured trip card, then suggests compatible buddies with a short AI-written reason. Contact only opens after **both** sides accept.
 
 ## How it works
 1. **Describe your trip** in one sentence. AI (server-side) extracts city, dates, interests, budget and vibe.
 2. **Get matched.** Hard filters (same city, overlapping dates, shared language, mutual preferences, not blocked) then a weighted score: trip similarity (pgvector embeddings) + travel style (pace, rhythm, interests) + personality.
-3. **Connect safely.** Send an invite; chat opens only when it's accepted. Block / report at any time.
-4. **After meeting,** leave private safety feedback and positive public tags.
+3. **Connect safely.** Send an invite; a simple message thread opens only when it's accepted. Block / report at any time.
 
 Guests can try a search on the homepage; results are anonymised on the server. All users must be 18+.
 
 Full product spec: [`docs/SPEC.md`](docs/SPEC.md) · user flows and rules: [`docs/FLOWS.md`](docs/FLOWS.md)
 
 ## Build status
-| Phase | Status |
+Capstone scope (deadline 18 Oct 2026, see [`docs/SPEC.md`](docs/SPEC.md) §0):
+
+| Part | Status |
 |---|---|
-| 1. Scaffold & auth (email sign-up/login, 18+ check, `profiles` + RLS, deploy) | 🚧 in progress |
-| 2. Onboarding & profile | ⏳ |
-| 3. Posting (AI extraction) | ⏳ |
-| 4. Matching + guest search | ⏳ |
-| 5. Invites, chat, safety | ⏳ |
-| 6. Feedback | ⏳ |
-| 8. Hardening & launch | ⏳ |
+| A. Email auth, 18+ check, `profiles` + RLS, deploy | ✅ done |
+| B. Onboarding & profile (incl. travel style quiz) | ⏳ |
+| C. Intent post (AI extraction, preset covers) | ⏳ |
+| D. Matching + AI reasons + seed data | ⏳ |
+| E. Homepage guest search (anonymised, rate-limited) | ⏳ |
+| F. Invites + simple message thread | ⏳ |
+| G. Safety & compliance (block/report, AI labels, delete my data) | ⏳ |
+| H. Design, security scan, evaluation | ⏳ |
+
+### What's next (Roadmap, not in the capstone)
+Google login · avatars and travel stories with photos · trip photo upload with vision-AI check · Facebook verification and mutual social reveal · after-meeting feedback tags · group activities · realtime chat · email notifications.
 
 ## Tech stack
 - **Next.js 16** (App Router, TypeScript, Tailwind) — deployed on **Vercel**
