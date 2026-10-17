@@ -50,6 +50,7 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 - `npm run build` — production build (run before every PR)
 - `npm run lint` — lint (run before every PR)
 - `node --env-file=.env.local scripts/rls-check.mjs` — two-account RLS test (run after every migration)
+- `npm test` — unit tests (`*.test.mjs`, Node's built-in test runner; e.g. the contact-details detector)
 
 ## Non-negotiable rules
 ### Security
@@ -75,6 +76,7 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 - After applying a migration, verify the actual state (tables, policies) and show me the result.
 - Preview and production share one Supabase database. Every migration must stay compatible with the code currently on main (expand first, remove later). Check this before proposing any migration.
 - Read-only verification queries live in `supabase/checks/` (committed), so they can be copied with `pbcopy < file`.
+- Every new email user needs `birth_year` and `display_name` in its user metadata — the sign-up trigger refuses it otherwise. This includes Supabase Dashboard "Add user", `auth.admin.createUser` and seed scripts (error: "Database error creating new user").
 
 ### AI & compliance
 - Label every AI-generated text in the UI as "AI-generated" (EU AI Act Art. 50).

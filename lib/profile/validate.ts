@@ -8,6 +8,7 @@ import {
   isOption,
   type Option,
 } from "./options";
+import { containsContactDetails } from "./contact";
 import type { ProfileFormValues } from "./types";
 
 // Column updates for public.profiles (snake_case = database names).
@@ -71,22 +72,18 @@ function pickAll(values: string[], options: Option[]) {
   return [...new Set(values)].filter((v) => isOption(options, v));
 }
 
-// No contact details in free text (safety rule, SPEC §4.10).
-const EMAIL_PATTERN = /[^\s@]+@[^\s@]+\.[^\s@]+/;
-const PHONE_CANDIDATE = /\+?\d[\d\s().\/-]{6,}\d/g;
-export function containsContactDetails(value: string) {
-  if (EMAIL_PATTERN.test(value)) return true;
-  // A run of 9+ digits (spaces/dashes allowed) looks like a phone number;
-  // "2015 - 2019" (8 digits) does not.
-  return (value.match(PHONE_CANDIDATE) ?? []).some(
-    (m) => m.replace(/\D/g, "").length >= 9,
-  );
+const NO_CONTACTS = "Please remove contact details (email or phone number)";
+
+// Shared by sign-up and the profile forms.
+export function parseDisplayName(value: string): string | null {
+  if (value.length < 1 || value.length > 50) return "Please enter a display name (1–50 characters).";
+  if (containsContactDetails(value)) return `${NO_CONTACTS} from your display name.`;
+  return null;
 }
 
 export function parseBasics(v: ProfileFormValues): Result<BasicsUpdate> {
-  if (v.displayName.length < 1 || v.displayName.length > 50) {
-    return { ok: false, error: "Please enter a display name (1–50 characters)." };
-  }
+  const nameError = parseDisplayName(v.displayName);
+  if (nameError) return { ok: false, error: nameError };
   if (v.gender && !isOption(GENDERS, v.gender)) {
     return { ok: false, error: "Please choose a gender from the list, or leave it empty." };
   }
@@ -98,20 +95,25 @@ export function parseBasics(v: ProfileFormValues): Result<BasicsUpdate> {
   if (v.homeCity.length < 1 || v.homeCity.length > 80) {
     return { ok: false, error: "Please enter your home city (up to 80 characters)." };
   }
+  if (containsContactDetails(v.homeCity)) return { ok: false, error: `${NO_CONTACTS} from your home city.` };
 
   if (v.bio.length > 500) return { ok: false, error: "Your bio can be at most 500 characters." };
   if (containsContactDetails(v.bio)) {
-    return { ok: false, error: "Please remove contact details (email or phone number) from your bio." };
+    return { ok: false, error: `${NO_CONTACTS} from your bio.` };
   }
 
   const visitedCities = splitList(v.visitedCities);
   if (visitedCities.length > 50 || visitedCities.some((c) => c.length > 80)) {
     return { ok: false, error: "Cities visited: up to 50 cities, each up to 80 characters." };
   }
+  if (visitedCities.some(containsContactDetails)) {
+    return { ok: false, error: `${NO_CONTACTS} from your cities visited.` };
+  }
   const hobbies = splitList(v.hobbies);
   if (hobbies.length > 20 || hobbies.some((h) => h.length > 30)) {
     return { ok: false, error: "Hobbies: up to 20 hobbies, each up to 30 characters." };
   }
+  if (hobbies.some(containsContactDetails)) return { ok: false, error: `${NO_CONTACTS} from your hobbies.` };
 
   const prefAgeMin = Number(v.prefAgeMin);
   const prefAgeMax = Number(v.prefAgeMax);
@@ -155,6 +157,42 @@ export function parseStyle(v: ProfileFormValues): Result<StyleUpdate> {
     return { ok: false, error: "Please choose at least one travel interest." };
   }
   return { ok: true, update: { travel_pace: travelPace, day_rhythm: v.dayRhythm, travel_interests: travelInterests } };
+}
+
+// A saved profile row as form values (used to show what was actually stored,
+// e.g. "Berlin, berlin" comes back as "Berlin").
+export type ProfileRow = {
+  display_name: string;
+  gender: string | null;
+  languages: string[];
+  home_city: string | null;
+  bio: string | null;
+  visited_cities: string[];
+  hobbies: string[];
+  pref_age_min: number;
+  pref_age_max: number;
+  pref_gender: string | null;
+  travel_pace: number | null;
+  day_rhythm: string | null;
+  travel_interests: string[];
+};
+
+export function toFormValues(row: ProfileRow): ProfileFormValues {
+  return {
+    displayName: row.display_name,
+    gender: row.gender ?? "",
+    languages: row.languages,
+    homeCity: row.home_city ?? "",
+    bio: row.bio ?? "",
+    visitedCities: row.visited_cities.join(", "),
+    hobbies: row.hobbies.join(", "),
+    prefAgeMin: String(row.pref_age_min),
+    prefAgeMax: String(row.pref_age_max),
+    prefGender: row.pref_gender ?? "",
+    travelPace: row.travel_pace === null ? "" : String(row.travel_pace),
+    dayRhythm: row.day_rhythm ?? "",
+    travelInterests: row.travel_interests,
+  };
 }
 
 // Strict 18+ rule, same as sign-up (birth year <= current year - 19).

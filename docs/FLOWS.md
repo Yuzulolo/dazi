@@ -56,7 +56,7 @@ Pending invites · my active post · latest recommendations
 - A signed-in user who has **not completed onboarding** (`profiles.onboarding_completed_at = null`) must finish `/onboarding` **before using any feature**. Only `/onboarding`, sign-out, `/privacy` and `/safety` are reachable until then.
 - Onboarding cannot be completed without a birth year (database constraint), so this also covers a missing birth year (e.g. a Google sign-up — Roadmap; today only possible via direct database edits).
 - **Birth year is locked once set** (cannot be changed or cleared; a mistake is fixed by an admin).
-- Same strict rule as email sign-up: birth year ≤ current year − 19. Under 18 → account and all its data are deleted, message *"You must be 18 or older to use Dazi."*
+- Same strict rule as email sign-up: birth year ≤ current year − 19. Under 18 → account and all its data are deleted, message *"You must be 18 or older to use Dazi."* **Until part G ("Delete my data") exists: onboarding is refused, not deleted.**
 - **Enforced on the server, not only in the UI:**
   - `getCurrentUser()` (used by every protected page and server action) redirects to `/onboarding` when onboarding is not completed
   - A database constraint refuses `onboarding_completed_at` unless the required fields (birth year, languages, home city, pace, day rhythm, ≥1 interest) are filled
@@ -138,7 +138,7 @@ none ──► requested (A asks in chat) ──► shared   (B agrees → BOTH 
 |---|---|
 | No city or dates in the sentence | Fields left empty and highlighted; search disabled until filled |
 | Dates in the past / end before start | Validation error, cannot save |
-| Birth year shows under 18 | Sign-up refused, nothing stored (email). Google user entering an under-18 year on onboarding → account deleted (2.0) |
+| Birth year shows under 18 | Sign-up refused, nothing stored (email). Google user entering an under-18 year on onboarding → account deleted (2.0); until part G: refused, not deleted |
 | Signed in but no birth year (Google) | Redirected to `/onboarding` from every page and action until it is entered (2.0) |
 | AI down or timeout | Fall back to a manual form; recommendations still shown without AI reasons |
 | Phone numbers / emails / abusive text in a post | AI strips contact details; clearly abusive content is rejected |

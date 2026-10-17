@@ -1,17 +1,17 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import { toFormValues } from "./validate";
 import type { ProfileFormValues } from "./types";
 
 // Public columns only — birth_year, gender and pref_* are not readable through
 // the table (column grants). The owner gets those via get_my_private_profile().
 const MY_PUBLIC_COLUMNS =
-  "display_name, languages, home_city, bio, visited_cities, hobbies, travel_pace, day_rhythm, travel_interests, onboarding_completed_at";
+  "display_name, languages, home_city, bio, visited_cities, hobbies, travel_pace, day_rhythm, travel_interests";
 
 export type MyProfile = {
   values: ProfileFormValues;
   birthYear: number | null;
   basicsSaved: boolean; // onboarding step 1 done
-  onboarded: boolean;
 };
 
 // Row returned by public.get_my_private_profile() (always the caller's own row).
@@ -23,8 +23,14 @@ type PrivateProfileRow = {
   pref_gender: string | null;
 };
 
-export async function getMyProfile(userId: string): Promise<MyProfile> {
+// The signed-in user's own profile, public and private fields. Takes no id:
+// both halves always come from the caller's own row.
+export async function getMyProfile(): Promise<MyProfile> {
   const supabase = await createClient();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const userId = claimsData?.claims.sub;
+  if (!userId) throw new Error("Could not load profile: not signed in");
+
   const [{ data: pub, error: pubError }, { data: privData, error: privError }] = await Promise.all([
     supabase.from("profiles").select(MY_PUBLIC_COLUMNS).eq("id", userId).single(),
     supabase.rpc("get_my_private_profile").single(),
@@ -35,24 +41,10 @@ export async function getMyProfile(userId: string): Promise<MyProfile> {
   }
 
   return {
-    values: {
-      displayName: pub.display_name,
-      gender: priv.gender ?? "",
-      languages: pub.languages,
-      homeCity: pub.home_city ?? "",
-      bio: pub.bio ?? "",
-      visitedCities: pub.visited_cities.join(", "),
-      hobbies: pub.hobbies.join(", "),
-      prefAgeMin: String(priv.pref_age_min),
-      prefAgeMax: String(priv.pref_age_max),
-      prefGender: priv.pref_gender ?? "",
-      travelPace: pub.travel_pace === null ? "" : String(pub.travel_pace),
-      dayRhythm: pub.day_rhythm ?? "",
-      travelInterests: pub.travel_interests,
-    },
+    values: toFormValues({ ...pub, ...priv }),
     birthYear: priv.birth_year,
-    basicsSaved: pub.languages.length > 0 && pub.home_city !== null,
-    onboarded: pub.onboarding_completed_at !== null,
+    // Same fields the database requires before onboarding can be completed.
+    basicsSaved: priv.birth_year !== null && pub.languages.length > 0 && pub.home_city !== null,
   };
 }
 

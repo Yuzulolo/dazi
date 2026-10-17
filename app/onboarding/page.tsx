@@ -21,7 +21,7 @@ async function Onboarding({ searchParams }: { searchParams: PageProps<"/onboardi
   const user = await getCurrentUser({ allowIncompleteOnboarding: true });
   if (user.onboarded) redirect("/me/edit");
 
-  const profile = await getMyProfile(user.id);
+  const profile = await getMyProfile();
   const { step } = await searchParams;
   const showStep = !profile.basicsSaved || step === "1" ? 1 : 2;
 

@@ -25,8 +25,7 @@ export async function saveBasics(
   const update: Record<string, unknown> = { ...basics.update };
   if (formData.has("birthYear")) {
     const birth = parseBirthYear(birthYearRaw);
-    // FLOWS 2.0 says an under-18 account is deleted; that needs "Delete my data" (part G).
-    // Until then onboarding simply cannot be completed.
+    // Under 18: refused, not deleted, until "Delete my data" exists (part G, FLOWS 2.0).
     if (!birth.ok) return { error: birth.error, values, birthYear: birthYearRaw };
     update.birth_year = birth.year;
   }

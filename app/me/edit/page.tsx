@@ -18,7 +18,7 @@ export default function EditProfilePage() {
 
 async function EditProfile() {
   const user = await getCurrentUser();
-  const profile = await getMyProfile(user.id);
+  const profile = await getMyProfile();
 
   return (
     <>

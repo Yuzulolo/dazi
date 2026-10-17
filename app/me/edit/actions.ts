@@ -2,7 +2,7 @@
 
 import { getCurrentUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { parseBasics, parseStyle, readFormValues } from "@/lib/profile/validate";
+import { parseBasics, parseStyle, readFormValues, toFormValues } from "@/lib/profile/validate";
 import type { ProfileFormState } from "@/lib/profile/types";
 
 // Edit everything except the (locked) birth year. Only onboarded users get here:
@@ -20,14 +20,16 @@ export async function updateProfile(
   if (!style.ok) return { error: style.error, values };
 
   const supabase = await createClient();
+  const update = { ...basics.update, ...style.update };
   const { error } = await supabase
     .from("profiles")
-    .update({ ...basics.update, ...style.update })
+    .update(update)
     .eq("id", user.id);
   if (error) {
     console.error("updateProfile failed:", error.code);
     return { error: "Couldn't save your changes. Please check them and try again.", values };
   }
 
-  return { saved: true, values };
+  // Show what was stored (trimmed, de-duplicated), not the raw input.
+  return { saved: true, values: toFormValues(update) };
 }
