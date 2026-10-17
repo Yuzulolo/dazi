@@ -35,7 +35,8 @@ Capstone scope (deadline 20 Oct 2026, see [`docs/SPEC.md`](docs/SPEC.md) §0):
 | E. Homepage guest search (anonymised, rate-limited) | ⏳ |
 | F. Invites + simple message thread | ⏳ |
 | G. Safety & compliance (block/report, AI labels, delete my data) | ⏳ |
-| H. Design, security scan, evaluation | ⏳ |
+| Design foundation (poster wall, design system — [`docs/DESIGN.md`](docs/DESIGN.md)) | ✅ done |
+| H. Design polish, security scan, evaluation | ⏳ |
 
 ### What's next (Roadmap, not in the capstone)
 Google login · avatars and travel stories with photos · trip photo upload with vision-AI check · Facebook verification and mutual social reveal · after-meeting feedback tags · group activities · realtime chat · email notifications.

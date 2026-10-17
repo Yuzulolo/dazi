@@ -1,5 +1,6 @@
 import "server-only";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 export type CurrentUser = {
@@ -16,6 +17,7 @@ export type CurrentUser = {
 export async function getCurrentUser(
   { allowIncompleteOnboarding = false }: { allowIncompleteOnboarding?: boolean } = {},
 ): Promise<CurrentUser> {
+  await connection(); // per-request: the session check reads cookies and the clock
   const supabase = await createClient();
 
   const { data } = await supabase.auth.getClaims();

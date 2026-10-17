@@ -15,7 +15,7 @@ Guest types one sentence on the homepage → AI trip card → 5 anonymised simil
 |---|---|---|
 | A | Email auth + 18+ + `profiles` + RLS + Vercel | ✅ **Done** (PR #1, live). **No Google login.** |
 | B | Onboarding & profile | ✅ **Done** (phase 2 PR). Display name, birth year, gender (optional), languages, home city, bio, **cities visited**, **hobbies**, matching prefs (age range, gender pref), **travel style quiz** (pace, day rhythm, interests). Profile page = these fields only. **No avatar upload, no stories, no photos.** |
-| C | Intent post | One sentence → AI extraction → editable card → save. Max 1 active post. Pick one of ~8 **preset covers** (no upload, no vision AI). Edit allowed; changing city/dates expires pending invites and ends accepted ones (FLOWS 2.6) — **no monthly limit**. |
+| C | Intent post | One sentence → AI extraction → editable card → save. Max 1 active post. **Covers = the 4 poster tones** (lavender / forest / mint / pink, `docs/DESIGN.md`): AI suggests a tone from the trip's mood, the user can change it — no cover images, no upload, no vision AI. The AI extraction also returns a **two-line poster headline** (`headline: [line1, line2]`, each ≤ ~22 characters ending with a full stop, e.g. "Flea markets." / "Good coffee."), editable on the card and shown on the posters. Edit allowed; changing city/dates expires pending invites and ends accepted ones (FLOWS 2.6) — **no monthly limit**. |
 | D | Matching | Hard filters (§5 step 1) + `score = 0.4 × trip + 0.35 × style + 0.25 × personality`. Personality embedding = bio + hobbies + cities visited (no stories). AI reason for top 5. Seed 30 demo users. **The seed script must always set `birth_year` (and `display_name`) in the user metadata** — the sign-up trigger refuses any email user without a birth year. **Open question (decide in D):** gender `other` can't be picked as a preference, so under the mutual gender rule those users are hidden from anyone who set a preference — same as "no gender". Keep that (and say so in the gender help text) or add `other` to the preference options? |
 | E | Homepage guest search | Anonymised server-side, trip-only ranking, rate limit per IP, search carries over after sign-up. |
 | F | Invites + messages | Invite (optional note), accept / decline / expire, max 10 pending, mutual invites auto-accept. After acceptance: **simple message thread, no realtime** (refresh to see new messages). |
@@ -27,18 +27,18 @@ Guest types one sentence on the homepage → AI trip card → 5 anonymised simil
 |---|---|
 | 15 Oct | ✅ Phase 1 (A): RLS test, deploy, PR review + merge |
 | 16 Oct | ✅ B (onboarding/profile): RLS test, browser test, PR review |
-| 17 Oct | C (posting + AI extraction + embeddings) + D (matching, **30 realistic seed users**) |
-| 18 Oct | E (guest search) + F (invites + messages) + **user testing with 3–5 classmates** |
-| 19 Oct | G (safety/compliance) + full design + one stretch feature (§0.5) |
-| 20 Oct (morning) | H: `/security-scan`, README, evaluation, showcase, presentation |
+| 17 Oct | Design foundation (`docs/DESIGN.md`) + C (posting + AI extraction + embeddings) |
+| 18 Oct | D (matching, **30 realistic seed users**) + E (guest search) |
+| 19 Oct | F (invites + messages) + G (safety/compliance) + **user testing with 3–5 classmates** |
+| 20 Oct (morning) | Polish pass (incl. 320/768px checks) + H: `/security-scan`, README, evaluation, showcase, presentation |
 
-**Rule: quality over quantity.** The core flow (A–F) must work end-to-end and be polished before any stretch work starts.
+**Rule: quality over quantity.** The core flow (A–F) must work end-to-end and be polished. There is no stretch feature in the capstone (dropped 17 Oct).
 
 ### 0.4 Roadmap (not in capstone — mention in "What's next")
-Google login · avatar & travel stories with photos · ~~trip photo upload~~ (now stretch, §0.5) · Facebook verification + mutual social reveal · after-meeting feedback (safety check + positive tags) · group activities · match-break limit (2 per 30 days) · realtime chat · email notifications.
+Google login · avatar & travel stories with photos · **trip photo upload with a vision-AI check + mood description used in matching** (FLOWS 2.7; was stretch, dropped from the capstone 17 Oct — must follow all storage rules: own `{user_id}/` folder, EXIF/GPS stripped, server-side AI call) · Facebook verification + mutual social reveal · after-meeting feedback (safety check + positive tags) · group activities · match-break limit (2 per 30 days) · realtime chat · email notifications.
 
-### 0.5 Stretch (only after the core flow A–F works end-to-end)
-- **Trip photo upload** with a vision-AI check + mood description that is added to the post text before embedding, so aesthetics influence matching (FLOWS 2.7). Must follow all storage rules (own `{user_id}/` folder, EXIF/GPS stripped, server-side AI call).
+### 0.5 Stretch
+None — the former stretch feature (trip photo + vision AI) moved to §0.4 Roadmap on 17 Oct.
 
 ## 1. Problem (SCR)
 - **Situation:** More and more people travel solo or live in a new city, and look for a "buddy" to explore, eat or sightsee with.
@@ -106,7 +106,7 @@ Google login · avatar & travel stories with photos · ~~trip photo upload~~ (no
 | `profiles` | id (= auth user), display_name, birth_year, gender?, languages[], bio, home_city, visited_cities[], avatar_path, pref_age_min/max, pref_gender?, travel_pace, day_rhythm, travel_interests[], hobbies[], instagram_handle?, safety_paused, profile_embedding | Signed-in users read **public columns only** (via a view; never `instagram_handle`); owner updates |
 | `stories` | id, user_id, title, city, body, is_best | Signed-in read; owner writes |
 | `story_photos` | id, story_id, user_id, storage_path | Signed-in read; owner writes |
-| `posts` | id, user_id, raw_text, city, start_date, end_date, interests[], budget, vibe, photo_path?, preset_cover?, photo_mood?, embedding vector(1536), status (active/closed/archived) | Signed-in read active posts (not blocked); owner writes. **Max 1 active** (partial unique index). Guests: no direct access — server function returns anonymised fields only |
+| `posts` | id, user_id, raw_text, city, start_date, end_date, interests[], budget, vibe, headline text[2], tone (lavender/forest/mint/pink), photo_path?, photo_mood?, embedding vector(1536), status (active/closed/archived) | Signed-in read active posts (not blocked); owner writes. **Max 1 active** (partial unique index). Guests: no direct access — server function returns anonymised fields only |
 | `invites` | id, from_user, to_user, from_post, to_post, status (pending/accepted/declined/expired/cancelled/ended_trip_changed), note, ai_reason | Only participants read; sender creates/cancels; receiver accepts/declines |
 | `messages` | id, invite_id, sender_id, body | Participants of an accepted invite only |
 | `social_reveals` | invite_id, requester_id, status (requested/shared/declined) | Participants only; socials returned by a server function only when `shared` |

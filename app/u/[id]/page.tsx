@@ -3,17 +3,21 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { getPublicProfile } from "@/lib/profile/queries";
 import { DAY_RHYTHMS, LANGUAGES, TRAVEL_INTERESTS, TRAVEL_PACES, labelOf } from "@/lib/profile/options";
+import { SiteShell } from "@/app/_components/dazi/site-shell";
+import { AbstractAvatar, Tags } from "@/app/_components/dazi/primitives";
 
 export default function PublicProfilePage({ params }: PageProps<"/u/[id]">) {
   return (
-    <main>
-      <Suspense fallback={<p>Loading…</p>}>
-        <PublicProfile params={params} />
-      </Suspense>
-      <p>
-        <Link href="/home">← Home</Link>
-      </p>
-    </main>
+    <SiteShell variant="calm">
+      <section className="glass calm-panel">
+        <Suspense fallback={<p>Loading…</p>}>
+          <PublicProfile params={params} />
+        </Suspense>
+        <p className="panel-footer">
+          <Link href="/home">← Home</Link>
+        </p>
+      </section>
+    </SiteShell>
   );
 }
 
@@ -27,38 +31,59 @@ async function PublicProfile({ params }: { params: PageProps<"/u/[id]">["params"
   if (!profile) return <h1>User not found</h1>;
 
   const list = (items: string[]) => (items.length > 0 ? items.join(", ") : "—");
+  const languages = profile.languages.map((v) => labelOf(LANGUAGES, v));
+  const interests = profile.travelInterests.map((v) => labelOf(TRAVEL_INTERESTS, v));
 
   return (
     <>
-      <h1>{profile.displayName}</h1>
+      <div className="profile-head">
+        <AbstractAvatar size="large" />
+        <div>
+          <h1>{profile.displayName}</h1>
+          <p>
+            Age {profile.ageRange ?? "—"} · {profile.homeCity ?? "—"}
+          </p>
+        </div>
+      </div>
       {profile.id === viewer.id && (
         <p>
           This is how other members see you. <Link href="/me/edit">Edit profile</Link>
         </p>
       )}
-      <dl>
-        <dt>Age</dt>
-        <dd>{profile.ageRange ?? "—"}</dd>
-        <dt>Home city</dt>
-        <dd>{profile.homeCity ?? "—"}</dd>
-        <dt>Languages</dt>
-        <dd>{list(profile.languages.map((v) => labelOf(LANGUAGES, v)))}</dd>
-        <dt>About</dt>
-        <dd>{profile.bio ?? "—"}</dd>
-        <dt>Cities visited</dt>
-        <dd>{list(profile.visitedCities)}</dd>
-        <dt>Hobbies</dt>
-        <dd>{list(profile.hobbies)}</dd>
+
+      <dl className="profile-facts">
+        <div>
+          <dt>LANGUAGES</dt>
+          <dd>{languages.length > 0 ? <Tags values={languages} label="Languages" /> : "—"}</dd>
+        </div>
+        <div>
+          <dt>ABOUT</dt>
+          <dd>{profile.bio ?? "—"}</dd>
+        </div>
+        <div>
+          <dt>CITIES VISITED</dt>
+          <dd>{list(profile.visitedCities)}</dd>
+        </div>
+        <div>
+          <dt>HOBBIES</dt>
+          <dd>{list(profile.hobbies)}</dd>
+        </div>
       </dl>
 
       <h2>Travel style</h2>
-      <dl>
-        <dt>Pace</dt>
-        <dd>{profile.travelPace === null ? "—" : labelOf(TRAVEL_PACES, String(profile.travelPace))}</dd>
-        <dt>Day rhythm</dt>
-        <dd>{labelOf(DAY_RHYTHMS, profile.dayRhythm) || "—"}</dd>
-        <dt>Interests</dt>
-        <dd>{list(profile.travelInterests.map((v) => labelOf(TRAVEL_INTERESTS, v)))}</dd>
+      <dl className="profile-facts">
+        <div>
+          <dt>PACE</dt>
+          <dd>{profile.travelPace === null ? "—" : labelOf(TRAVEL_PACES, String(profile.travelPace))}</dd>
+        </div>
+        <div>
+          <dt>DAY RHYTHM</dt>
+          <dd>{labelOf(DAY_RHYTHMS, profile.dayRhythm) || "—"}</dd>
+        </div>
+        <div>
+          <dt>INTERESTS</dt>
+          <dd>{interests.length > 0 ? <Tags values={interests} label="Travel interests" /> : "—"}</dd>
+        </div>
       </dl>
     </>
   );
