@@ -22,8 +22,9 @@ copy them exactly, never calculate them yourself:
 - this weekend / dieses Wochenende / am Wochenende / 这个周末 / 这周末 / 周末: {THIS_WEEKEND}
 - next weekend / nächstes Wochenende / 下周末 / 下个周末: {NEXT_WEEKEND}
 - next week / nächste Woche / 下周 / 下个星期: {NEXT_WEEK}
-A day and month WITHOUT a year means the next time that date comes:
-- if it is on or after today, it is this year; if it is earlier than today, it is NEXT year.
+Days and months WITHOUT a year:
+- if the trip's END date has already passed this year, the trip is NEXT year;
+  otherwise it is this year (a trip that started a few days ago and is still going on is this year).
 - Example for today: "{FUTURE_LABEL}" → {FUTURE_DATE}; "{PAST_LABEL}" (already passed) → {PAST_DATE}.
 One single day: start_date = end_date. If no dates are given, both are null. Never invent dates.
 
@@ -68,10 +69,12 @@ const TRIP_SCHEMA = {
   additionalProperties: false,
 };
 
-// Cleans the sentence before it goes anywhere: trimmed, capped, no contact details
-// (so phone numbers / emails never reach the AI provider), no fake closing tag.
+// Cleans the sentence before it goes anywhere: capped BEFORE the contact regex (review W1),
+// no contact details (so phone numbers / emails never reach the AI provider), and no
+// angle brackets at all, so the text can't fake a closing </trip_text> tag (review S3).
 export function prepareTripText(text: string) {
-  return stripContactDetails(text.replace(/<\/?trip_text>/gi, " ").replace(/\s+/g, " ").trim()).slice(0, RAW_TEXT_MAX);
+  const capped = text.slice(0, RAW_TEXT_MAX * 2).replace(/[<>]/g, " ").replace(/\s+/g, " ").trim();
+  return stripContactDetails(capped).slice(0, RAW_TEXT_MAX).trim();
 }
 
 function systemPrompt(today: { iso: string; weekday: string }) {
@@ -92,10 +95,12 @@ function systemPrompt(today: { iso: string; weekday: string }) {
   return SYSTEM_PROMPT.replace(/\{([A-Z_]+)\}/g, (match, key: string) => values[key] ?? match);
 }
 
-export async function extractTrip(text: string, today: { iso: string; weekday: string }): Promise<TripCard> {
+// `preparedText` must come from prepareTripText() (callers prepare once: the server
+// action needs the cleaned text for its empty check before spending a quota slot).
+export async function extractTrip(preparedText: string, today: { iso: string; weekday: string }): Promise<TripCard> {
   const raw = await chatJson({
     system: systemPrompt(today),
-    user: `<trip_text>${prepareTripText(text)}</trip_text>`,
+    user: `<trip_text>${preparedText}</trip_text>`,
     schemaName: "trip_card",
     schema: TRIP_SCHEMA,
   });

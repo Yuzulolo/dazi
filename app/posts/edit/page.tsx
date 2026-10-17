@@ -21,7 +21,7 @@ export default function EditPostPage() {
 async function EditPost() {
   const user = await getCurrentUser();
   const post = await getMyActivePost(user.id);
-  if (!post) redirect("/posts/new");
+  if (!post || post.ended) redirect("/posts/new"); // an ended trip gets a new post, not an edit
   // aiAssisted false here: the AI badge belongs to an unsaved AI draft only.
   return <PostEditor mode="edit" action={updatePost} initial={{ ...post, aiAssisted: false }} />;
 }

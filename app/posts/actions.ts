@@ -10,12 +10,17 @@ import { todayInBerlin, validatePostForm, type PostInput, type TripCard } from "
 import { getMyActivePost } from "@/lib/posts/queries";
 
 // Every AI call costs money on a key without a spending limit, so each one first
-// takes a slot from the per-user quota (20 per rolling 24 h, enforced in the database).
-async function takeQuota(kind: "extract" | "embed") {
+// takes a slot from the quota (per user: 20 drafts + 20 saves per rolling 24 h; whole
+// site: 1,000 per 24 h — enforced in the database). An error is reported as an error,
+// not as "limit reached" (review S2); either way no AI call is made.
+async function takeQuota(kind: "extract" | "embed"): Promise<"ok" | "limit" | "error"> {
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("consume_ai_quota", { p_kind: kind });
-  if (error) console.error("consume_ai_quota failed:", error.code);
-  return data === true;
+  if (error) {
+    console.error("consume_ai_quota failed:", error.code);
+    return "error";
+  }
+  return data === true ? "ok" : "limit";
 }
 
 export type ExtractResult =
@@ -28,7 +33,8 @@ export async function extractTripAction(text: string): Promise<ExtractResult> {
   await getCurrentUser();
   const rawText = prepareTripText(String(text ?? ""));
   if (!rawText) return { ok: false, reason: "empty", rawText };
-  if (!(await takeQuota("extract"))) return { ok: false, reason: "quota", rawText };
+  const quota = await takeQuota("extract");
+  if (quota !== "ok") return { ok: false, reason: quota === "limit" ? "quota" : "ai", rawText };
   try {
     const card = await extractTrip(rawText, todayInBerlin());
     return { ok: true, card, rawText };
@@ -40,11 +46,14 @@ export async function extractTripAction(text: string): Promise<ExtractResult> {
 
 export type PostFormState = { error?: string };
 
-const QUOTA_MESSAGE = "You've reached today's limit of 20 AI actions. Please try again tomorrow.";
+const QUOTA_MESSAGE = "You've reached today's limit of 20 saves. Please try again tomorrow — nothing you typed is lost.";
 const SAVE_FAILED = "Couldn't save your plan right now. Please try again — nothing you typed is lost.";
+// The database's own rules (posts_guard / CHECKs) answer with 23514 if something slipped past.
+const DB_REFUSED = "This plan can't be saved: please remove contact details and check the dates.";
 
 async function embedPost(post: PostInput) {
-  if (!(await takeQuota("embed"))) return { ok: false as const, error: QUOTA_MESSAGE };
+  const quota = await takeQuota("embed");
+  if (quota !== "ok") return { ok: false as const, error: quota === "limit" ? QUOTA_MESSAGE : SAVE_FAILED };
   try {
     return { ok: true as const, vector: JSON.stringify(await embed(tripEmbeddingText(post))) };
   } catch (error) {
@@ -80,45 +89,48 @@ export async function publishPost(_prev: PostFormState, formData: FormData): Pro
   });
   if (error) {
     console.error("publish_post failed:", error.code);
-    return { error: SAVE_FAILED };
+    return { error: error.code === "23514" ? DB_REFUSED : SAVE_FAILED };
   }
   redirect("/home?posted=1");
 }
 
-// Edit the active post (FLOWS 2.6). Re-embeds because the text changed. The
-// "your matches will end" warning arrives with invites in part F.
+// Edit the active post (FLOWS 2.6) through public.update_post, which only ever touches
+// the caller's active post and raises if there is none (review W5). The embedding is only
+// recomputed when the text it is built from changed (review W2: tone/headline edits are free).
+// The "your matches will end" warning arrives with invites in part F.
 export async function updatePost(_prev: PostFormState, formData: FormData): Promise<PostFormState> {
   const user = await getCurrentUser();
   const current = await getMyActivePost(user.id);
-  if (!current) redirect("/posts/new");
+  if (!current || current.ended) redirect("/posts/new");
 
-  const parsed = validatePostForm(formData, todayInBerlin().iso, { editing: true });
+  const parsed = validatePostForm(formData, todayInBerlin().iso, { currentStartDate: current.startDate });
   if (!parsed.ok) return { error: parsed.error };
   const post = parsed.post;
 
-  const embedding = await embedPost(post);
-  if (!embedding.ok) return { error: embedding.error };
+  let vector: string | null = null;
+  if (tripEmbeddingText(post) !== tripEmbeddingText(current)) {
+    const embedding = await embedPost(post);
+    if (!embedding.ok) return { error: embedding.error };
+    vector = embedding.vector;
+  }
 
   const supabase = await createClient();
-  const { error } = await supabase
-    .from("posts")
-    .update({
-      raw_text: post.rawText,
-      city: post.city,
-      start_date: post.startDate,
-      end_date: post.endDate,
-      interests: post.interests,
-      budget: post.budget,
-      vibe: post.vibe,
-      headline: post.headline,
-      tone: post.tone,
-      embedding: embedding.vector,
-    })
-    .eq("id", current.id)
-    .eq("status", "active");
+  const { error } = await supabase.rpc("update_post", {
+    p_raw_text: post.rawText,
+    p_city: post.city,
+    p_start_date: post.startDate,
+    p_end_date: post.endDate,
+    p_interests: post.interests,
+    p_budget: post.budget,
+    p_vibe: post.vibe,
+    p_headline: post.headline,
+    p_tone: post.tone,
+    p_embedding: vector,
+  });
   if (error) {
-    console.error("updatePost failed:", error.code);
-    return { error: SAVE_FAILED };
+    console.error("update_post failed:", error.code);
+    if (error.code === "P0002") return { error: "This plan was replaced or ended in the meantime. Please reload the page." };
+    return { error: error.code === "23514" ? DB_REFUSED : SAVE_FAILED };
   }
   redirect("/home?posted=1");
 }

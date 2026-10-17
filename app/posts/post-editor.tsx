@@ -37,7 +37,7 @@ const EMPTY_CARD: TripCard = {
 
 const FALLBACK_NOTICES = {
   empty: "Tell us your plan in one sentence first.",
-  quota: "You've reached today's limit of 20 AI actions — fill in your card below, or try again tomorrow.",
+  quota: "You've used today's 20 AI drafts — fill in your card below (saving still works), or try again tomorrow.",
   ai: "We couldn't read that automatically — fill in your card below.",
 };
 
@@ -153,7 +153,9 @@ export function PostEditor({
             }
           }}
         >
-          <input type="hidden" name="aiAssisted" value={String(draft.aiAssisted)} />
+          {/* Known limitation (documented): this flag comes from the browser, so it only labels
+              the user's own post; it is not a security boundary. Edits keep the stored value. */}
+          {mode === "new" && <input type="hidden" name="aiAssisted" value={String(draft.aiAssisted)} />}
           <input type="hidden" name="tone" value={draft.tone} />
 
           <fieldset>

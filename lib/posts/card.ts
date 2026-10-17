@@ -4,6 +4,7 @@
 // eval script can run this with plain Node.
 import { TRAVEL_INTERESTS } from "../profile/options.ts";
 import { containsContactDetails, stripContactDetails } from "../profile/contact.ts";
+import { normalizeTripDates } from "./dates.ts";
 
 export const TONES = ["lavender", "forest", "mint", "pink"] as const;
 export type Tone = (typeof TONES)[number];
@@ -57,7 +58,7 @@ const isTone = (v: unknown): v is Tone => typeof v === "string" && (TONES as rea
 const isBudget = (v: unknown): v is Budget => typeof v === "string" && (BUDGETS as readonly string[]).includes(v);
 
 function cleanText(value: unknown, max: number): string | null {
-  if (typeof value !== "string") return null;
+  if (typeof value !== "string" || value.length > max * 2) return null; // cap before the regex (review W1)
   const text = stripContactDetails(value.replace(/\s+/g, " ").trim());
   return text.length >= 1 && text.length <= max ? text : null;
 }
@@ -80,15 +81,11 @@ function headlineLine(value: unknown): string | null {
 export function cleanAiCard(raw: unknown, todayIso: string): TripCard {
   const r = (raw ?? {}) as Record<string, unknown>;
   const city = cleanText(r.city, 80);
-  let startDate = isIsoDate(r.start_date) ? r.start_date : null;
-  let endDate = isIsoDate(r.end_date) ? r.end_date : null;
-  if (
-    !startDate || !endDate || endDate < startDate || startDate < todayIso ||
-    daysBetween(startDate, endDate) > MAX_TRIP_DAYS
-  ) {
-    startDate = null;
-    endDate = null;
-  }
+  // The year rule is applied here in code, not trusted to the model (dates.ts).
+  const range =
+    isIsoDate(r.start_date) && isIsoDate(r.end_date) ? normalizeTripDates(r.start_date, r.end_date, todayIso) : null;
+  const [startDate, endDate] =
+    range && daysBetween(range[0], range[1]) <= MAX_TRIP_DAYS ? range : [null, null];
   const line1 = Array.isArray(r.headline) ? headlineLine(r.headline[0]) : null;
   const line2 = Array.isArray(r.headline) ? headlineLine(r.headline[1]) : null;
   const headline: [string, string] =
@@ -118,24 +115,32 @@ export type PostInput = Omit<TripCard, "city" | "startDate" | "endDate"> & {
 export function validatePostForm(
   formData: FormData,
   todayIso: string,
-  { editing = false }: { editing?: boolean } = {},
+  { currentStartDate }: { currentStartDate?: string } = {}, // set when editing the active post
 ): { ok: true; post: PostInput } | { ok: false; error: string } {
+  const editing = currentStartDate !== undefined;
   const get = (name: string) => String(formData.get(name) ?? "").trim();
-  const rawText = stripContactDetails(get("rawText").replace(/\s+/g, " "));
-  if (rawText.length < 1 || rawText.length > RAW_TEXT_MAX) {
+  const typed = get("rawText").replace(/\s+/g, " ");
+  // Length is checked BEFORE stripping (cheap regex input, review W1); the placeholder can
+  // make the text a little longer, so the result is cut back to the limit (review S4).
+  if (typed.length < 1 || typed.length > RAW_TEXT_MAX) {
     return { ok: false, error: `Please describe your plan in one sentence (up to ${RAW_TEXT_MAX} characters).` };
   }
+  const rawText = stripContactDetails(typed).slice(0, RAW_TEXT_MAX).trim();
   const city = get("city").replace(/\s+/g, " ");
   if (city.length < 1 || city.length > 80) return { ok: false, error: "Please enter the city (up to 80 characters)." };
+  // (every length check above/below runs before containsContactDetails, review W1)
   if (containsContactDetails(city)) return { ok: false, error: "Please remove contact details from the city." };
 
   const startDate = get("startDate");
   const endDate = get("endDate");
   if (!isIsoDate(startDate) || !isIsoDate(endDate)) return { ok: false, error: "Please choose your start and end dates." };
   if (endDate < startDate) return { ok: false, error: "The end date can't be before the start date." };
-  // A trip that already started can still be edited, as long as it hasn't ended.
-  if (editing ? endDate < todayIso : startDate < todayIso) {
-    return { ok: false, error: editing ? "This trip has already ended." : "The start date can't be in the past." };
+  // A trip that already started can still be edited while it hasn't ended, but its start
+  // can't move further into the past (review W4; the database enforces the same).
+  if (editing && endDate < todayIso) return { ok: false, error: "This trip has already ended." };
+  const earliestStart = editing && currentStartDate < todayIso ? currentStartDate : todayIso;
+  if (startDate < earliestStart) {
+    return { ok: false, error: editing ? "The start date can't move further into the past." : "The start date can't be in the past." };
   }
   if (daysBetween(startDate, endDate) > MAX_TRIP_DAYS) {
     return { ok: false, error: `A plan can be at most ${MAX_TRIP_DAYS} days long.` };

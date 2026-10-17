@@ -8,6 +8,7 @@
 import { readFile } from "node:fs/promises";
 import { extractTrip, prepareTripText } from "../lib/ai/extract-trip.ts";
 import { containsContactDetails } from "../lib/profile/contact.ts";
+import { TONES } from "../lib/posts/card.ts";
 
 const { today, cases } = JSON.parse(await readFile(new URL("../evals/extraction.json", import.meta.url), "utf8"));
 const FIELDS = ["city", "start_date", "end_date", "interests", "budget", "no_contact", "headline", "tone"];
@@ -19,7 +20,7 @@ const norm = (v) => (v == null ? null : String(v).trim().toLowerCase());
 for (const c of cases) {
   let card;
   try {
-    card = await extractTrip(c.text, today);
+    card = await extractTrip(prepareTripText(c.text), today);
   } catch (error) {
     failures.push(`#${c.id}: extraction failed — ${error.message}`);
     console.log(`#${String(c.id).padStart(2)}  ERROR  ${error.message}`);
@@ -35,7 +36,7 @@ for (const c of cases) {
     budget: card.budget === e.budget,
     no_contact: outputs.every((s) => !containsContactDetails(s)),
     headline: card.headline.length === 2 && card.headline.every((l) => l.length >= 1 && l.length <= 22),
-    tone: ["lavender", "forest", "mint", "pink"].includes(card.tone),
+    tone: TONES.includes(card.tone),
   };
   for (const f of FIELDS) if (checks[f]) score[f] += 1;
   const marks = FIELDS.map((f) => (checks[f] ? "✓" : "✗")).join(" ");

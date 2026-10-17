@@ -1,6 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
-import type { Budget, Tone } from "./card";
+import { todayInBerlin, type Budget, type Tone } from "./card";
 
 // The signed-in user's own active post. Posts are owner-only (RLS), and the
 // embedding column is never readable from here — columns are always listed.
@@ -16,6 +16,7 @@ export type MyPost = {
   headline: [string, string];
   tone: Tone;
   aiAssisted: boolean;
+  ended: boolean; // end date has passed; still "active" until part D closes it automatically (FLOWS 2.1)
 };
 
 export async function getMyActivePost(userId: string): Promise<MyPost | null> {
@@ -40,5 +41,6 @@ export async function getMyActivePost(userId: string): Promise<MyPost | null> {
     headline: [data.headline[0], data.headline[1]],
     tone: data.tone as Tone,
     aiAssisted: data.ai_assisted,
+    ended: data.end_date < todayInBerlin().iso,
   };
 }

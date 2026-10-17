@@ -66,7 +66,8 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 - **Secrets never go in the repo.** Keys live in `.env.local` (git-ignored) and in Vercel env vars. Never print or commit them.
 - Only `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` may be exposed to the browser. The service-role key and `OPENROUTER_API_KEY` are **server-only**.
 - **Every AI call (chat + embeddings) runs server-side** (route handlers / server actions), never from client components.
-- **Every AI call is rate-limited:** signed-in users through `consume_ai_quota()` (20 per rolling 24 h), guests through the per-IP limit (part E). No AI call without a quota check.
+- **Every AI call is rate-limited:** signed-in users through `consume_ai_quota()` (20 drafts + 20 saves per user per rolling 24 h, 1,000 per day site-wide), guests through the per-IP limit (part E). No AI call without a quota check.
+- **Posts are written only through `publish_post()` / `update_post()`** (security definer, pinned to `auth.uid()`); users have no direct INSERT/UPDATE, and the `posts_guard` trigger rejects contact details, past start dates and illegal status changes in the database itself.
 - **Row Level Security is enabled on every table that holds user data**, with explicit policies for select / insert / update / delete. Use `USING` + `WITH CHECK` scoped to `auth.uid()`.
 - Messages are readable only by the participants of an **accepted** invite or the **approved** members of an activity.
 - Storage: users may upload/delete only inside their own `{user_id}/` folder. Strip EXIF/GPS from photos before upload.

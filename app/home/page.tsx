@@ -33,10 +33,14 @@ async function Home({ searchParams }: { searchParams: PageProps<"/home">["search
           </p>
         )}
         <p className="calm-lead">
-          {post ? "Your active plan. Matches appear here soon." : "Tell us your next plan and find your people."}
+          {!post
+            ? "Tell us your next plan and find your people."
+            : post.ended
+              ? "This plan has ended — post a new one."
+              : "Your active plan. Matches appear here soon."}
         </p>
         <div className="panel-links">
-          {post ? (
+          {post && !post.ended ? (
             <>
               <Link className="primary-button" href="/posts/edit">
                 Edit plan
@@ -65,7 +69,9 @@ async function Home({ searchParams }: { searchParams: PageProps<"/home">["search
           </button>
         </form>
       </section>
-      {post && <PostPoster {...post} ai={post.aiAssisted ? "assisted" : null} />}
+      {post && (
+        <PostPoster {...post} ai={post.aiAssisted ? "assisted" : null} eyebrow={post.ended ? "Ended plan" : "My plan"} />
+      )}
     </div>
   );
 }

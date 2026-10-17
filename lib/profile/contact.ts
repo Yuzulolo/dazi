@@ -1,7 +1,9 @@
 // Email / phone rules shared by sign-up and the profile forms. No imports, so
 // `npm test` can load this file directly (lib/profile/contact.test.mjs).
 
-const EMAIL = "[^\\s@]+@[^\\s@]+\\.[^\\s@]+";
+// Bounded (RFC limits: 64-char local part, 255-char domain) so a long run of
+// characters can't make the regex slow (PR #5 review W1).
+const EMAIL = "[^\\s@]{1,64}@[^\\s@]{1,255}\\.[^\\s@]{1,63}";
 const EMAIL_EXACT = new RegExp(`^${EMAIL}$`);
 const EMAIL_ANYWHERE = new RegExp(EMAIL);
 // Digits joined by spaces, dots, dashes or brackets. Not slashes, so

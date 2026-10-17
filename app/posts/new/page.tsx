@@ -20,5 +20,6 @@ export default function NewPostPage() {
 async function NewPost() {
   const user = await getCurrentUser();
   const active = await getMyActivePost(user.id);
-  return <PostEditor mode="new" action={publishPost} hasActivePost={active !== null} />;
+  // An ended plan is replaced without asking; a running one needs the confirm dialog.
+  return <PostEditor mode="new" action={publishPost} hasActivePost={active !== null && !active.ended} />;
 }

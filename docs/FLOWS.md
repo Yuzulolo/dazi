@@ -78,6 +78,7 @@ active ──► archived   (user creates a new post; confirm dialog first)
 ```
 - **Max 1 active post per user.** Old posts stay visible in the user's own history.
 - Publishing while a post is active asks first: *"Replace your current plan?"* — the old one is archived in the same transaction (`publish_post`).
+- An ended plan (end date passed) shows on `/home` as "This plan has ended — post a new one"; it can't be edited. Automatic closing comes with part D.
 - **Posts are owner-only.** Nobody else can query them directly; other users only see a post through the part D matching function (hard filters incl. mutual age/gender preferences applied server-side).
 - When a post becomes closed/archived, its pending invites become `expired`.
 
