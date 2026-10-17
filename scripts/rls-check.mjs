@@ -1,9 +1,10 @@
-// Two-account Row Level Security check for public.profiles.
+// Two-account Row Level Security check for public.profiles and public.posts.
 // Talks to Supabase through the public Data API with the anon key — exactly
 // what any browser (or attacker) can do. Never prints keys or passwords.
 //
 // Run from the project folder:
 //   node --env-file=.env.local scripts/rls-check.mjs
+//   (add --quota to also test the 20-per-day AI limit; spends test account B's quota for 24 h)
 //
 // Needs two confirmed 18+ test accounts in .env.local:
 //   TEST_A_EMAIL, TEST_A_PASSWORD, TEST_B_EMAIL, TEST_B_PASSWORD
@@ -335,6 +336,127 @@ try {
   ]) {
     const { error } = await update(A.client, values);
     report(Boolean(error), label, error?.message ?? "update succeeded!");
+  }
+
+  // ======================= posts (phase 3) =======================
+  // Posts are owner-only for direct reads; other users' posts will only come from the
+  // part D matching function. A's real active post (if any) is restored at the end.
+  console.log("\nRow Level Security check: posts (phase 3)\n");
+  const vector = `[${Array(1536).fill(0.01).join(",")}]`;
+  const basePost = {
+    raw_text: "RLS check post", city: "Berlin", start_date: "2030-01-10", end_date: "2030-01-12",
+    interests: ["cafes"], budget: null, vibe: null, headline: ["RLS check.", "Please ignore."], tone: "mint",
+  };
+  const publish = (client, overrides = {}) => {
+    const p = { ...basePost, ...overrides };
+    return client.rpc("publish_post", {
+      p_raw_text: p.raw_text, p_city: p.city, p_start_date: p.start_date, p_end_date: p.end_date,
+      p_interests: p.interests, p_budget: p.budget, p_vibe: p.vibe, p_headline: p.headline,
+      p_tone: p.tone, p_ai_assisted: false, p_embedding: vector,
+    });
+  };
+  const { data: originalActive } = await A.client.from("posts").select("id").eq("status", "active").maybeSingle();
+  const createdPosts = [];
+  try {
+    const { data: firstId, error: firstError } = await publish(A.client);
+    if (firstId) createdPosts.push(firstId);
+    report(Boolean(firstId) && !firstError, "A can publish a post (publish_post)", firstError?.message ?? "1 post created");
+
+    {
+      const { error } = await A.client.from("posts").insert({ ...basePost, user_id: A.id, embedding: vector });
+      report(error?.code === "23505", "A cannot have two active posts (unique index)", error?.message ?? "second active post inserted!");
+    }
+
+    {
+      const { data: secondId, error } = await publish(A.client, { headline: ["Second post.", "Please ignore."] });
+      if (secondId) createdPosts.push(secondId);
+      const { data: first } = await A.client.from("posts").select("status").eq("id", firstId).single();
+      report(!error && first?.status === "archived", "publish_post archives the previous active post", error?.message ?? `first post is now ${first?.status}`);
+    }
+
+    {
+      const { data, error } = await B.client.from("posts").select("id, city").eq("user_id", A.id);
+      report(!error && data?.length === 0, "B can NOT read A's posts directly (owner-only)", error?.message ?? `${data?.length} rows visible`);
+    }
+
+    {
+      const { error } = await A.client.from("posts").select("embedding").limit(1);
+      report(Boolean(error), "Nobody can read the embedding column, not even the owner", error?.message ?? "embedding readable!");
+    }
+
+    {
+      const { error } = await anon.from("posts").select("id").limit(1);
+      report(Boolean(error), "Signed-out (anon) cannot read posts", error?.message ?? "read succeeded!");
+    }
+
+    {
+      const { data, error } = await B.client.from("posts").update({ city: "Hacked" }).eq("user_id", A.id).select("id");
+      report(Boolean(error) || data?.length === 0, "B cannot update A's post", error?.message ?? `${data?.length} rows changed`);
+    }
+
+    {
+      const { data, error } = await B.client.from("posts").delete().eq("user_id", A.id).select("id");
+      const { data: still } = await A.client.from("posts").select("id").in("id", createdPosts);
+      report((Boolean(error) || data?.length === 0) && still?.length === createdPosts.length, "B cannot delete A's post", error?.message ?? `${data?.length} rows deleted`);
+    }
+
+    {
+      // No status column in the insert: users may not set it, and we want the RLS check to answer.
+      const { error } = await B.client.from("posts").insert({ ...basePost, user_id: A.id, embedding: vector });
+      report(/row-level security/.test(error?.message ?? ""), "B cannot create a post in A's name", error?.message ?? "insert succeeded!");
+    }
+
+    // Through publish_post, so the database CHECK constraints answer (a failed publish
+    // rolls back completely, so A's active test post stays active).
+    for (const [label, values, constraint] of [
+      ["A cannot use an unknown poster tone", { tone: "orange" }, "posts_tone_check"],
+      ["A cannot use an unknown interest", { interests: ["skydiving"] }, "posts_interests_check"],
+      ["A cannot use a headline line over 22 characters", { headline: ["This line is far too long.", "Ok."] }, "posts_headline_check"],
+      ["A cannot end a trip before it starts", { start_date: "2030-01-12", end_date: "2030-01-10" }, "posts_date_order"],
+    ]) {
+      const { data, error } = await publish(A.client, values);
+      if (data) createdPosts.push(data);
+      report((error?.message ?? "").includes(constraint), label, error?.message ?? "publish succeeded!");
+    }
+    {
+      const { data: active } = await A.client.from("posts").select("id").eq("status", "active");
+      report(active?.length === 1 && createdPosts.includes(active[0].id), "A failed publish leaves the active post untouched", `${active?.length} active post(s)`);
+    }
+
+    {
+      const { error: publishError } = await anon.rpc("publish_post", {
+        p_raw_text: "x", p_city: "x", p_start_date: "2030-01-10", p_end_date: "2030-01-10", p_interests: ["cafes"],
+        p_budget: null, p_vibe: null, p_headline: ["a.", "b."], p_tone: "mint", p_ai_assisted: false, p_embedding: vector,
+      });
+      report(Boolean(publishError), "Signed-out (anon) cannot call publish_post", publishError?.message ?? "call succeeded!");
+      const { error: quotaError } = await anon.rpc("consume_ai_quota", { p_kind: "extract" });
+      report(Boolean(quotaError), "Signed-out (anon) cannot call consume_ai_quota", quotaError?.message ?? "call succeeded!");
+    }
+
+    {
+      const { data: bogus } = await B.client.rpc("consume_ai_quota", { p_kind: "free_money" });
+      report(bogus === false, "consume_ai_quota refuses an unknown kind", `returned ${bogus}`);
+      if (process.argv.includes("--quota")) {
+        // Opt-in: spends test account B's AI quota for 24 hours.
+        let calls = 0;
+        let ok = true;
+        while (ok && calls < 25) {
+          const { data } = await B.client.rpc("consume_ai_quota", { p_kind: "extract" });
+          ok = data === true;
+          if (ok) calls++;
+        }
+        report(!ok && calls <= 20, "consume_ai_quota stops at 20 calls per 24 h (--quota)", `refused after ${calls} successful calls`);
+      }
+    }
+  } finally {
+    if (createdPosts.length) {
+      const { error } = await A.client.from("posts").delete().in("id", createdPosts);
+      if (error) console.log(`      WARNING: could not delete test posts: ${error.message}`);
+    }
+    if (originalActive) {
+      const { error } = await A.client.from("posts").update({ status: "active" }).eq("id", originalActive.id);
+      if (error) console.log(`      WARNING: could not restore A's active post: ${error.message}`);
+    }
   }
 } finally {
   const { error } = await update(A.client, snapshot);

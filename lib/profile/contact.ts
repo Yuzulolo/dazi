@@ -20,3 +20,14 @@ export function containsContactDetails(value: string) {
     (m) => m.replace(/\D/g, "").length >= 9,
   );
 }
+
+// Removes emails and phone numbers from free text (post sentences, AI output),
+// so they are never stored, shown or sent to the AI provider.
+export const CONTACT_PLACEHOLDER = "[contact removed]";
+export function stripContactDetails(value: string) {
+  return value
+    .replace(new RegExp(EMAIL, "g"), CONTACT_PLACEHOLDER)
+    .replace(PHONE_CANDIDATE, (m) => (m.replace(/\D/g, "").length >= 9 ? CONTACT_PLACEHOLDER : m))
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
