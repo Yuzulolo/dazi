@@ -2,6 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { isEmailAddress } from "@/lib/profile/contact";
+import { parseBirthYear, parseDisplayName } from "@/lib/profile/validate";
 
 export type SignUpState = {
   error?: string;
@@ -15,14 +17,6 @@ export type SignInState = {
   email?: string;
 };
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-// Strict 18+ rule (FLOWS 2.0): we only know the birth year, so require
-// birth year <= current year - 19. Must match the database trigger.
-function latestAllowedBirthYear() {
-  return new Date().getFullYear() - 19;
-}
-
 export async function signUp(
   _prevState: SignUpState,
   formData: FormData,
@@ -33,21 +27,14 @@ export async function signUp(
   const password = String(formData.get("password") ?? "");
   const fields = { displayName, birthYear: birthYearRaw, email };
 
-  if (displayName.length < 1 || displayName.length > 50) {
-    return { error: "Please enter a display name (1–50 characters).", fields };
-  }
-  if (!/^\d{4}$/.test(birthYearRaw)) {
-    return { error: "Please enter your birth year as 4 digits, e.g. 1995.", fields };
-  }
-  const birthYear = Number(birthYearRaw);
-  if (birthYear < 1900) {
-    return { error: "Please enter a valid birth year.", fields };
-  }
-  if (birthYear > latestAllowedBirthYear()) {
-    // Refused before contacting Supabase: nothing is stored.
-    return { error: "You must be 18 or older to use Dazi.", fields };
-  }
-  if (!EMAIL_PATTERN.test(email)) {
+  const nameError = parseDisplayName(displayName);
+  if (nameError) return { error: nameError, fields };
+  // Strict 18+ rule (FLOWS 2.0), same check as onboarding; the database trigger
+  // enforces it too. Refused here before contacting Supabase: nothing is stored.
+  const birth = parseBirthYear(birthYearRaw);
+  if (!birth.ok) return { error: birth.error, fields };
+  const birthYear = birth.year;
+  if (!isEmailAddress(email)) {
     return { error: "Please enter a valid email address.", fields };
   }
   if (password.length < 8) {

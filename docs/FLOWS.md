@@ -2,7 +2,7 @@
 
 > Companion to `docs/SPEC.md`. SPEC says *what* we build; this file says *how users move through it* and *what rules apply*.
 >
-> **Capstone scope (SPEC §0):** sections 1.5 (social verification), 2.4 (social reveal), 2.6b (match-break limit), 2.7 (trip photo upload — preset covers only) and 2.8 (feedback) are **Roadmap**, not built for the capstone. Google sign-up is also Roadmap. "Chat" in this file = simple message thread without realtime.
+> **Capstone scope (SPEC §0):** sections 1.5 (social verification), 2.4 (social reveal), 2.6b (match-break limit) and 2.8 (feedback) are **Roadmap**; 2.7 (trip photo upload) is **stretch** (SPEC §0.5) — preset covers until then, not built for the capstone. Google sign-up is also Roadmap. "Chat" in this file = simple message thread without realtime.
 
 ## 1. User journey (confirmed)
 
@@ -52,13 +52,21 @@ Pending invites · my active post · latest recommendations
 
 ## 2. States & rules (confirmed)
 
-### 2.0 Birth year gate (18+)
-- A signed-in user with `profiles.birth_year = null` (e.g. a Google sign-up — Roadmap; today only possible via direct database edits) must enter their birth year on `/onboarding` **before using any feature**. Only `/onboarding`, sign-out, `/privacy` and `/safety` are reachable until then.
-- Same strict rule as email sign-up: birth year ≤ current year − 19. Under 18 → account and all its data are deleted, message *"You must be 18 or older to use Dazi."*
+### 2.0 Onboarding gate (incl. birth year, 18+)
+- A signed-in user who has **not completed onboarding** (`profiles.onboarding_completed_at = null`) must finish `/onboarding` **before using any feature**. Only `/onboarding`, sign-out, `/privacy` and `/safety` are reachable until then.
+- Onboarding cannot be completed without a birth year (database constraint), so this also covers a missing birth year (e.g. a Google sign-up — Roadmap; today only possible via direct database edits).
+- **Birth year is locked once set** (cannot be changed or cleared; a mistake is fixed by an admin).
+- Same strict rule as email sign-up: birth year ≤ current year − 19. Under 18 → account and all its data are deleted, message *"You must be 18 or older to use Dazi."* **Until part G ("Delete my data") exists: onboarding is refused, not deleted.**
 - **Enforced on the server, not only in the UI:**
-  - `getCurrentUser()` (used by every protected page and server action) redirects to `/onboarding` when `birth_year` is null
-  - From phase 2 on, every insert/update RLS policy on feature tables also requires `birth_year is not null`, so direct API calls are refused too
-  - The database never lets `birth_year` go back to null once set, and rejects any under-18 value (trigger)
+  - `getCurrentUser()` (used by every protected page and server action) redirects to `/onboarding` when onboarding is not completed
+  - A database constraint refuses `onboarding_completed_at` unless the required fields (birth year, languages, home city, pace, day rhythm, ≥1 interest) are filled
+  - From part C on, every insert/update RLS policy on feature tables also requires completed onboarding, so direct API calls are refused too
+  - The database never lets `birth_year` change once set, and rejects any under-18 value (trigger)
+
+### 2.0b Profile privacy & gender (part B, used by part D)
+- **Private (owner only):** birth year, gender, preferred age range, preferred gender. Other signed-in users see an **age range** (e.g. "30–34"), never the year.
+- **Gender is optional and only used for matching, never shown.** UI text: *"Only used for matching, never shown. If you leave it empty, people who set a gender preference won't see you."*
+- **Matching rule (part D):** a user with **no gender set is hidden from anyone who has set a gender preference**; gender preferences must match **mutually**.
 <!-- invite statuses: pending, accepted, declined, expired, cancelled, ended_trip_changed -->
 
 ### 2.1 Post
@@ -130,7 +138,7 @@ none ──► requested (A asks in chat) ──► shared   (B agrees → BOTH 
 |---|---|
 | No city or dates in the sentence | Fields left empty and highlighted; search disabled until filled |
 | Dates in the past / end before start | Validation error, cannot save |
-| Birth year shows under 18 | Sign-up refused, nothing stored (email). Google user entering an under-18 year on onboarding → account deleted (2.0) |
+| Birth year shows under 18 | Sign-up refused, nothing stored (email). Google user entering an under-18 year on onboarding → account deleted (2.0); until part G: refused, not deleted |
 | Signed in but no birth year (Google) | Redirected to `/onboarding` from every page and action until it is entered (2.0) |
 | AI down or timeout | Fall back to a manual form; recommendations still shown without AI reasons |
 | Phone numbers / emails / abusive text in a post | AI strips contact details; clearly abusive content is rejected |

@@ -173,6 +173,174 @@ console.log("Row Level Security check: profiles\n");
   }
 }
 
+// 11. Direct sign-up with NO birth year is refused by the database too.
+//     Same + alias approach as check 10.
+{
+  const [local, domain] = env.TEST_A_EMAIL.split("@");
+  const baseLocal = local.split("+")[0];
+  const { data, error } = await anon.auth.signUp({
+    email: `${baseLocal}+nobirth-${Date.now()}@${domain}`,
+    password: crypto.randomUUID(),
+    options: { data: { display_name: "No Birth Year" } },
+  });
+  if (!error) {
+    report(false, "Direct sign-up without birth year is refused", `user was created: ${data.user?.id}`);
+  } else if (/database error/i.test(error.message)) {
+    report(true, "Direct sign-up without birth year is refused", "blocked by the sign-up trigger");
+  } else {
+    console.log(`????  Direct sign-up without birth year: inconclusive  (${error.message}) — try again later`);
+  }
+}
+
+// ================= Phase 2: profile privacy + onboarding =================
+// A's editable fields are snapshotted first and restored at the end, so the
+// script works whether or not A has finished onboarding and leaves A unchanged.
+
+console.log("\nRow Level Security check: profile privacy (phase 2)\n");
+
+const PUBLIC_COLUMNS =
+  "languages, home_city, bio, visited_cities, hobbies, travel_pace, day_rhythm, travel_interests, onboarding_completed_at";
+const PRIVATE_COLUMNS = ["birth_year", "gender", "pref_age_min", "pref_age_max", "pref_gender"];
+
+async function snapshotA() {
+  const { data: pub, error: pubError } = await A.client.from("profiles").select(PUBLIC_COLUMNS).eq("id", A.id).single();
+  const { data: priv, error: privError } = await A.client.rpc("get_my_private_profile").single();
+  if (pubError || privError) {
+    console.error(`Could not snapshot A's profile: ${(pubError ?? privError).message}`);
+    process.exit(1);
+  }
+  // birth_year is left out on purpose: it is locked and never written.
+  return {
+    ...pub,
+    gender: priv.gender,
+    pref_age_min: priv.pref_age_min,
+    pref_age_max: priv.pref_age_max,
+    pref_gender: priv.pref_gender,
+  };
+}
+
+const snapshot = await snapshotA();
+const update = (client, values, id = A.id) => client.from("profiles").update(values).eq("id", id);
+
+try {
+  // Database onboarding gate: completing onboarding with required fields missing is refused.
+  {
+    const { error } = await update(A.client, {
+      languages: [],
+      onboarding_completed_at: new Date().toISOString(),
+    });
+    report(Boolean(error), "Onboarding can't be completed with required fields missing", error?.message ?? "update succeeded!");
+  }
+
+  // Make sure A is onboarded (minimal valid answers) so A appears in public_profiles.
+  if (!snapshot.onboarding_completed_at) {
+    const { error } = await update(A.client, {
+      languages: ["en"],
+      home_city: "Berlin",
+      travel_pace: 3,
+      day_rhythm: "flexible",
+      travel_interests: ["cafes"],
+      onboarding_completed_at: new Date().toISOString(),
+    });
+    if (error) {
+      console.error(`Could not prepare A for the checks: ${error.message}`);
+      process.exit(1);
+    }
+  }
+
+  // B cannot read any of A's private columns.
+  {
+    const leaked = [];
+    for (const column of PRIVATE_COLUMNS) {
+      const { error } = await B.client.from("profiles").select(column).eq("id", A.id);
+      if (!error) leaked.push(column);
+    }
+    report(
+      leaked.length === 0,
+      "B cannot read A's birth_year, gender or preferences",
+      leaked.length ? `readable: ${leaked.join(", ")}` : "permission denied for all 5 columns",
+    );
+  }
+
+  // B cannot use select=* to get them either.
+  {
+    const { error } = await B.client.from("profiles").select("*").eq("id", A.id);
+    report(Boolean(error), "B cannot select * on profiles", error?.message ?? "select * succeeded!");
+  }
+
+  // B cannot filter by birth year (would leak it one guess at a time).
+  {
+    const { error } = await B.client.from("profiles").select("id").eq("birth_year", 1995);
+    report(Boolean(error), "B cannot filter profiles by birth_year", error?.message ?? "filter succeeded!");
+  }
+
+  // B sees A in public_profiles with an age range only.
+  {
+    const { data, error } = await B.client.from("public_profiles").select("id, age_range").eq("id", A.id);
+    const ageRange = data?.[0]?.age_range;
+    report(
+      !error && /^(\d{2}–\d{2}|60\+)$/.test(ageRange ?? ""),
+      "B sees A's age range in public_profiles",
+      error ? error.message : `age_range: ${ageRange}`,
+    );
+    const { error: yearError } = await B.client.from("public_profiles").select("birth_year").eq("id", A.id);
+    report(Boolean(yearError), "public_profiles has no birth_year column", yearError?.message ?? "birth_year returned!");
+  }
+
+  // get_my_private_profile() returns the caller's own row only (marker value proves whose).
+  {
+    const { error: markError } = await update(A.client, { pref_age_max: 97 });
+    const { data: mine } = await A.client.rpc("get_my_private_profile");
+    const { data: theirs } = await B.client.rpc("get_my_private_profile");
+    report(
+      !markError && mine?.length === 1 && mine[0].pref_age_max === 97,
+      "A's get_my_private_profile() returns A's own row",
+      markError?.message ?? `${mine?.length} row(s), marker found: ${mine?.[0]?.pref_age_max === 97}`,
+    );
+    report(
+      theirs?.length === 1 && theirs[0].pref_age_max !== 97,
+      "B's get_my_private_profile() returns only B's row",
+      `${theirs?.length} row(s), A's marker absent: ${theirs?.[0]?.pref_age_max !== 97}`,
+    );
+  }
+
+  // Signed-out visitors get nothing.
+  {
+    const { error: viewError } = await anon.from("public_profiles").select("id");
+    report(Boolean(viewError), "Signed-out (anon) cannot read public_profiles", viewError?.message ?? "read succeeded!");
+    const { error: rpcError } = await anon.rpc("get_my_private_profile");
+    report(Boolean(rpcError), "Signed-out (anon) cannot call get_my_private_profile", rpcError?.message ?? "call succeeded!");
+  }
+
+  // B cannot edit A's profile.
+  {
+    const { data: before } = await A.client.from("profiles").select("bio").eq("id", A.id).single();
+    const { data, error } = await B.client.from("profiles").update({ bio: "hacked" }).eq("id", A.id).select("id");
+    const { data: after } = await A.client.from("profiles").select("bio").eq("id", A.id).single();
+    report(
+      (error || data?.length === 0) && after?.bio === before?.bio,
+      "B cannot update A's bio",
+      error ? error.message : `${data?.length} rows changed, A's bio unchanged: ${after?.bio === before?.bio}`,
+    );
+  }
+
+  // The database rejects invalid values even if the app is bypassed.
+  for (const [label, values] of [
+    ["A cannot set an unknown travel interest", { travel_interests: ["skydiving"] }],
+    ["A cannot set an unknown language", { languages: ["xx"] }],
+    ["A cannot set pref_age_min below 18", { pref_age_min: 10 }],
+    ["A cannot set pref_age_min above pref_age_max", { pref_age_min: 60, pref_age_max: 30 }],
+    ["A cannot change own birth_year (locked)", { birth_year: 1990 }],
+    ["A cannot clear languages while onboarded", { languages: [] }],
+  ]) {
+    const { error } = await update(A.client, values);
+    report(Boolean(error), label, error?.message ?? "update succeeded!");
+  }
+} finally {
+  const { error } = await update(A.client, snapshot);
+  if (error) console.log(`      WARNING: could not restore A's profile: ${error.message}`);
+}
+
 await Promise.all([A.client.auth.signOut(), B.client.auth.signOut()]);
 
 console.log(failures === 0 ? "\nAll checks passed." : `\n${failures} check(s) FAILED.`);
