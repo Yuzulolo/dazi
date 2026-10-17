@@ -14,7 +14,7 @@ Guest types one sentence on the homepage → AI trip card → 5 anonymised simil
 | # | Feature | Notes |
 |---|---|---|
 | A | Email auth + 18+ + `profiles` + RLS + Vercel | ✅ **Done** (PR #1, live). **No Google login.** |
-| B | Onboarding & profile | Display name, birth year, gender (optional), languages, home city, bio, **cities visited**, **hobbies**, matching prefs (age range, gender pref), **travel style quiz** (pace, day rhythm, interests). Profile page = these fields only. **No avatar upload, no stories, no photos.** |
+| B | Onboarding & profile | ✅ **Done** (phase 2 PR). Display name, birth year, gender (optional), languages, home city, bio, **cities visited**, **hobbies**, matching prefs (age range, gender pref), **travel style quiz** (pace, day rhythm, interests). Profile page = these fields only. **No avatar upload, no stories, no photos.** |
 | C | Intent post | One sentence → AI extraction → editable card → save. Max 1 active post. Pick one of ~8 **preset covers** (no upload, no vision AI). Edit allowed; changing city/dates expires pending invites and ends accepted ones (FLOWS 2.6) — **no monthly limit**. |
 | D | Matching | Hard filters (§5 step 1) + `score = 0.4 × trip + 0.35 × style + 0.25 × personality`. Personality embedding = bio + hobbies + cities visited (no stories). AI reason for top 5. Seed 30 demo users. **The seed script must always set `birth_year` (and `display_name`) in the user metadata** — the sign-up trigger refuses any email user without a birth year. |
 | E | Homepage guest search | Anonymised server-side, trip-only ranking, rate limit per IP, search carries over after sign-up. |
@@ -26,7 +26,7 @@ Guest types one sentence on the homepage → AI trip card → 5 anonymised simil
 | Day | Work |
 |---|---|
 | 15 Oct | ✅ Phase 1 (A): RLS test, deploy, PR review + merge |
-| 16 Oct | B (onboarding/profile) |
+| 16 Oct | ✅ B (onboarding/profile): RLS test, browser test, PR review |
 | 17 Oct | C (posting + AI extraction + embeddings) + D (matching, **30 realistic seed users**) |
 | 18 Oct | E (guest search) + F (invites + messages) + **user testing with 3–5 classmates** |
 | 19 Oct | G (safety/compliance) + full design + one stretch feature (§0.5) |

@@ -24,12 +24,12 @@ Guests can try a search on the homepage; results are anonymised on the server. A
 Full product spec: [`docs/SPEC.md`](docs/SPEC.md) · user flows and rules: [`docs/FLOWS.md`](docs/FLOWS.md)
 
 ## Build status
-Capstone scope (deadline 18 Oct 2026, see [`docs/SPEC.md`](docs/SPEC.md) §0):
+Capstone scope (deadline 20 Oct 2026, see [`docs/SPEC.md`](docs/SPEC.md) §0):
 
 | Part | Status |
 |---|---|
 | A. Email auth, 18+ check, `profiles` + RLS, deploy | ✅ done |
-| B. Onboarding & profile (incl. travel style quiz) | ⏳ |
+| B. Onboarding & profile (incl. travel style quiz), private birth year / gender / preferences | ✅ done |
 | C. Intent post (AI extraction, preset covers) | ⏳ |
 | D. Matching + AI reasons + seed data | ⏳ |
 | E. Homepage guest search (anonymised, rate-limited) | ⏳ |
