@@ -86,6 +86,7 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 ### Git workflow
 - `main` is always deployable. One feature branch + one PR per build phase (see `docs/SPEC.md` §8).
 - Branch names: `phase-1-scaffold-auth`, `phase-2-posting`, etc.
+- Push every feature branch to **both** remotes: `origin` (course repo, PRs) and `personal` (Vercel builds from it, so only branches pushed there get a preview URL). After merging on origin: `git push personal origin/main:main`.
 - Small, descriptive commits. Run `npm run lint` and `npm run build` before opening a PR.
 - Every PR is reviewed (ai-code-reviewer subagent + me) before merging.
 
