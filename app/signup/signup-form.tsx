@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { signUp, type SignUpState } from "@/app/auth/actions";
+import { FormError } from "@/app/_components/profile-fields";
 
 const initialState: SignUpState = {};
 
@@ -10,17 +11,16 @@ export function SignupForm() {
 
   if (state.done) {
     return (
-      <p aria-live="polite">
+      <p className="form-success" aria-live="polite">
         Check your email to confirm your account. Open the link in this same browser.
       </p>
     );
   }
 
   return (
-    <form action={formAction}>
-      <p>
+    <form action={formAction} className="dazi-form">
+      <p className="field">
         <label htmlFor="displayName">Display name</label>
-        <br />
         <input
           id="displayName"
           name="displayName"
@@ -30,9 +30,8 @@ export function SignupForm() {
           defaultValue={state.fields?.displayName}
         />
       </p>
-      <p>
+      <p className="field">
         <label htmlFor="birthYear">Birth year</label>
-        <br />
         <input
           id="birthYear"
           name="birthYear"
@@ -41,14 +40,15 @@ export function SignupForm() {
           pattern="\d{4}"
           required
           placeholder="e.g. 1995"
+          aria-describedby="birthYear-help"
           defaultValue={state.fields?.birthYear}
         />
-        <br />
-        <small>Dazi is for adults only. We store your birth year, never your full birthday.</small>
+        <small id="birthYear-help" className="field-help">
+          Dazi is for adults only. We store your birth year, never your full birthday.
+        </small>
       </p>
-      <p>
+      <p className="field">
         <label htmlFor="email">Email</label>
-        <br />
         <input
           id="email"
           name="email"
@@ -58,9 +58,8 @@ export function SignupForm() {
           defaultValue={state.fields?.email}
         />
       </p>
-      <p>
+      <p className="field">
         <label htmlFor="password">Password (at least 8 characters)</label>
-        <br />
         <input
           id="password"
           name="password"
@@ -70,12 +69,8 @@ export function SignupForm() {
           autoComplete="new-password"
         />
       </p>
-      {state.error && (
-        <p role="alert" aria-live="polite">
-          {state.error}
-        </p>
-      )}
-      <button type="submit" disabled={pending}>
+      <FormError error={state.error} />
+      <button type="submit" className="primary-button" disabled={pending}>
         {pending ? "Creating account…" : "Sign up"}
       </button>
     </form>

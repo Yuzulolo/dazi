@@ -4,16 +4,19 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { getMyProfile } from "@/lib/profile/queries";
 import { ProfileForm } from "@/app/_components/profile-form";
+import { SiteShell } from "@/app/_components/dazi/site-shell";
 import { saveBasics, saveStyle } from "./actions";
 
 export default function OnboardingPage({ searchParams }: PageProps<"/onboarding">) {
   return (
-    <main>
-      <h1>Set up your travel profile</h1>
-      <Suspense fallback={<p>Loading…</p>}>
-        <Onboarding searchParams={searchParams} />
-      </Suspense>
-    </main>
+    <SiteShell variant="calm">
+      <section className="glass calm-panel">
+        <h1>Set up your travel profile</h1>
+        <Suspense fallback={<p>Loading…</p>}>
+          <Onboarding searchParams={searchParams} />
+        </Suspense>
+      </section>
+    </SiteShell>
   );
 }
 
@@ -28,7 +31,8 @@ async function Onboarding({ searchParams }: { searchParams: PageProps<"/onboardi
   if (showStep === 1) {
     return (
       <>
-        <h2>Step 1 of 2: About you</h2>
+        <StepProgress step={1} />
+        <h2>About you</h2>
         <ProfileForm
           key="basics"
           action={saveBasics}
@@ -42,7 +46,8 @@ async function Onboarding({ searchParams }: { searchParams: PageProps<"/onboardi
 
   return (
     <>
-      <h2>Step 2 of 2: Your travel style</h2>
+      <StepProgress step={2} />
+      <h2>Your travel style</h2>
       <p>
         <Link href="/onboarding?step=1">← Back to step 1</Link>
       </p>
@@ -53,6 +58,18 @@ async function Onboarding({ searchParams }: { searchParams: PageProps<"/onboardi
         sections={{ style: true }}
         submitLabel="Finish"
       />
+    </>
+  );
+}
+
+function StepProgress({ step }: { step: 1 | 2 }) {
+  return (
+    <>
+      <p className="eyebrow">Step {step} of 2</p>
+      <div className="step-progress" aria-hidden="true">
+        <span className="done" />
+        <span className={step === 2 ? "done" : undefined} />
+      </div>
     </>
   );
 }

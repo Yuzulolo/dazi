@@ -1,0 +1,204 @@
+/* Dazi design system — wall variant: poster carousel, plan composer, matches, plan detail. */
+
+.dazi-root {
+  --poster-width: clamp(330px, 32vw, 445px);
+  --poster-gap: calc(var(--poster-width) + 25px);
+}
+
+.dazi-root .wall-caption {
+  text-align: center;
+  font-size: 12px;
+  letter-spacing: 1.6px;
+  margin: 8px 20px 20px;
+}
+.dazi-root .wall-caption > span { margin-left: 16px; color: var(--muted); }
+
+/* ---------- Carousel ---------- */
+.dazi-root .carousel {
+  height: 710px;
+  perspective: 1800px;
+  position: relative;
+  touch-action: pan-y;
+  cursor: grab;
+  outline-offset: -8px;
+}
+.dazi-root .carousel.is-dragging { cursor: grabbing; user-select: none; }
+.dazi-root .carousel-stage { position: absolute; inset: 0; transform-style: preserve-3d; }
+.dazi-root .carousel-paper {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: var(--poster-width);
+  min-height: 690px;
+  padding: 30px 25px;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.6s cubic-bezier(.22, .8, .22, 1), opacity 0.5s, filter 0.5s;
+  transform: translateX(-50%) translateZ(-600px);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.dazi-root .carousel-paper[data-distance="0"] { transform: translateX(-50%) translateZ(15px); opacity: 1; z-index: 5; pointer-events: auto; }
+.dazi-root .carousel-paper[data-distance="-1"] { transform: translateX(calc(-50% - var(--poster-gap))) translateZ(-110px) rotateY(14deg); opacity: 1; z-index: 3; filter: brightness(.94); pointer-events: auto; }
+.dazi-root .carousel-paper[data-distance="1"] { transform: translateX(calc(-50% + var(--poster-gap))) translateZ(-110px) rotateY(-14deg); opacity: 1; z-index: 3; filter: brightness(.94); pointer-events: auto; }
+.dazi-root .carousel-paper[data-distance="-2"] { transform: translateX(calc(-50% - var(--poster-gap) * 1.9)) translateZ(-230px) rotateY(22deg); opacity: 1; z-index: 1; filter: brightness(.8); pointer-events: auto; }
+.dazi-root .carousel-paper[data-distance="2"] { transform: translateX(calc(-50% + var(--poster-gap) * 1.9)) translateZ(-230px) rotateY(-22deg); opacity: 1; z-index: 1; filter: brightness(.8); pointer-events: auto; }
+.dazi-root .carousel-paper:not([data-distance="0"]) { cursor: pointer; }
+.dazi-root .carousel-paper :is(h1, h2) { font-size: clamp(36px, 3.5vw, 49px); margin: 20px 0 18px; }
+
+.dazi-root .carousel-controls {
+  display: flex;
+  gap: 30px;
+  align-items: center;
+  justify-content: center;
+  margin: 8px 20px 0;
+  position: relative;
+  z-index: 10;
+}
+.dazi-root .carousel-position { text-align: center; max-width: 240px; min-width: 150px; }
+.dazi-root .position-dots { display: flex; align-items: center; justify-content: center; gap: 8px; height: 22px; }
+.dazi-root .position-dots > span { width: 6px; height: 6px; background: #ffffff80; border-radius: 50%; }
+.dazi-root .position-dots > .selected { background: #fff; width: 18px; border-radius: 4px; }
+.dazi-root .carousel-position p { font-size: 12px; line-height: 1.5; margin: 2px 0; }
+.dazi-root .gesture-hint { font-size: 12px; text-align: center; margin: 15px 20px; }
+
+/* ---------- Composer poster (homepage) ---------- */
+.dazi-root .composer { text-align: center; }
+.dazi-root .composer h1 { margin: 18px 0 20px; }
+.dazi-root .paper-wordmark {
+  font-family: var(--font-heading);
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -2px;
+  margin: 8px 0 18px;
+}
+.dazi-root .composer-intro { font-size: 18px; line-height: 1.45; margin: 0 0 35px; }
+.dazi-root .trip-input { margin-top: auto; text-align: left; }
+.dazi-root .trip-input label { display: block; font-size: 12px; letter-spacing: 1.6px; margin: 4px 3px 10px; }
+.dazi-root .trip-input textarea {
+  display: block;
+  width: 100%;
+  min-height: 118px;
+  resize: vertical;
+  background: #0001;
+  border: 1px solid #fff6;
+  border-radius: 12px;
+  color: #fff;
+  padding: 12px 52px 12px 12px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+.dazi-root .trip-input textarea::placeholder { color: #f8f8f0c9; }
+.dazi-root .send-button {
+  position: absolute;
+  right: 24px;
+  bottom: 24px;
+  width: 44px;
+  height: 44px;
+  font-size: 26px;
+  border-radius: 10px;
+  border: 1px solid #fff;
+  color: #151a16;
+  background: #fff;
+  display: grid;
+  place-items: center;
+}
+.dazi-root .composer-error { font-size: 14px; font-weight: 600; margin: 12px 0 0; }
+.dazi-root .input-helper { font-size: 13px; margin: 18px 0; }
+.dazi-root .paper-privacy { font-size: 13px; line-height: 1.5; margin: 20px 0 0; }
+
+/* ---------- Recruitment poster ---------- */
+.dazi-root .trip-date { font-size: 19px; line-height: 1.4; margin: 0 0 17px; }
+.dazi-root .match-reason { margin-top: auto; z-index: 4; padding: 18px; }
+.dazi-root .match-reason > .eyebrow { margin-top: 0; }
+.dazi-root .match-reason > p:not(.eyebrow) { font-size: 15px; line-height: 1.5; margin: 12px 0 17px; }
+.dazi-root .poster-actions { display: flex; gap: 9px; }
+.dazi-root .poster-actions > * { flex: 1; min-width: 0; font-size: 14px; padding: 10px 9px; }
+
+/* ---------- Matches ---------- */
+.dazi-root .results-intro { max-width: 1200px; margin: 0 auto 22px; padding: 0 25px; }
+.dazi-root .plan-summary { display: flex; align-items: center; gap: 20px; justify-content: space-between; padding: 17px 22px; }
+.dazi-root .plan-summary .eyebrow { margin-right: 12px; display: inline; }
+.dazi-root .plan-summary p { font-size: 17px; line-height: 1.5; margin: 7px 0 0; overflow-wrap: anywhere; }
+.dazi-root .plan-summary > a { flex-shrink: 0; }
+.dazi-root .results-intro h1 { font-size: 30px; line-height: 1.2; margin: 22px 0 8px; }
+.dazi-root .demo-copy { font-size: 13px; margin: 0; color: var(--muted); }
+
+/* ---------- Plan detail ---------- */
+.dazi-root .detail-back { max-width: 1200px; margin: 0 auto 15px; padding: 0 25px; }
+.dazi-root .detail-back > a { display: inline-flex; min-height: 44px; align-items: center; font-size: 15px; }
+.dazi-root .detail-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 25px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 25px 40px;
+}
+.dazi-root .detail-paper { padding: 38px 36px; min-height: 720px; }
+.dazi-root .detail-paper h1 { font-size: clamp(40px, 4.3vw, 61px); margin: 20px 0; }
+.dazi-root .detail-paper .identity { margin: 25px 0; }
+.dazi-root .detail-section { border-top: 1px solid #0003; padding-top: 20px; margin-top: 22px; }
+.dazi-root [data-tone="forest"] .detail-section,
+.dazi-root [data-tone="forest"] .trip-facts { border-color: #fff4; }
+.dazi-root .detail-section h2 { font-size: 23px; letter-spacing: -0.03em; margin: 0 0 12px; }
+.dazi-root .detail-section p { font-size: 17px; line-height: 1.6; margin: 0; }
+.dazi-root .trip-facts {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr;
+  gap: 14px;
+  border-block: 1px solid #0003;
+  padding: 20px 0;
+  margin: 25px 0;
+}
+.dazi-root dt { font-size: 12px; letter-spacing: 1px; margin-bottom: 9px; font-weight: 700; }
+.dazi-root dd { margin: 0; font-size: 15px; line-height: 1.5; }
+.dazi-root .detail-glass { padding: 32px; }
+.dazi-root .detail-glass h2 { font-size: 33px; line-height: 1.15; margin: 5px 0 16px; }
+.dazi-root .match-facts > div { padding: 22px 0; border-bottom: 1px solid #fff4; }
+.dazi-root .match-facts dt { font-size: 16px; letter-spacing: 0; }
+.dazi-root .match-facts dd { font-size: 16px; line-height: 1.5; }
+.dazi-root .detail-glass > .primary-button { width: 100%; margin-top: 12px; }
+.dazi-root .small-copy { font-size: 13px; line-height: 1.6; }
+.dazi-root .safety-note { font-size: 14px; line-height: 1.6; border-block: 1px solid #fff4; padding: 20px 0; margin: 22px 0 6px; }
+.dazi-root .detail-glass > .text-button { font-size: 13px; line-height: 1.5; }
+
+@media (max-width: 800px) {
+  .dazi-root { --poster-width: min(84vw, 380px); --poster-gap: calc(var(--poster-width) + 14px); }
+  .dazi-root .wall-caption { letter-spacing: 1px; margin: 8px 16px 20px; }
+  .dazi-root .wall-caption > span { display: block; margin: 8px 0 0; }
+  .dazi-root .carousel { height: 700px; }
+  .dazi-root .carousel-paper { min-height: 675px; padding: 26px 22px; }
+  .dazi-root .carousel-paper :is(h1, h2) { font-size: 40px; margin-top: 20px; }
+  .dazi-root .composer h1 { font-size: 39px; }
+  .dazi-root .composer-intro { font-size: 17px; }
+  .dazi-root .paper-wordmark { font-size: 32px; margin: 8px 0 20px; }
+  .dazi-root .trip-date { font-size: 17px; }
+  .dazi-root .identity { font-size: 13px; }
+  .dazi-root .identity small { font-size: 12px; }
+  .dazi-root .match-reason { padding: 16px; }
+  .dazi-root .match-reason > p:not(.eyebrow) { font-size: 16px; }
+  .dazi-root .poster-actions { flex-direction: column; }
+  .dazi-root .poster-actions > * { font-size: 15px; }
+  .dazi-root .trip-input { padding: 16px; }
+  .dazi-root .carousel-controls { gap: 20px; }
+  .dazi-root .carousel-position { max-width: 180px; min-width: 140px; }
+  .dazi-root .results-intro { padding: 0 20px; }
+  .dazi-root .plan-summary { padding: 17px 16px; gap: 12px; align-items: flex-start; }
+  .dazi-root .plan-summary p { font-size: 15px; }
+  .dazi-root .plan-summary .outline-button { font-size: 13px; padding: 10px; min-height: 44px; }
+  .dazi-root .plan-summary .eyebrow { display: block; margin: 0 0 7px; }
+  .dazi-root .results-intro h1 { font-size: 27px; max-width: 350px; line-height: 1.15; }
+  .dazi-root .detail-layout { display: block; padding: 0 20px 35px; }
+  .dazi-root .detail-back { padding: 0 20px; }
+  .dazi-root .detail-paper { min-height: 0; padding: 28px 24px 35px; }
+  .dazi-root .detail-paper h1 { font-size: 41px; }
+  .dazi-root .detail-paper .trip-date { font-size: 18px; }
+  .dazi-root .detail-section p { font-size: 16px; }
+  .dazi-root .trip-facts { grid-template-columns: 1fr 1fr; gap: 18px; }
+  .dazi-root .trip-facts > div:first-child { grid-column: 1 / -1; }
+  .dazi-root .detail-glass { margin-top: 20px; padding: 26px; }
+  .dazi-root .detail-glass h2 { font-size: 29px; }
+}

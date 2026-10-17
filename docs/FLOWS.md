@@ -7,12 +7,12 @@
 ## 1. User journey (confirmed)
 
 ### 1.1 Guest (not signed in) — "try before you sign up"
-1. `/` — landing page with one big input: *"Tell us about your trip…"*
+1. `/` — poster-wall homepage; the first poster is the composer: *"Your next plan"* (one sentence). Submitting opens `/matches`.
 2. AI extracts a trip card (city, dates, interests, budget, vibe). Guest can edit it.
-3. App shows **top 5 similar trips**, **anonymised on the server**:
+3. `/matches` shows **top 5 similar trips** as recruitment posters, **anonymised on the server**; "View plan" opens `/plans/[id]`:
    - Shown: initial only (e.g. `M•••`), blurred placeholder avatar, age range, interest chips, overlapping dates, AI match reason
    - **Never sent to the browser:** real name, real avatar, stories, profile link, socials
-4. Guest clicks "Connect" or a profile → sign-up modal.
+4. Guest clicks "Connect" → sign-up dialog (Sign up / Not now).
 5. Guest ranking uses **trip similarity + city + dates only** (no profile yet). Banner: *"Complete your profile for more accurate matches."*
 6. The guest's search text is kept in the browser (sessionStorage) so it can become their first post after sign-up. Nothing about the guest is stored in the database except a rate-limit log.
 
@@ -32,7 +32,9 @@ Pending invites · my active post · latest recommendations
 ### 1.4 Page map
 | Page | Access | Purpose |
 |---|---|---|
-| `/` | everyone | Hero search box + anonymised results |
+| `/` | everyone | Poster-wall homepage: plan composer + wall of plans (demo trips until part E) |
+| `/matches` | everyone | Guest results: plan summary + 5 anonymised recruitment posters (demo trips until part E) |
+| `/plans/[id]` | everyone | Recruitment detail, anonymised; "Why this plan fits" (AI); Connect → sign-up |
 | `/login`, `/signup` | everyone | Auth |
 | `/onboarding` | new users | Basics + travel style quiz |
 | `/home` | signed in | Invites, active post, recommendations |

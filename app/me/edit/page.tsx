@@ -3,16 +3,19 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { getMyProfile } from "@/lib/profile/queries";
 import { ProfileForm } from "@/app/_components/profile-form";
+import { SiteShell } from "@/app/_components/dazi/site-shell";
 import { updateProfile } from "./actions";
 
 export default function EditProfilePage() {
   return (
-    <main>
-      <h1>Edit your profile</h1>
-      <Suspense fallback={<p>Loading…</p>}>
-        <EditProfile />
-      </Suspense>
-    </main>
+    <SiteShell variant="calm">
+      <section className="glass calm-panel">
+        <h1>Edit your profile</h1>
+        <Suspense fallback={<p>Loading…</p>}>
+          <EditProfile />
+        </Suspense>
+      </section>
+    </SiteShell>
   );
 }
 
@@ -22,7 +25,7 @@ async function EditProfile() {
 
   return (
     <>
-      <p>
+      <p className="calm-lead">
         <Link href={`/u/${user.id}`}>View my public profile</Link> · <Link href="/home">Home</Link>
       </p>
       <ProfileForm

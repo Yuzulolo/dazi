@@ -9,7 +9,9 @@ import {
 } from "@/lib/profile/options";
 import type { ProfileFormValues } from "@/lib/profile/types";
 
-// Plain form fields shared by /onboarding and /me/edit. Unstyled until docs/DESIGN.md exists.
+// Plain form fields shared by /onboarding and /me/edit, styled by the calm
+// variant (app/_styles/dazi-forms.css). Checkbox and radio groups are real
+// inputs shown as tags.
 
 export function BirthYearField({
   birthYear,
@@ -20,15 +22,16 @@ export function BirthYearField({
 }) {
   if (birthYear !== null) {
     return (
-      <p>
-        Birth year: {birthYear} <small>(can&apos;t be changed; others only see an age range)</small>
-      </p>
+      <div className="field">
+        <span className="field-label">Birth year</span>
+        <p className="read-only-value">{birthYear}</p>
+        <small className="field-help">Can&apos;t be changed. Others only see an age range.</small>
+      </div>
     );
   }
   return (
-    <p>
+    <p className="field">
       <label htmlFor="birthYear">Birth year</label>
-      <br />
       <input
         id="birthYear"
         name="birthYear"
@@ -37,10 +40,12 @@ export function BirthYearField({
         pattern="\d{4}"
         required
         placeholder="e.g. 1995"
+        aria-describedby="birthYear-help"
         defaultValue={defaultValue}
       />
-      <br />
-      <small>Dazi is for adults only. Others only see an age range. It can&apos;t be changed later.</small>
+      <small id="birthYear-help" className="field-help">
+        Dazi is for adults only. Others only see an age range. It can&apos;t be changed later.
+      </small>
     </p>
   );
 }
@@ -48,16 +53,14 @@ export function BirthYearField({
 export function BasicsFields({ values }: { values: ProfileFormValues }) {
   return (
     <>
-      <p>
+      <p className="field">
         <label htmlFor="displayName">Display name</label>
-        <br />
         <input id="displayName" name="displayName" required maxLength={50} defaultValue={values.displayName} />
       </p>
 
-      <p>
+      <p className="field">
         <label htmlFor="gender">Gender (optional)</label>
-        <br />
-        <select id="gender" name="gender" defaultValue={values.gender}>
+        <select id="gender" name="gender" defaultValue={values.gender} aria-describedby="gender-help">
           <option value="">Prefer not to say</option>
           {GENDERS.map((o) => (
             <option key={o.value} value={o.value}>
@@ -65,67 +68,74 @@ export function BasicsFields({ values }: { values: ProfileFormValues }) {
             </option>
           ))}
         </select>
-        <br />
-        <small>{GENDER_HELP}</small>
+        <small id="gender-help" className="field-help">
+          {GENDER_HELP}
+        </small>
       </p>
 
       <fieldset>
         <legend>Languages you speak (at least one)</legend>
-        {LANGUAGES.map((o) => (
-          <label key={o.value}>
-            <input
-              type="checkbox"
-              name="languages"
-              value={o.value}
-              defaultChecked={values.languages.includes(o.value)}
-            />{" "}
-            {o.label}{" "}
-          </label>
-        ))}
+        <div className="choice-group">
+          {LANGUAGES.map((o) => (
+            <label key={o.value} className="choice">
+              <input
+                type="checkbox"
+                name="languages"
+                value={o.value}
+                defaultChecked={values.languages.includes(o.value)}
+              />
+              {o.label}
+            </label>
+          ))}
+        </div>
       </fieldset>
 
-      <p>
+      <p className="field">
         <label htmlFor="homeCity">Home city</label>
-        <br />
         <input id="homeCity" name="homeCity" required maxLength={80} defaultValue={values.homeCity} />
       </p>
 
-      <p>
+      <p className="field">
         <label htmlFor="bio">About you (optional, up to 500 characters)</label>
-        <br />
-        <textarea id="bio" name="bio" rows={4} cols={50} maxLength={500} defaultValue={values.bio} />
-        <br />
-        <small>No contact details (email or phone) — those are shared later, only if you both agree.</small>
+        <textarea id="bio" name="bio" rows={4} maxLength={500} defaultValue={values.bio} aria-describedby="bio-help" />
+        <small id="bio-help" className="field-help">
+          No contact details (email or phone) — those are shared later, only if you both agree.
+        </small>
       </p>
 
-      <p>
+      <p className="field">
         <label htmlFor="visitedCities">Cities you&apos;ve visited (optional, comma-separated)</label>
-        <br />
-        <input id="visitedCities" name="visitedCities" size={50} defaultValue={values.visitedCities} placeholder="Lisbon, Tokyo, Mexico City" />
+        <input id="visitedCities" name="visitedCities" defaultValue={values.visitedCities} placeholder="Lisbon, Tokyo, Mexico City" />
       </p>
 
-      <p>
+      <p className="field">
         <label htmlFor="hobbies">Hobbies (optional, comma-separated)</label>
-        <br />
-        <input id="hobbies" name="hobbies" size={50} defaultValue={values.hobbies} placeholder="film photography, bouldering, vinyl" />
+        <input id="hobbies" name="hobbies" defaultValue={values.hobbies} placeholder="film photography, bouldering, vinyl" />
       </p>
 
       <fieldset>
         <legend>Who would you like to meet? (private, only used for matching)</legend>
-        <label htmlFor="prefAgeMin">Age from</label>{" "}
-        <input id="prefAgeMin" name="prefAgeMin" type="number" min={18} max={99} required defaultValue={values.prefAgeMin} />{" "}
-        <label htmlFor="prefAgeMax">to</label>{" "}
-        <input id="prefAgeMax" name="prefAgeMax" type="number" min={18} max={99} required defaultValue={values.prefAgeMax} />
-        <br />
-        <label htmlFor="prefGender">Gender</label>{" "}
-        <select id="prefGender" name="prefGender" defaultValue={values.prefGender}>
-          <option value="">Anyone</option>
-          {PREF_GENDERS.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
+        <div className="inline-fields">
+          <p className="field">
+            <label htmlFor="prefAgeMin">Age from</label>
+            <input id="prefAgeMin" name="prefAgeMin" type="number" min={18} max={99} required defaultValue={values.prefAgeMin} />
+          </p>
+          <p className="field">
+            <label htmlFor="prefAgeMax">to</label>
+            <input id="prefAgeMax" name="prefAgeMax" type="number" min={18} max={99} required defaultValue={values.prefAgeMax} />
+          </p>
+          <p className="field">
+            <label htmlFor="prefGender">Gender</label>
+            <select id="prefGender" name="prefGender" defaultValue={values.prefGender}>
+              <option value="">Anyone</option>
+              {PREF_GENDERS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </p>
+        </div>
       </fieldset>
     </>
   );
@@ -136,39 +146,43 @@ export function StyleFields({ values }: { values: ProfileFormValues }) {
     <>
       <fieldset>
         <legend>Travel pace</legend>
-        {TRAVEL_PACES.map((o) => (
-          <label key={o.value}>
-            <input type="radio" name="travelPace" value={o.value} required defaultChecked={values.travelPace === o.value} />{" "}
-            {o.label}
-            <br />
-          </label>
-        ))}
+        <div className="choice-group" data-layout="stack">
+          {TRAVEL_PACES.map((o) => (
+            <label key={o.value} className="choice">
+              <input type="radio" name="travelPace" value={o.value} required defaultChecked={values.travelPace === o.value} />
+              {o.label}
+            </label>
+          ))}
+        </div>
       </fieldset>
 
       <fieldset>
         <legend>Day rhythm</legend>
-        {DAY_RHYTHMS.map((o) => (
-          <label key={o.value}>
-            <input type="radio" name="dayRhythm" value={o.value} required defaultChecked={values.dayRhythm === o.value} />{" "}
-            {o.label}{" "}
-          </label>
-        ))}
+        <div className="choice-group">
+          {DAY_RHYTHMS.map((o) => (
+            <label key={o.value} className="choice">
+              <input type="radio" name="dayRhythm" value={o.value} required defaultChecked={values.dayRhythm === o.value} />
+              {o.label}
+            </label>
+          ))}
+        </div>
       </fieldset>
 
       <fieldset>
         <legend>Travel interests (at least one)</legend>
-        {TRAVEL_INTERESTS.map((o) => (
-          <label key={o.value}>
-            <input
-              type="checkbox"
-              name="travelInterests"
-              value={o.value}
-              defaultChecked={values.travelInterests.includes(o.value)}
-            />{" "}
-            {o.label}
-            <br />
-          </label>
-        ))}
+        <div className="choice-group">
+          {TRAVEL_INTERESTS.map((o) => (
+            <label key={o.value} className="choice">
+              <input
+                type="checkbox"
+                name="travelInterests"
+                value={o.value}
+                defaultChecked={values.travelInterests.includes(o.value)}
+              />
+              {o.label}
+            </label>
+          ))}
+        </div>
       </fieldset>
     </>
   );
@@ -177,7 +191,7 @@ export function StyleFields({ values }: { values: ProfileFormValues }) {
 export function FormError({ error }: { error?: string }) {
   if (!error) return null;
   return (
-    <p role="alert" aria-live="polite">
+    <p className="form-error" role="alert" aria-live="polite">
       {error}
     </p>
   );

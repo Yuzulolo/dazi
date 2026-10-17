@@ -1,0 +1,310 @@
+/* Dazi design system — base: tokens, wall, shell, buttons, paper, glass, badges.
+   Everything is scoped under .dazi-root. See docs/DESIGN.md. Minimum text size: 12px. */
+
+.dazi-root {
+  --wall: #333630;
+  --ink: #161b17;
+  --cream: #fcfaf5;
+  --muted: #d9dcd6;
+  --error: #ffc2c2;
+  --ai: #d5b9ed;
+  --paper: #c3e4c7;
+  --motif-a: #e494d4;
+  --motif-b: #a77fd6;
+  --font-heading: var(--font-dazi-heading, Manrope), Arial, sans-serif;
+  position: relative;
+  isolation: isolate;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: clip;
+  background: var(--wall);
+  color: var(--cream);
+  font-family: var(--font-dazi-body, "DM Sans"), Arial, sans-serif;
+  color-scheme: dark;
+}
+.dazi-root *,
+.dazi-root *::before,
+.dazi-root *::after { box-sizing: border-box; }
+.dazi-root > main { flex: 1; }
+.dazi-root :is(button, input, select, textarea) { font: inherit; }
+.dazi-root button { cursor: pointer; color: inherit; }
+.dazi-root button:disabled { cursor: default; }
+.dazi-root a { color: inherit; text-decoration: none; }
+.dazi-root :is(button, a, textarea, input, select, [tabindex]):focus-visible {
+  outline: 3px solid currentColor;
+  outline-offset: 4px;
+}
+.dazi-root :is(h1, h2) {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  line-height: 1.04;
+}
+.dazi-root :is(h1, h2) > span { display: block; }
+
+/* ---------- Wall background ---------- */
+.dazi-root .wall-background {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  /* Fixed overlay so text placed directly on the wall stays readable. */
+  background:
+    linear-gradient(180deg, #0e100ecc 0%, #0e100e8c 30%, #0e100e66 70%, #0a170b80 100%),
+    url("/dazi/wall-grass.webp") center bottom / cover no-repeat;
+}
+.dazi-root[data-variant="calm"] .wall-background {
+  background:
+    linear-gradient(180deg, #0e100ee0 0%, #0e100ec4 60%, #0a170b99 100%),
+    url("/dazi/wall-grass.webp") center bottom / cover no-repeat;
+}
+
+/* ---------- Header / footer ---------- */
+.dazi-root .dazi-header {
+  min-height: 90px;
+  padding: 0 5vw;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+.dazi-root .wordmark {
+  font-family: var(--font-heading);
+  font-size: 42px;
+  font-weight: 800;
+  letter-spacing: -3px;
+}
+.dazi-root .header-note {
+  font-size: 12px;
+  letter-spacing: 1.6px;
+  color: var(--muted);
+  border-left: 1px solid #fff5;
+  padding-left: 25px;
+}
+.dazi-root .dazi-header nav {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+.dazi-root .dazi-footer {
+  padding: 20px 5vw 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+.dazi-root .dazi-footer > span {
+  font-size: 12px;
+  letter-spacing: 1.1px;
+  max-width: 320px;
+  line-height: 1.6;
+}
+
+/* ---------- Buttons ---------- */
+.dazi-root .text-button {
+  background: none;
+  border: 0;
+  padding: 10px 0;
+  min-height: 44px;
+  font-size: 14px;
+  text-align: left;
+  display: inline-flex;
+  align-items: center;
+}
+.dazi-root .outline-button,
+.dazi-root .primary-button {
+  border-radius: 12px;
+  min-height: 48px;
+  padding: 12px 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 15px;
+  line-height: 1.25;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+.dazi-root .outline-button { border: 1px solid #fff9; background: #ffffff09; }
+.dazi-root .primary-button { border: 1px solid #fff; background: #fff; color: #181d19; font-weight: 600; }
+.dazi-root .primary-button:hover { background: #e9f0e4; }
+.dazi-root .primary-button:disabled { opacity: 0.7; }
+.dazi-root .round-button {
+  width: 48px;
+  height: 48px;
+  border: 1px solid #fff9;
+  background: #1520158c;
+  border-radius: 50%;
+  font-size: 24px;
+  backdrop-filter: blur(10px);
+  transition: background 0.15s;
+}
+.dazi-root :is(.outline-button, .round-button):hover { background: #ffffff26; }
+
+/* ---------- Paper poster ---------- */
+.dazi-root .paper {
+  position: relative;
+  isolation: isolate;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid #fff8;
+  box-shadow: 0 14px 25px #0005, inset 0 1px #fff9;
+  overflow: hidden;
+  clip-path: polygon(.4% .3%, 19% 0, 39% .3%, 65% 0, 85% .2%, 99.5% 0, 100% 23%, 99.7% 54%, 100% 78%, 99.5% 99.8%, 75% 100%, 50% 99.7%, 24% 100%, .3% 99.7%, 0 71%, .3% 40%, 0 12%);
+}
+/* Procedural crease texture. */
+.dazi-root .paper::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0.3;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='650'%3E%3Cfilter id='paper'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.025 .09' numOctaves='3' seed='14'/%3E%3CfeDiffuseLighting surfaceScale='3' diffuseConstant='.9' lighting-color='white'%3E%3CfeDistantLight azimuth='225' elevation='48'/%3E%3C/feDiffuseLighting%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23paper)' opacity='.55'/%3E%3Cpath d='M-20 100Q100 124 240 81T460 93M80 0Q63 160 92 350T59 680M350 0Q380 200 352 450T399 680' stroke='%23000' opacity='.12' fill='none'/%3E%3C/svg%3E");
+  background-size: 100% 100%;
+}
+/* Motif circles in the corners (two colours per tone). */
+.dazi-root .paper-motif {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 0% 0%, var(--motif-a) 0 120px, transparent 121px),
+    radial-gradient(circle at 100% 4%, var(--motif-b) 0 95px, transparent 96px),
+    radial-gradient(circle at 0% 100%, var(--motif-b) 0 110px, transparent 111px),
+    radial-gradient(circle at 100% 96%, var(--motif-a) 0 130px, transparent 131px);
+}
+.dazi-root [data-tone="lavender"] { --paper: #c5aee0; --motif-a: #8d63d2; --motif-b: #e3a1cf; }
+.dazi-root [data-tone="forest"] { --paper: #214d38; --motif-a: #e7a9c9; --motif-b: #a9d8b4; color: #fff7e9; }
+.dazi-root [data-tone="mint"] { --paper: #c3e4c7; --motif-a: #e494d4; --motif-b: #a77fd6; }
+.dazi-root [data-tone="pink"] { --paper: #e7b4c6; --motif-a: #b48be0; --motif-b: #7e57c2; }
+
+/* ---------- Glass ---------- */
+.dazi-root .glass {
+  position: relative;
+  isolation: isolate;
+  color: #fff;
+  background: linear-gradient(145deg, #323536ed, #28252fe0);
+  border: 1px solid #ffffff90;
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 12px 25px #0003, inset 0 1px #fff5;
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+}
+.dazi-root .glass::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border: 1px solid #ffffff25;
+  border-radius: 14px;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* ---------- Small parts ---------- */
+.dazi-root .eyebrow {
+  font-size: 12px;
+  letter-spacing: 1.6px;
+  margin: 8px 0;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.dazi-root .ai-badge {
+  display: inline-block;
+  color: #1e2220;
+  background: var(--ai);
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.5;
+  letter-spacing: 0;
+  font-weight: 500;
+  vertical-align: middle;
+  text-transform: none;
+  margin-left: 6px;
+}
+.dazi-root .demo-badge {
+  align-self: flex-start;
+  display: inline-block;
+  font-size: 12px;
+  border: 1px solid currentColor;
+  border-radius: 5px;
+  padding: 2px 7px;
+  line-height: 1.4;
+  vertical-align: middle;
+}
+.dazi-root .tags { display: flex; gap: 7px; flex-wrap: wrap; margin: 0 0 18px; padding: 0; list-style: none; }
+.dazi-root .tags > li {
+  font-size: 13px;
+  border: 1px solid currentColor;
+  border-radius: 30px;
+  padding: 6px 12px;
+  line-height: 1.4;
+}
+.dazi-root .identity { display: flex; align-items: center; gap: 12px; font-size: 14px; margin: 2px 0 20px; }
+.dazi-root .identity small { display: block; font-size: 13px; line-height: 1.5; margin-top: 4px; }
+.dazi-root .abstract-avatar {
+  height: 44px;
+  width: 44px;
+  flex: none;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 32% 62%, #bc765f 0 28%, transparent 29%),
+    radial-gradient(circle at 64% 34%, #6b508c 0 28%, transparent 29%),
+    #e3d6db;
+}
+.dazi-root .abstract-avatar[data-size="large"] { width: 72px; height: 72px; }
+.dazi-root .empty-state { margin: 30px auto; max-width: 600px; padding: 30px; }
+.dazi-root .empty-state h1 { font-size: 32px; margin: 0 0 16px; }
+
+/* ---------- Dialog ---------- */
+.dazi-root .dazi-modal {
+  width: min(460px, calc(100% - 32px));
+  max-height: calc(100dvh - 40px);
+  padding: 34px;
+  background: #2b3030;
+  color: #fff;
+  border: 1px solid #fff7;
+  border-radius: 20px;
+  box-shadow: 0 20px 70px #0008;
+}
+.dazi-root .dazi-modal::backdrop { background: #141813b0; backdrop-filter: blur(5px); }
+.dazi-root .dazi-modal h2 { font-size: 31px; margin: 22px 0 16px; }
+.dazi-root .dazi-modal p { font-size: 16px; line-height: 1.6; }
+.dazi-root .dazi-modal .modal-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+.dazi-root .close-button {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  border: 0;
+  background: none;
+  font-size: 28px;
+  width: 44px;
+  height: 44px;
+}
+
+@media (max-width: 800px) {
+  .dazi-root .dazi-header { min-height: 76px; padding: 0 20px; gap: 15px; }
+  .dazi-root .wordmark { font-size: 34px; }
+  .dazi-root .header-note { display: none; }
+  .dazi-root .dazi-header nav { gap: 14px; }
+  .dazi-root .dazi-header nav :is(.text-button, .outline-button) { font-size: 13px; }
+  .dazi-root .dazi-header nav .outline-button { padding: 10px 12px; min-height: 44px; }
+  .dazi-root .dazi-footer { padding: 15px 20px max(20px, env(safe-area-inset-bottom)); }
+  .dazi-root .dazi-footer > span { max-width: 190px; }
+  .dazi-root .empty-state { margin: 25px 20px; }
+  .dazi-root .wall-background { background-size: auto 100%, auto 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dazi-root *,
+  .dazi-root *::before,
+  .dazi-root *::after {
+    transition: none !important;
+    animation: none !important;
+    scroll-behavior: auto !important;
+  }
+}

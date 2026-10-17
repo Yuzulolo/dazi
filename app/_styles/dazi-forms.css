@@ -1,0 +1,95 @@
+/* Dazi design system — calm variant: dark wall + one smoked-glass panel,
+   for auth, onboarding, profile and home pages. Plain HTML form controls, styled. */
+
+.dazi-root .calm-main { padding: 12px 20px 40px; }
+.dazi-root .calm-panel { margin: 0 auto; max-width: 760px; padding: 36px; }
+.dazi-root .calm-panel[data-width="narrow"] { max-width: 480px; }
+.dazi-root .calm-panel h1 { font-size: 38px; margin: 4px 0 12px; }
+.dazi-root .calm-panel h2 { font-size: 24px; letter-spacing: -0.03em; margin: 28px 0 12px; }
+.dazi-root .calm-panel p { font-size: 15px; line-height: 1.6; }
+.dazi-root .calm-panel a:not(.primary-button, .outline-button) { text-decoration: underline; text-underline-offset: 3px; }
+.dazi-root .calm-lead { color: var(--muted); margin: 0 0 24px; }
+.dazi-root .panel-links { display: flex; flex-wrap: wrap; gap: 10px; margin: 20px 0 0; }
+.dazi-root .panel-footer { margin: 24px 0 0; font-size: 15px; }
+.dazi-root .step-progress { display: flex; gap: 6px; margin: 4px 0 18px; }
+.dazi-root .step-progress > span { height: 4px; flex: 1; border-radius: 2px; background: #ffffff40; }
+.dazi-root .step-progress > .done { background: #fff; }
+
+/* ---------- Fields ---------- */
+.dazi-root .dazi-form { display: flex; flex-direction: column; gap: 20px; }
+.dazi-root .field { display: flex; flex-direction: column; gap: 8px; margin: 0; }
+.dazi-root .field > label,
+.dazi-root .dazi-form legend { font-size: 15px; font-weight: 600; }
+.dazi-root .field-help { font-size: 13px; line-height: 1.5; color: var(--muted); }
+.dazi-root .dazi-form :is(input[type="text"], input[type="email"], input[type="password"], input[type="number"], input:not([type]), select, textarea) {
+  width: 100%;
+  min-height: 48px;
+  padding: 11px 13px;
+  font-size: 16px;
+  color: #fff;
+  background: #ffffff14;
+  border: 1px solid #ffffff70;
+  border-radius: 12px;
+}
+.dazi-root .dazi-form textarea { min-height: 110px; resize: vertical; line-height: 1.5; }
+.dazi-root .dazi-form select option { color: var(--ink); }
+.dazi-root .dazi-form ::placeholder { color: #f8f8f0c9; }
+.dazi-root .dazi-form fieldset {
+  border: 1px solid #ffffff40;
+  border-radius: 16px;
+  padding: 16px 18px 18px;
+  margin: 0;
+  min-width: 0;
+}
+.dazi-root .dazi-form legend { padding: 0 6px; }
+.dazi-root .inline-fields { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-end; }
+.dazi-root .inline-fields .field { flex: 1 1 140px; }
+.dazi-root .read-only-value { font-size: 16px; margin: 0; }
+
+/* Checkbox / radio groups shown as tags. Real inputs, visible focus. */
+.dazi-root .choice-group { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.dazi-root .choice-group[data-layout="stack"] { flex-direction: column; align-items: stretch; }
+.dazi-root .choice {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid #ffffff80;
+  border-radius: 30px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.dazi-root .choice-group[data-layout="stack"] .choice { border-radius: 12px; }
+.dazi-root .choice input { width: 18px; height: 18px; margin: 0; accent-color: #fff; flex: none; }
+.dazi-root .choice:has(input:checked) { background: #fff; color: #181d19; border-color: #fff; }
+.dazi-root .choice:has(input:focus-visible) { outline: 3px solid #fff; outline-offset: 3px; }
+
+.dazi-root .form-error {
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--error);
+  border: 1px solid #ffc2c280;
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin: 0;
+}
+.dazi-root .form-success { font-size: 15px; margin: 0; }
+.dazi-root .dazi-form > .primary-button { align-self: flex-start; min-width: 160px; }
+
+/* ---------- Profile view ---------- */
+.dazi-root .profile-head { display: flex; align-items: center; gap: 18px; margin-bottom: 8px; }
+.dazi-root .profile-head h1 { margin: 0; }
+.dazi-root .profile-head p { margin: 4px 0 0; color: var(--muted); }
+.dazi-root .profile-facts > div { padding: 14px 0; border-bottom: 1px solid #fff3; }
+.dazi-root .profile-facts dd { font-size: 16px; }
+.dazi-root .glass .tags { margin: 0; }
+
+@media (max-width: 800px) {
+  .dazi-root .calm-main { padding: 4px 14px 30px; }
+  .dazi-root .calm-panel { padding: 26px 20px; }
+  .dazi-root .calm-panel h1 { font-size: 32px; }
+  .dazi-root .dazi-form > .primary-button { align-self: stretch; }
+}
+.dazi-root .field-label { font-size: 15px; font-weight: 600; }

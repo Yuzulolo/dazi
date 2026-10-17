@@ -18,7 +18,7 @@ export function ProfileForm({ action, initial, sections, submitLabel }: Props) {
   const values = state.values ?? initial;
 
   return (
-    <form action={formAction}>
+    <form action={formAction} className="dazi-form">
       {sections.basics && (
         <>
           <BirthYearField birthYear={sections.basics.birthYear} defaultValue={state.birthYear} />
@@ -27,8 +27,12 @@ export function ProfileForm({ action, initial, sections, submitLabel }: Props) {
       )}
       {sections.style && <StyleFields values={values} />}
       <FormError error={state.error} />
-      {state.saved && <p aria-live="polite">Saved.</p>}
-      <button type="submit" disabled={pending}>
+      {state.saved && (
+        <p className="form-success" aria-live="polite">
+          Saved.
+        </p>
+      )}
+      <button type="submit" className="primary-button" disabled={pending}>
         {pending ? "Saving…" : submitLabel}
       </button>
     </form>

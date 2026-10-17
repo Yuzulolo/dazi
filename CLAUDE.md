@@ -35,6 +35,10 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 - `lib/supabase/proxy.ts` + `proxy.ts` — session refresh + optimistic redirects on every request. **Next 16: `proxy.ts` replaces `middleware.ts`.**
 - `lib/auth.ts` — `getCurrentUser()`: the single server-side gate for every protected page and server action
 - `supabase/migrations/` — all schema changes (applied by pasting into the Supabase SQL Editor)
+- `app/_components/dazi/` — design-system components (`SiteShell`, `Paper`, `PosterCarousel`, dialogs, badges); `app/_styles/dazi-*.css` — their styles, loaded once via `app/globals.css`
+- `app/matches`, `app/plans/[id]` — guest results and recruitment detail (demo trips until part E)
+- `lib/demo/trips.ts` — fictional, labelled demo trips + the `DEMO_MATCHES` flag
+- `lib/profile/` — profile options, validation, contact-details detector, queries
 - `scripts/rls-check.mjs` — two-account RLS test via the public Data API
 - `.claude/agents/` — `ai-code-reviewer`, `security-auditor` subagents
 - `next.config.ts` has `cacheComponents: true`: anything that reads cookies, `params` or `searchParams` must render inside `<Suspense>`, or the build fails.
@@ -97,9 +101,9 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 - Before final submission: do a full pass to make `CLAUDE.md` and `README.md` match the finished app.
 
 ### Visual design
-- The visual design is made separately by me (with GPT) and will be added as `docs/DESIGN.md` (+ reference images).
-- **Until `docs/DESIGN.md` exists:** keep UI minimal and functional (plain layout, default Tailwind). Do not invent a visual style, colours or fonts.
-- Before starting phase 2, remind me: "Design checkpoint — is `docs/DESIGN.md` ready?"
+- **Follow `docs/DESIGN.md`** (poster wall, 4 poster tones, smoked glass, Manrope + DM Sans, text ≥ 12px, WCAG AA). Build new UI from `app/_components/dazi/` and the `.dazi-root` classes; don't invent new colours or fonts.
+- Pages use `SiteShell` with `variant="wall"` (poster carousel) or `variant="calm"` (forms, profile, home).
+- Fictional demo data lives only in `lib/demo/` and is always labelled (Demo badge + footer).
 
 ## Out of scope (do not build unless I ask)
 Payments, push/email notifications, native mobile app, ID verification, star ratings / public reviews, likes/comments on stories, maps, LinkedIn.
