@@ -74,7 +74,7 @@ export function PosterCarousel({ items, positionKey }: { items: CarouselItem[]; 
   if (count === 0) return null;
 
   return (
-    <>
+    <div className="carousel-frame">
       <section
         className={`carousel ${dragging ? "is-dragging" : ""}`}
         ref={carouselRef}
@@ -130,10 +130,14 @@ export function PosterCarousel({ items, positionKey }: { items: CarouselItem[]; 
           })}
         </div>
       </section>
+      {/* Arrows sit at the left/right edges on desktop, beside the dots on mobile. */}
+      <button type="button" className="round-button carousel-arrow" data-side="prev" onClick={() => turn(active - 1)} aria-label="Previous poster">
+        ←
+      </button>
+      <button type="button" className="round-button carousel-arrow" data-side="next" onClick={() => turn(active + 1)} aria-label="Next poster">
+        →
+      </button>
       <div className="carousel-controls">
-        <button type="button" className="round-button" onClick={() => turn(active - 1)} aria-label="Previous poster">
-          ←
-        </button>
         <div className="carousel-position">
           <div className="position-dots" aria-hidden="true">
             {items.map((item, index) => (
@@ -144,11 +148,8 @@ export function PosterCarousel({ items, positionKey }: { items: CarouselItem[]; 
             {active + 1} of {count} · {items[active].label}
           </p>
         </div>
-        <button type="button" className="round-button" onClick={() => turn(active + 1)} aria-label="Next poster">
-          →
-        </button>
       </div>
       <p className="gesture-hint">Drag or swipe to explore · Arrow keys work too</p>
-    </>
+    </div>
   );
 }

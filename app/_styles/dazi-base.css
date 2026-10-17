@@ -152,17 +152,17 @@
   overflow: hidden;
   clip-path: polygon(.4% .3%, 19% 0, 39% .3%, 65% 0, 85% .2%, 99.5% 0, 100% 23%, 99.7% 54%, 100% 78%, 99.5% 99.8%, 75% 100%, 50% 99.7%, 24% 100%, .3% 99.7%, 0 71%, .3% 40%, 0 12%);
 }
-/* Procedural crease texture. */
+/* Neutral relief from wet-pasted paper. Soft light retains the printed palette;
+   the overlay never captures pointer events or replaces accessible HTML text. */
 .dazi-root .paper::after {
   content: "";
   position: absolute;
   inset: 0;
   z-index: 3;
   pointer-events: none;
-  opacity: 0.3;
-  mix-blend-mode: multiply;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='650'%3E%3Cfilter id='paper'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.025 .09' numOctaves='3' seed='14'/%3E%3CfeDiffuseLighting surfaceScale='3' diffuseConstant='.9' lighting-color='white'%3E%3CfeDistantLight azimuth='225' elevation='48'/%3E%3C/feDiffuseLighting%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23paper)' opacity='.55'/%3E%3Cpath d='M-20 100Q100 124 240 81T460 93M80 0Q63 160 92 350T59 680M350 0Q380 200 352 450T399 680' stroke='%23000' opacity='.12' fill='none'/%3E%3C/svg%3E");
-  background-size: 100% 100%;
+  opacity: .86;
+  mix-blend-mode: soft-light;
+  background: url("/dazi/wet-pasted-paper-v1.webp") center / 100% 100% no-repeat;
 }
 /* Motif circles in the corners (two colours per tone). */
 .dazi-root .paper-motif {

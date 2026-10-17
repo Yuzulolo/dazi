@@ -53,7 +53,7 @@ Radius: glass 20px (inner border 14px), buttons/inputs 12px, tags 30px, badges 5
 | Component | File | Notes |
 |---|---|---|
 | `SiteShell` | `site-shell.tsx` | Wall background + header (wordmark, "How it works", auth links) + footer ("Your privacy, first"). `variant="wall" \| "calm"`; `demo` switches the footer to "Fictional demo data · no invites are sent". |
-| `Paper` | `primitives.tsx` | Poster: `tone`, irregular clip-path edge, procedural crease texture (inline SVG), motif circles. |
+| `Paper` | `primitives.tsx` | Poster: `tone`, irregular clip-path edge, motif circles, and the **wet-pasted paper texture** (`wet-pasted-paper-v1.webp`, neutral grey) laid over the colours with `mix-blend-mode: soft-light` at 86% — creases, not baked-in content; mirrored on every second carousel poster so neighbours don't look identical. |
 | `.glass` | CSS class | Smoked glass with double border. Use for panels, the plan input, match reasons. |
 | Buttons | CSS classes | `.primary-button` (white, the one main action), `.outline-button` (secondary), `.round-button` (carousel arrows), `.text-button` (inline actions). |
 | `Tags` | `primitives.tsx` | Outlined pills in `currentColor`, as a `<ul>`. Interests, languages. |
@@ -63,12 +63,14 @@ Radius: glass 20px (inner border 14px), buttons/inputs 12px, tags 30px, badges 5
 | `Identity` | `primitives.tsx` | `M••• · 25–29` + languages. Initial only, age range only. |
 | `Headline` | `primitives.tsx` | Two-line poster headline (`h1` or `h2`). |
 | `InfoDialog` / `InfoButton` | `info-dialog.tsx` | Native `<dialog>`: Escape + backdrop close, focus returns to the opener. Texts in `copy.ts`. |
-| `PosterCarousel` | `poster-carousel.tsx` | Active poster frontal, neighbours angled (±14°, ±22°). Drag/swipe, arrow keys, wraparound, dots + live "2 of 5" text. Non-active posters' controls are untabbable. `positionKey` remembers the poster across detail ↔ back. |
+| `PosterCarousel` | `poster-carousel.tsx` | Active poster frontal, neighbours angled (±14°, ±22°). Drag/swipe, arrow keys, wraparound, dots + live "2 of 5" text. Arrows at the left/right edges, vertically centred (desktop); beside the dots under the poster (≤ 800px). Non-active posters' controls are untabbable. `positionKey` remembers the poster across detail ↔ back. |
 | `PlanComposerContent` | `plan-composer.tsx` | "Good plans. Better company." + "Your next plan" input. Keeps the text in sessionStorage (`dazi:plan:v1`). |
 | `TripPosterContent`, `HomeWall`, `MatchesWall`, `PlanDetail` | `trip-poster.tsx`, `walls.tsx` | Page-level views. All take a **required** `demo` prop. |
 
 ## 4. Page variants
 - **Wall** (`/`, `/matches`, `/plans/[id]`): the poster carousel on the wall. A fixed dark overlay sits over the photo (`#0e100e` at 80% → 40% → 50%) so white text placed directly on the wall stays readable.
+  - **Viewport fit:** poster height follows the window (`--stage-h`: `100dvh − 290px` on `/`, `100dvh − 360px` on `/matches`, clamped 520–690px) and the width follows the height (`× 0.72`, max 30vw). At 1440×900 the whole wall — header, three whole posters, controls, footer — fits without vertical scrolling. Phones (≤ 800px) use a fixed 640px stage and scroll normally.
+  - **Demo honesty:** demo results say "Fictional examples · Not matched to your input"; the author's text is labelled ("Fictional author's plan"), separate from the AI explanation.
 - **Calm** (`/login`, `/signup`, `/onboarding`, `/me/edit`, `/u/[id]`, `/home`): same wall with a **stronger overlay** (88% → 77% → 60%), and one centred smoked-glass panel (`.calm-panel`, 760px; `data-width="narrow"` = 480px for auth). Forms use `.dazi-form`, `.field`, `.field-help`, `fieldset`, `.choice-group` (checkboxes/radios shown as tags — still real inputs with visible focus), `.form-error`, `.form-success`.
 
 ## 5. Rules for extending
@@ -108,6 +110,7 @@ Text directly on the wall photo is protected by the fixed overlay (§4) and chec
 | File | Source | Processing |
 |---|---|---|
 | `public/dazi/wall-grass.webp` (≈ 250 KB) | kit `public/dazi/wall-grass.png` (3.6 MB, 1586×992) | `sharp(...).webp({ quality: 60, effort: 6 })` |
+| `public/dazi/wet-pasted-paper-v1.webp` (≈ 230 KB, 1024×1536) | AI-generated grayscale texture (made with Codex's image tool, 17 Oct 2026, after the user's wet-glued poster reference): front-on macro photo of thin paper wheat-pasted onto a flat wall — long slender vertical wrinkles, tapered diagonal tension creases, soft bulges, neutral grey `#808080`, no text or pattern | WebP; no source PNG is kept in the repo |
 | `docs/design/reference/*.jpg` (140–210 KB each) | kit `reference/*.png` (≈ 3 MB each) | `sharp(...).resize({ width: 1200 }).jpeg({ quality: 68, mozjpeg: true })` |
 
 `sharp` ships with Next.js, so no extra dependency. The original kit stays outside the repo (`~/Turing/Final-Sprint-Project/dazi-design-kit/`).

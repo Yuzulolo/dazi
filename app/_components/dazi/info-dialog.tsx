@@ -6,7 +6,7 @@ import type { DialogContent } from "./types";
 
 // Native <dialog>: Escape and backdrop click close it, focus returns to the
 // button that opened it.
-export function InfoDialog({ content, onClose }: { content: DialogContent; onClose: () => void }) {
+export function InfoDialog({ content, onClose, children }: { content: DialogContent; onClose: () => void; children?: ReactNode }) {
   const ref = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -42,7 +42,7 @@ export function InfoDialog({ content, onClose }: { content: DialogContent; onClo
       {content.eyebrow && <p className="eyebrow">{content.eyebrow}</p>}
       <h2 id="dazi-modal-title">{content.title}</h2>
       <p>{content.body}</p>
-      <div className="modal-actions">
+      {children ?? <div className="modal-actions">
         {content.signUp ? (
           <>
             <Link className="primary-button" href="/signup">
@@ -57,7 +57,7 @@ export function InfoDialog({ content, onClose }: { content: DialogContent; onClo
             Got it
           </button>
         )}
-      </div>
+      </div>}
     </dialog>
   );
 }

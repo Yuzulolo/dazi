@@ -2,7 +2,7 @@
 
 > Companion to `docs/SPEC.md`. SPEC says *what* we build; this file says *how users move through it* and *what rules apply*.
 >
-> **Capstone scope (SPEC §0):** sections 1.5 (social verification), 2.4 (social reveal), 2.6b (match-break limit) and 2.8 (feedback) are **Roadmap**; 2.7 (trip photo upload) is **stretch** (SPEC §0.5) — preset covers until then, not built for the capstone. Google sign-up is also Roadmap. "Chat" in this file = simple message thread without realtime.
+> **Capstone scope (SPEC §0):** sections 1.5 (social verification), 2.4 (social reveal), 2.6b (match-break limit) and 2.8 (feedback) are **Roadmap**; 2.7 (trip photo upload) is also **Roadmap** (SPEC §0.4) — posts use the 4 poster tones as covers instead. Google sign-up is also Roadmap. "Chat" in this file = simple message thread without realtime.
 
 ## 1. User journey (confirmed)
 
@@ -14,7 +14,7 @@
    - **Never sent to the browser:** real name, real avatar, stories, profile link, socials
 4. Guest clicks "Connect" → sign-up dialog (Sign up / Not now).
 5. Guest ranking uses **trip similarity + city + dates only** (no profile yet). Banner: *"Complete your profile for more accurate matches."*
-6. The guest's search text is kept in the browser (sessionStorage) so it can become their first post after sign-up. Nothing about the guest is stored in the database except a rate-limit log.
+6. The guest's search text is kept in the browser (sessionStorage) so it can become their first post after sign-up. Nothing about the guest is stored in the database except a rate-limit log. sessionStorage is tab-local and best-effort: continuing in another tab or device does not carry the plan over. On `/matches` the guest can edit the sentence in place ("Edit plan"). Only the guest's own plan text (and the carousel position) is stored — never another user's data. Remembering which recruitment the guest wanted to connect with is part F (server-side, after sign-up), not browser storage.
 
 ### 1.2 Sign-up → first match
 1. Sign up (email or Google) → confirm 18+ (Google users enter birth year on `/onboarding` first, see 2.0)

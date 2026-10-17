@@ -7,7 +7,7 @@ Dazi is a web app for finding a travel or food buddy (搭子). A user writes one
 
 Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `docs/FLOWS.md`. Read both before starting any phase. If code and docs disagree, stop and ask me.
 
-**Capstone deadline: 20 Oct 2026 (morning). `docs/SPEC.md` §0 defines the capstone scope and overrides the rest of the docs.** Anything listed in §0.4 Roadmap is out of scope — do not build it. **Quality over quantity:** the core flow (A–F) must work end-to-end and be polished before any stretch work (§0.5).
+**Capstone deadline: 20 Oct 2026 (morning). `docs/SPEC.md` §0 defines the capstone scope and overrides the rest of the docs.** Anything listed in §0.4 Roadmap is out of scope — do not build it. **Quality over quantity:** the core flow (A–F) must work end-to-end and be polished. There is no stretch feature (the trip photo moved to Roadmap).
 
 **Pace for the deadline:** do a whole phase in one go, then stop for one round of testing. Always stop and show me (1) any SQL before it is applied to the database and (2) the code review result before a PR is merged.
 

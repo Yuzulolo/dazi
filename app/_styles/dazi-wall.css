@@ -202,3 +202,76 @@
   .dazi-root .detail-glass { margin-top: 20px; padding: 26px; }
   .dazi-root .detail-glass h2 { font-size: 29px; }
 }
+
+/* ---------- Codex material refinements (texture relief, detail panel, plan editor) ---------- */
+.dazi-root :is(.carousel-paper, .detail-paper) {
+  background-image: linear-gradient(112deg, #ffffff16, transparent 35%, #0000000c 70%, #ffffff18);
+  box-shadow: inset 0 0 2px 2px #ffffff80, inset 0 -8px 12px #0002;
+}
+.dazi-root .carousel-paper:nth-child(even)::after { transform: scaleX(-1); } /* mirrored texture on neighbours */
+.dazi-root .plan-summary > button { flex-shrink: 0; }
+.dazi-root .detail-paper .authored-label { font-size: 12px; margin: -4px 0 12px; font-style: italic; }
+.dazi-root .detail-glass { position: sticky; top: 24px; background: linear-gradient(125deg, #414442dd, #242625e8); }
+.dazi-root .detail-glass .match-facts { margin: 12px 0; }
+.dazi-root .plan-editor { display: grid; gap: 16px; }
+.dazi-root .plan-editor label { font-size: 14px; line-height: 1.5; }
+.dazi-root .plan-editor textarea { width: 100%; min-height: 145px; resize: vertical; border: 1px solid #fff8; border-radius: 12px; background: #1116; color: white; padding: 14px; font-size: 16px; line-height: 1.5; }
+
+/* ---------- Viewport fit: the whole wall fits the window ----------
+   --stage-h follows the window height (≈ 610px tall posters at 1440×900 on the
+   homepage, ≈ 540px on /matches); the poster width follows the height, so three
+   whole posters fit side by side. Small text keeps its 12px minimum. */
+.dazi-root {
+  --stage-h: clamp(560px, calc(100dvh - 290px), 690px);
+  --poster-width: min(30vw, calc(var(--stage-h) * 0.72));
+  --poster-gap: calc(var(--poster-width) + 25px);
+}
+.dazi-root .results-experience {
+  --stage-h: clamp(520px, calc(100dvh - 360px), 690px);
+  --poster-width: min(30vw, calc(var(--stage-h) * 0.72));
+  --poster-gap: calc(var(--poster-width) + 25px);
+}
+.dazi-root .results-heading { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 18px; }
+.dazi-root .wall-caption { margin: 4px 20px 12px; }
+.dazi-root .carousel { height: var(--stage-h); }
+.dazi-root .carousel-paper { min-height: calc(var(--stage-h) - 16px); padding: 24px 22px; }
+.dazi-root .carousel-paper :is(h1, h2) { font-size: clamp(30px, calc(var(--stage-h) * 0.068), 46px); margin: 12px 0; }
+.dazi-root .carousel-paper .eyebrow { margin: 4px 0; }
+.dazi-root .carousel-paper .trip-date { font-size: 17px; margin-bottom: 12px; }
+.dazi-root .carousel-paper .tags { margin-bottom: 12px; }
+.dazi-root .carousel-paper .identity { margin: 0 0 12px; }
+.dazi-root .match-reason { padding: 14px 16px; }
+.dazi-root .match-reason > p:not(.eyebrow) { font-size: 14px; margin: 8px 0 12px; }
+.dazi-root .poster-actions > * { min-height: 44px; }
+.dazi-root .paper-wordmark { font-size: 30px; margin: 2px 0 8px; }
+.dazi-root .composer h1 { margin: 8px 0 10px; }
+.dazi-root .composer-intro { font-size: 17px; margin: 0 0 16px; }
+.dazi-root .trip-input textarea { min-height: 96px; }
+.dazi-root .input-helper { margin: 12px 0 6px; }
+.dazi-root .paper-privacy { margin: 6px 0 0; }
+.dazi-root .results-intro { margin-bottom: 12px; }
+.dazi-root .plan-summary { padding: 12px 18px; }
+.dazi-root .plan-summary p { font-size: 16px; margin-top: 4px; }
+.dazi-root .results-intro h1 { font-size: 26px; margin: 12px 0 4px; }
+.dazi-root[data-variant="wall"] .dazi-header { min-height: 78px; }
+.dazi-root[data-variant="wall"] .dazi-footer { padding-top: 10px; padding-bottom: 14px; }
+
+/* Arrows: left/right edges, vertically centred on the posters. */
+.dazi-root .carousel-frame { position: relative; }
+.dazi-root .carousel-arrow { position: absolute; z-index: 10; top: calc(var(--stage-h) / 2); transform: translateY(-50%); }
+.dazi-root .carousel-arrow[data-side="prev"] { left: max(16px, 3vw); }
+.dazi-root .carousel-arrow[data-side="next"] { right: max(16px, 3vw); }
+.dazi-root .carousel-controls { margin: 4px 20px 0; min-height: 48px; }
+.dazi-root .gesture-hint { margin: 2px 20px 4px; }
+
+@media (max-width: 800px) {
+  .dazi-root { --stage-h: 640px; --poster-width: min(84vw, 380px); --poster-gap: calc(var(--poster-width) + 14px); }
+  .dazi-root .results-experience { --stage-h: 640px; --poster-width: min(84vw, 380px); --poster-gap: calc(var(--poster-width) + 14px); }
+  .dazi-root .carousel-paper :is(h1, h2) { font-size: 36px; }
+  .dazi-root .match-reason > p:not(.eyebrow) { font-size: 15px; }
+  /* On phones the arrows sit beside the dots, under the poster (mobile reference). */
+  .dazi-root .carousel-arrow { top: calc(var(--stage-h) + 28px); }
+  .dazi-root .carousel-arrow[data-side="prev"] { left: 16px; }
+  .dazi-root .carousel-arrow[data-side="next"] { right: 16px; }
+  .dazi-root .detail-glass { position: static; }
+}

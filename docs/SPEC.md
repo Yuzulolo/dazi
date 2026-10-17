@@ -27,18 +27,18 @@ Guest types one sentence on the homepage → AI trip card → 5 anonymised simil
 |---|---|
 | 15 Oct | ✅ Phase 1 (A): RLS test, deploy, PR review + merge |
 | 16 Oct | ✅ B (onboarding/profile): RLS test, browser test, PR review |
-| 17 Oct | C (posting + AI extraction + embeddings) + D (matching, **30 realistic seed users**) |
-| 18 Oct | E (guest search) + F (invites + messages) + **user testing with 3–5 classmates** |
-| 19 Oct | G (safety/compliance) + full design + one stretch feature (§0.5) |
-| 20 Oct (morning) | H: `/security-scan`, README, evaluation, showcase, presentation |
+| 17 Oct | Design foundation (`docs/DESIGN.md`) + C (posting + AI extraction + embeddings) |
+| 18 Oct | D (matching, **30 realistic seed users**) + E (guest search) |
+| 19 Oct | F (invites + messages) + G (safety/compliance) + **user testing with 3–5 classmates** |
+| 20 Oct (morning) | Polish pass (incl. 320/768px checks) + H: `/security-scan`, README, evaluation, showcase, presentation |
 
-**Rule: quality over quantity.** The core flow (A–F) must work end-to-end and be polished before any stretch work starts.
+**Rule: quality over quantity.** The core flow (A–F) must work end-to-end and be polished. There is no stretch feature in the capstone (dropped 17 Oct).
 
 ### 0.4 Roadmap (not in capstone — mention in "What's next")
-Google login · avatar & travel stories with photos · ~~trip photo upload~~ (now stretch, §0.5) · Facebook verification + mutual social reveal · after-meeting feedback (safety check + positive tags) · group activities · match-break limit (2 per 30 days) · realtime chat · email notifications.
+Google login · avatar & travel stories with photos · **trip photo upload with a vision-AI check + mood description used in matching** (FLOWS 2.7; was stretch, dropped from the capstone 17 Oct — must follow all storage rules: own `{user_id}/` folder, EXIF/GPS stripped, server-side AI call) · Facebook verification + mutual social reveal · after-meeting feedback (safety check + positive tags) · group activities · match-break limit (2 per 30 days) · realtime chat · email notifications.
 
-### 0.5 Stretch (only after the core flow A–F works end-to-end)
-- **Trip photo upload** with a vision-AI check + mood description that is added to the post text before embedding, so aesthetics influence matching (FLOWS 2.7). Must follow all storage rules (own `{user_id}/` folder, EXIF/GPS stripped, server-side AI call).
+### 0.5 Stretch
+None — the former stretch feature (trip photo + vision AI) moved to §0.4 Roadmap on 17 Oct.
 
 ## 1. Problem (SCR)
 - **Situation:** More and more people travel solo or live in a new city, and look for a "buddy" to explore, eat or sightsee with.
