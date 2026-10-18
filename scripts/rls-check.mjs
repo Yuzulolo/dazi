@@ -1,9 +1,10 @@
-// Two-account Row Level Security check for public.profiles.
+// Two-account Row Level Security check for public.profiles and public.posts.
 // Talks to Supabase through the public Data API with the anon key — exactly
 // what any browser (or attacker) can do. Never prints keys or passwords.
 //
 // Run from the project folder:
 //   node --env-file=.env.local scripts/rls-check.mjs
+//   (add --quota to also test the 20-per-day AI limit; spends test account B's quota for 24 h)
 //
 // Needs two confirmed 18+ test accounts in .env.local:
 //   TEST_A_EMAIL, TEST_A_PASSWORD, TEST_B_EMAIL, TEST_B_PASSWORD
@@ -335,6 +336,135 @@ try {
   ]) {
     const { error } = await update(A.client, values);
     report(Boolean(error), label, error?.message ?? "update succeeded!");
+  }
+
+  // ======================= posts (phase 3) =======================
+  // Posts are owner-only; users can't INSERT/UPDATE them directly — only publish_post /
+  // update_post (security definer, pinned to auth.uid()), and a trigger enforces content rules.
+  // Real posts are never touched: publish tests run as whichever test account has no
+  // active post, and every test post is deleted again at the end.
+  console.log("\nRow Level Security check: posts (phase 3)\n");
+  const vector = `[${Array(1536).fill(0.01).join(",")}]`;
+  const basePost = {
+    raw_text: "RLS check post", city: "Berlin", start_date: "2030-01-10", end_date: "2030-01-12",
+    interests: ["cafes"], budget: null, vibe: null, headline: ["RLS check.", "Please ignore."], tone: "mint",
+  };
+  const args = (p) => ({
+    p_raw_text: p.raw_text, p_city: p.city, p_start_date: p.start_date, p_end_date: p.end_date,
+    p_interests: p.interests, p_budget: p.budget, p_vibe: p.vibe, p_headline: p.headline, p_tone: p.tone,
+  });
+  const publish = (client, overrides = {}) =>
+    client.rpc("publish_post", { ...args({ ...basePost, ...overrides }), p_ai_assisted: false, p_embedding: vector });
+  const updatePost = (client, overrides = {}) =>
+    client.rpc("update_post", { ...args({ ...basePost, ...overrides }), p_embedding: null });
+  const hasActive = async (who) =>
+    (await who.client.from("posts").select("id").eq("status", "active").maybeSingle()).data !== null;
+
+  // The writer must have no active post (so a publish never archives a real one).
+  const [aBusy, bBusy] = [await hasActive(A), await hasActive(B)];
+  const writer = !aBusy ? A : !bBusy ? B : null;
+  const other = writer === A ? B : A;
+  const W = writer === A ? "A" : "B";
+  const O = writer === A ? "B" : "A";
+  const createdPosts = [];
+  try {
+    // --- direct writes are refused for everyone ---
+    {
+      const { error } = await A.client.from("posts").insert({ ...basePost, user_id: A.id, embedding: vector });
+      report(/permission denied/.test(error?.message ?? ""), "Direct INSERT into posts is refused", error?.message ?? "insert succeeded!");
+    }
+    {
+      const { data, error } = await A.client.from("posts").update({ raw_text: "WhatsApp +49 170 1234567" }).eq("user_id", A.id).select("id");
+      report(/permission denied/.test(error?.message ?? ""), "Direct UPDATE of posts is refused (e.g. adding a phone number)", error?.message ?? `${data?.length} rows changed!`);
+    }
+    {
+      const { error } = await A.client.from("posts").update({ status: "active" }).eq("status", "archived");
+      report(/permission denied/.test(error?.message ?? ""), "Direct status change (archived → active) is refused", error?.message ?? "update succeeded!");
+    }
+
+    // --- the database's own content rules, through the official write path ---
+    // A failed publish rolls back completely, so these are safe even with a real active post.
+    for (const [label, values, expected] of [
+      ["publish_post rejects a phone number in the plan text", { raw_text: "Berlin, text me at 0151 2345678" }, "Contact details are not allowed"],
+      ["publish_post rejects an email in the headline", { headline: ["Mail a@b.de.", "Thanks."] }, "Contact details are not allowed"],
+      ["publish_post rejects a start date in the past", { start_date: "2020-01-10", end_date: "2020-01-12" }, "cannot start in the past"],
+      ["publish_post rejects an unknown poster tone", { tone: "orange" }, "posts_tone_check"],
+      ["publish_post rejects an unknown interest", { interests: ["skydiving"] }, "posts_interests_check"],
+      ["publish_post rejects a headline line over 22 characters", { headline: ["This line is far too long.", "Ok."] }, "posts_headline_check"],
+      ["publish_post rejects a trip that ends before it starts", { start_date: "2030-01-12", end_date: "2030-01-10" }, "posts_date_order"],
+    ]) {
+      const { data, error } = await publish(A.client, values);
+      if (data) createdPosts.push(data);
+      report((error?.message ?? "").includes(expected), label, error?.message ?? "publish succeeded!");
+    }
+
+    if (!writer) {
+      console.log("SKIP  publish/update success checks: both test accounts have a real active post (left untouched)");
+    } else {
+      const { data: firstId, error: firstError } = await publish(writer.client);
+      if (firstId) createdPosts.push(firstId);
+      report(Boolean(firstId) && !firstError, `${W} can publish a post (publish_post)`, firstError?.message ?? "1 post created");
+
+      const { data: secondId, error: secondError } = await publish(writer.client, { headline: ["Second post.", "Please ignore."] });
+      if (secondId) createdPosts.push(secondId);
+      const { data: first } = await writer.client.from("posts").select("status").eq("id", firstId).single();
+      report(!secondError && first?.status === "archived", "publish_post archives the previous active post (one active post)", secondError?.message ?? `first post is now ${first?.status}`);
+
+      {
+        const { data, error } = await updatePost(writer.client, { city: "Hamburg" });
+        const { data: row } = await writer.client.from("posts").select("city").eq("id", secondId).single();
+        report(!error && data === secondId && row?.city === "Hamburg", `${W} can edit the active post (update_post)`, error?.message ?? `city is now ${row?.city}`);
+      }
+      {
+        const { error } = await updatePost(writer.client, { vibe: "call me on 0151 2345678" });
+        report((error?.message ?? "").includes("Contact details are not allowed"), "update_post rejects a phone number", error?.message ?? "update succeeded!");
+      }
+      {
+        const { data, error } = await other.client.from("posts").select("id, city").eq("user_id", writer.id);
+        report(!error && data?.length === 0, `${O} can NOT read ${W}'s posts directly (owner-only)`, error?.message ?? `${data?.length} rows visible`);
+      }
+      {
+        const { data, error } = await other.client.from("posts").delete().eq("user_id", writer.id).select("id");
+        const { data: still } = await writer.client.from("posts").select("id").in("id", createdPosts);
+        report((Boolean(error) || data?.length === 0) && still?.length === createdPosts.length, `${O} cannot delete ${W}'s posts`, error?.message ?? `${data?.length} rows deleted`);
+      }
+    }
+
+    {
+      const { error } = await A.client.from("posts").select("embedding").limit(1);
+      report(Boolean(error), "Nobody can read the embedding column, not even the owner", error?.message ?? "embedding readable!");
+    }
+    {
+      const { error } = await anon.from("posts").select("id").limit(1);
+      report(Boolean(error), "Signed-out (anon) cannot read posts", error?.message ?? "read succeeded!");
+    }
+    for (const fn of ["publish_post", "update_post", "consume_ai_quota"]) {
+      const params = fn === "consume_ai_quota" ? { p_kind: "extract" } : fn === "publish_post"
+        ? { ...args(basePost), p_ai_assisted: false, p_embedding: vector } : { ...args(basePost), p_embedding: null };
+      const { error } = await anon.rpc(fn, params);
+      report(Boolean(error), `Signed-out (anon) cannot call ${fn}`, error?.message ?? "call succeeded!");
+    }
+    {
+      const { data: bogus } = await B.client.rpc("consume_ai_quota", { p_kind: "free_money" });
+      report(bogus === false, "consume_ai_quota refuses an unknown kind", `returned ${bogus}`);
+      if (process.argv.includes("--quota")) {
+        // Opt-in: spends test account B's draft quota for 24 hours.
+        let calls = 0;
+        let ok = true;
+        while (ok && calls < 25) {
+          const { data } = await B.client.rpc("consume_ai_quota", { p_kind: "extract" });
+          ok = data === true;
+          if (ok) calls++;
+        }
+        report(!ok && calls <= 20, "consume_ai_quota stops at 20 drafts per 24 h (--quota)", `refused after ${calls} successful calls`);
+      }
+    }
+  } finally {
+    if (createdPosts.length) {
+      const owner = writer ?? A;
+      const { error } = await owner.client.from("posts").delete().in("id", createdPosts);
+      if (error) console.log(`      WARNING: could not delete test posts: ${error.message}`);
+    }
   }
 } finally {
   const { error } = await update(A.client, snapshot);

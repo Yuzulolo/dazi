@@ -38,8 +38,8 @@ Pending invites · my active post · latest recommendations
 | `/login`, `/signup` | everyone | Auth |
 | `/onboarding` | new users | Basics + travel style quiz |
 | `/home` | signed in | Invites, active post, recommendations |
-| `/posts/new` | signed in | One-sentence post |
-| `/u/[id]` | signed in | Other user's profile (stories, style, cities) |
+| `/u/[id]` | signed in | Other user's profile (style, cities). Their active post appears only via the part D server function (posts are owner-only — see SPEC §6) |
+| `/posts/new`, `/posts/edit` | signed in, onboarded | One sentence → AI draft card (poster preview, tone picker) → publish / edit the active post |
 | `/me/edit` | owner | Edit profile, preferences, social accounts |
 | `/stories/new` | owner | Write story + photos |
 | `/invites` | owner | Received / sent |
@@ -77,6 +77,9 @@ active ──► closed     (user closes it, or end_date has passed — automati
 active ──► archived   (user creates a new post; confirm dialog first)
 ```
 - **Max 1 active post per user.** Old posts stay visible in the user's own history.
+- Publishing while a post is active asks first: *"Replace your current plan?"* — the old one is archived in the same transaction (`publish_post`).
+- An ended plan (end date passed) shows on `/home` as "This plan has ended — post a new one"; it can't be edited. Automatic closing comes with part D.
+- **Posts are owner-only.** Nobody else can query them directly; other users only see a post through the part D matching function (hard filters incl. mutual age/gender preferences applied server-side).
 - When a post becomes closed/archived, its pending invites become `expired`.
 
 ### 2.2 Invite

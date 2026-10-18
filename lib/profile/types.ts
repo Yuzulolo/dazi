@@ -21,5 +21,4 @@ export type ProfileFormState = {
   error?: string;
   values?: ProfileFormValues; // echoed back on error so nothing typed is lost
   birthYear?: string;
-  saved?: boolean;
 };

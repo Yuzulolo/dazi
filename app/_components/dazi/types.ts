@@ -1,7 +1,9 @@
 // Shared types for the Dazi design system (docs/DESIGN.md).
 
-// The four poster tones. Also the post "covers" in part C (SPEC §0.2 C).
-export type Tone = "lavender" | "forest" | "mint" | "pink";
+import type { Tone } from "@/lib/posts/card";
+
+// The four poster tones (defined once in lib/posts/card.ts) — also the post covers (SPEC §0.2 C).
+export type { Tone };
 
 // A recruitment poster as a guest may see it. Guest-safe fields only: the
 // server redacts everything else (no full name, face, exact age, hidden

@@ -93,3 +93,38 @@
   .dazi-root .dazi-form > .primary-button { align-self: stretch; }
 }
 .dazi-root .field-label { font-size: 15px; font-weight: 600; }
+
+/* ---------- Posts: editor, preview, home ---------- */
+.dazi-root .post-poster { display: flex; flex-direction: column; padding: 28px 26px; min-height: 440px; }
+.dazi-root .post-poster h2 { font-size: clamp(32px, 3.4vw, 44px); margin: 14px 0 12px; }
+.dazi-root .post-poster .tags { margin-bottom: 14px; }
+.dazi-root .post-vibe { font-size: 15px; line-height: 1.5; margin: 0 0 12px; }
+.dazi-root .post-ai-note { font-size: 13px; margin: auto 0 0; font-style: italic; }
+.dazi-root .post-editor {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  gap: 24px;
+  align-items: start;
+  max-width: 1160px;
+  margin: 0 auto;
+}
+.dazi-root .post-editor .calm-panel { max-width: none; margin: 0; }
+.dazi-root .post-preview { position: sticky; top: 20px; display: grid; gap: 12px; }
+.dazi-root .post-preview .small-copy { margin: 0; }
+.dazi-root .tone-swatch { width: 18px; height: 18px; border-radius: 50%; background: var(--paper); border: 1px solid #fff9; flex: none; }
+.dazi-root .home-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr);
+  gap: 24px;
+  align-items: start;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.dazi-root .home-layout .calm-panel { max-width: none; margin: 0; }
+.dazi-root .home-layout .calm-panel:only-child { grid-column: 1 / -1; max-width: 760px; margin: 0 auto; width: 100%; }
+@media (max-width: 800px) {
+  .dazi-root .post-editor,
+  .dazi-root .home-layout { grid-template-columns: minmax(0, 1fr); }
+  .dazi-root .post-preview { position: static; }
+  .dazi-root .post-poster { min-height: 0; }
+}

@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -37,6 +38,7 @@ export async function saveBasics(
     return { error: SAVE_FAILED, values, birthYear: birthYearRaw };
   }
 
+  revalidatePath("/onboarding");
   redirect("/onboarding"); // shows step 2
 }
 
@@ -64,5 +66,7 @@ export async function saveStyle(
     return { error: message, values };
   }
 
+  revalidatePath("/home");
+  revalidatePath("/me/edit");
   redirect("/home");
 }

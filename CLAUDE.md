@@ -22,7 +22,7 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 ## Stack
 - Next.js (App Router, TypeScript, Tailwind) — check the installed version in `package.json`; do not assume APIs from older versions.
 - Supabase: Auth (email + password; Google login is Roadmap, SPEC §0.4), Postgres, `pgvector`, Row Level Security
-- OpenRouter for all AI calls (chat model + `openai/text-embedding-3-small`)
+- OpenRouter for all AI calls: chat `google/gemini-2.5-flash-lite` (fallback `openai/gpt-4.1-nano`; the school key blocks Claude models) + `openai/text-embedding-3-small`. Models are set in `lib/ai/openrouter.ts` only.
 - Deployed on Vercel
 - Demo city: Berlin (data model must still support any city)
 
@@ -38,13 +38,17 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 - `app/_components/dazi/` — design-system components (`SiteShell`, `Paper`, `PosterCarousel`, dialogs, badges); `app/_styles/dazi-*.css` — their styles, loaded once via `app/globals.css`
 - `app/matches`, `app/plans/[id]` — guest results and recruitment detail (demo trips until part E)
 - `lib/demo/trips.ts` — fictional, labelled demo trips + the `DEMO_MATCHES` flag
-- `lib/profile/` — profile options, validation, contact-details detector, queries
+- `lib/profile/` — profile options, validation, contact-details detector/stripper, queries
+- `lib/ai/` — OpenRouter wrapper, trip extraction (prompt + JSON schema), embedding text builder (server-only; `.ts` import extensions so scripts can run them)
+- `lib/posts/` — trip card rules (shared by AI cleanup and form validation), queries, date formatting; `app/posts/` — editor, `/posts/new`, `/posts/edit`, server actions
+- `evals/extraction.json` + `scripts/eval-extraction.mjs` — AI extraction eval
 - `scripts/rls-check.mjs` — two-account RLS test via the public Data API
 - `.claude/agents/` — `ai-code-reviewer`, `security-auditor` subagents
 - `next.config.ts` has `cacheComponents: true`: anything that reads cookies, `params` or `searchParams` must render inside `<Suspense>`, or the build fails.
 
 ## Environment variables
 - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` — public
+- `OPENROUTER_API_KEY` — server-only (Production + Preview in Vercel, marked Sensitive). School key: **no spending limit**, so quotas are the only protection
 - `SITE_URL` — server-only; where auth emails send people back to (`http://localhost:3000` locally, the Vercel URL in production / the branch URL in preview)
 - Test-only (local `.env.local`): `TEST_A_EMAIL`, `TEST_A_PASSWORD`, `TEST_B_EMAIL`, `TEST_B_PASSWORD`
 - Names (no values) are listed in `.env.example`.
@@ -55,12 +59,15 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 - `npm run lint` — lint (run before every PR)
 - `node --env-file=.env.local scripts/rls-check.mjs` — two-account RLS test (run after every migration)
 - `npm test` — unit tests (`*.test.mjs`, Node's built-in test runner; e.g. the contact-details detector)
+- `node --conditions=react-server --env-file=.env.local scripts/eval-extraction.mjs` — AI extraction eval (20 real AI calls; run sparingly)
 
 ## Non-negotiable rules
 ### Security
 - **Secrets never go in the repo.** Keys live in `.env.local` (git-ignored) and in Vercel env vars. Never print or commit them.
 - Only `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` may be exposed to the browser. The service-role key and `OPENROUTER_API_KEY` are **server-only**.
 - **Every AI call (chat + embeddings) runs server-side** (route handlers / server actions), never from client components.
+- **Every AI call is rate-limited:** signed-in users through `consume_ai_quota()` (20 drafts + 20 saves per user per rolling 24 h, 1,000 per day site-wide), guests through the per-IP limit (part E). No AI call without a quota check.
+- **Posts are written only through `publish_post()` / `update_post()`** (security definer, pinned to `auth.uid()`); users have no direct INSERT/UPDATE, and the `posts_guard` trigger rejects contact details, past start dates and illegal status changes in the database itself.
 - **Row Level Security is enabled on every table that holds user data**, with explicit policies for select / insert / update / delete. Use `USING` + `WITH CHECK` scoped to `auth.uid()`.
 - Messages are readable only by the participants of an **accepted** invite or the **approved** members of an activity.
 - Storage: users may upload/delete only inside their own `{user_id}/` folder. Strip EXIF/GPS from photos before upload.
