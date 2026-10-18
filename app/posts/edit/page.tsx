@@ -22,6 +22,8 @@ async function EditPost() {
   const user = await getCurrentUser();
   const post = await getMyActivePost(user.id);
   if (!post || post.ended) redirect("/posts/new"); // an ended trip gets a new post, not an edit
+  // key = last save time: Next 16 keeps visited pages alive (Activity) and the editor
+  // reads `initial` only once, so fresh data must remount it — otherwise it shows old values.
   // aiAssisted false here: the AI badge belongs to an unsaved AI draft only.
-  return <PostEditor mode="edit" action={updatePost} initial={{ ...post, aiAssisted: false }} />;
+  return <PostEditor key={post.updatedAt} mode="edit" action={updatePost} initial={{ ...post, aiAssisted: false }} />;
 }

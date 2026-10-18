@@ -16,6 +16,7 @@ export type MyPost = {
   headline: [string, string];
   tone: Tone;
   aiAssisted: boolean;
+  updatedAt: string; // changes on every save — used as the editor's React key
   ended: boolean; // end date has passed; still "active" until part D closes it automatically (FLOWS 2.1)
 };
 
@@ -23,7 +24,7 @@ export async function getMyActivePost(userId: string): Promise<MyPost | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("posts")
-    .select("id, raw_text, city, start_date, end_date, interests, budget, vibe, headline, tone, ai_assisted")
+    .select("id, raw_text, city, start_date, end_date, interests, budget, vibe, headline, tone, ai_assisted, updated_at")
     .eq("user_id", userId)
     .eq("status", "active")
     .maybeSingle();
@@ -41,6 +42,7 @@ export async function getMyActivePost(userId: string): Promise<MyPost | null> {
     headline: [data.headline[0], data.headline[1]],
     tone: data.tone as Tone,
     aiAssisted: data.ai_assisted,
+    updatedAt: data.updated_at,
     ended: data.end_date < todayInBerlin().iso,
   };
 }

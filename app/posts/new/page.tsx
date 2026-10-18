@@ -21,5 +21,13 @@ async function NewPost() {
   const user = await getCurrentUser();
   const active = await getMyActivePost(user.id);
   // An ended plan is replaced without asking; a running one needs the confirm dialog.
-  return <PostEditor mode="new" action={publishPost} hasActivePost={active !== null && !active.ended} />;
+  // key = current active post: after publishing, a kept-alive editor starts fresh.
+  return (
+    <PostEditor
+      key={active?.id ?? "none"}
+      mode="new"
+      action={publishPost}
+      hasActivePost={active !== null && !active.ended}
+    />
+  );
 }

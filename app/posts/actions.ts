@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -46,6 +47,13 @@ export async function extractTripAction(text: string): Promise<ExtractResult> {
 
 export type PostFormState = { error?: string };
 
+// After a save, every page that shows the post must be re-rendered from the server.
+// Without this the browser reuses its copy of /posts/edit (Next 16 client cache +
+// Activity), and the editor showed the previous values (re-test bug, 18 Oct).
+function refreshPostPages() {
+  for (const path of ["/home", "/posts/edit", "/posts/new"]) revalidatePath(path);
+}
+
 const QUOTA_MESSAGE = "You've reached today's limit of 20 saves. Please try again tomorrow — nothing you typed is lost.";
 const SAVE_FAILED = "Couldn't save your plan right now. Please try again — nothing you typed is lost.";
 // The database's own rules (posts_guard / CHECKs) answer with 23514 if something slipped past.
@@ -91,6 +99,7 @@ export async function publishPost(_prev: PostFormState, formData: FormData): Pro
     console.error("publish_post failed:", error.code);
     return { error: error.code === "23514" ? DB_REFUSED : SAVE_FAILED };
   }
+  refreshPostPages();
   redirect("/home?posted=1");
 }
 
@@ -132,5 +141,6 @@ export async function updatePost(_prev: PostFormState, formData: FormData): Prom
     if (error.code === "P0002") return { error: "This plan was replaced or ended in the meantime. Please reload the page." };
     return { error: error.code === "23514" ? DB_REFUSED : SAVE_FAILED };
   }
+  refreshPostPages();
   redirect("/home?posted=1");
 }

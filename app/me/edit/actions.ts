@@ -1,8 +1,10 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { parseBasics, parseStyle, readFormValues, toFormValues } from "@/lib/profile/validate";
+import { parseBasics, parseStyle, readFormValues } from "@/lib/profile/validate";
 import type { ProfileFormState } from "@/lib/profile/types";
 
 // Edit everything except the (locked) birth year. Only onboarded users get here:
@@ -30,6 +32,11 @@ export async function updateProfile(
     return { error: "Couldn't save your changes. Please check them and try again.", values };
   }
 
-  // Show what was stored (trimmed, de-duplicated), not the raw input.
-  return { saved: true, values: toFormValues(update) };
+  // Every page that shows profile data is re-rendered from the server (Next 16 client cache),
+  // then a fresh /me/edit shows the stored values (trimmed, de-duplicated) and "Saved.".
+  // Errors above return state instead, so nothing the user typed is lost.
+  revalidatePath("/home");
+  revalidatePath(`/u/${user.id}`);
+  revalidatePath("/me/edit");
+  redirect("/me/edit?saved=1");
 }

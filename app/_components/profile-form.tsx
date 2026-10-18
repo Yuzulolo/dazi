@@ -27,11 +27,6 @@ export function ProfileForm({ action, initial, sections, submitLabel }: Props) {
       )}
       {sections.style && <StyleFields values={values} />}
       <FormError error={state.error} />
-      {state.saved && (
-        <p className="form-success" aria-live="polite">
-          Saved.
-        </p>
-      )}
       <button type="submit" className="primary-button" disabled={pending}>
         {pending ? "Saving…" : submitLabel}
       </button>
