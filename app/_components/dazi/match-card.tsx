@@ -1,0 +1,52 @@
+import { TRAVEL_INTERESTS, LANGUAGES, labelOf } from "@/lib/profile/options";
+import { formatDateRange } from "@/lib/posts/format";
+import type { Match, MatchReason } from "@/lib/matching/types";
+import type { Tone } from "@/lib/posts/card";
+import { AIBadge, DemoBadge, Headline, Identity, Paper, Tags } from "./primitives";
+
+// One match on /home "For you": the other person's plan as a poster, the reason
+// (AI-generated or rule-based) and the three parts of the score.
+export function MatchCard({ match, reason }: { match: Match; reason: MatchReason }) {
+  const parts: [string, number][] = [
+    ["Trip", match.tripScore],
+    ["Style", match.styleScore],
+    ["Personality", match.personalityScore],
+  ];
+  return (
+    <Paper tone={match.tone as Tone} className="match-card">
+      <p className="eyebrow">Similar plan</p>
+      {match.isDemo && <DemoBadge />}
+      <Headline lines={match.headline} />
+      <p className="trip-date">
+        {match.city} / {formatDateRange(match.overlapStart, match.overlapEnd)}
+      </p>
+      <Tags values={match.interests.map((v) => labelOf(TRAVEL_INTERESTS, v))} label="Interests" />
+      <Identity
+        trip={{
+          name: match.displayName,
+          ageRange: match.ageRange ?? "—",
+          languages: match.languages.map((v) => labelOf(LANGUAGES, v)),
+        }}
+      />
+      <div className="glass match-reason">
+        <p className="eyebrow">
+          Why you might get along {reason.ai ? <AIBadge /> : <span className="demo-badge">Suggested match</span>}
+        </p>
+        <p>{reason.text}</p>
+        <dl className="score-parts" aria-label="Why you match">
+          {parts.map(([label, value]) => (
+            <div key={label}>
+              <dt>{label}</dt>
+              <dd>
+                <span className="score-bar" aria-hidden="true">
+                  <span style={{ width: `${Math.round(value * 100)}%` }} />
+                </span>
+                {Math.round(value * 100)}%
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    </Paper>
+  );
+}

@@ -6,6 +6,10 @@ import { getCurrentUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { parseBasics, parseStyle, readFormValues } from "@/lib/profile/validate";
 import type { ProfileFormState } from "@/lib/profile/types";
+import { getMyProfile } from "@/lib/profile/queries";
+import { profileEmbeddingText } from "@/lib/ai/profile-text";
+import { refreshMyProfileEmbedding } from "@/lib/ai/profile-embedding";
+import { splitList } from "@/lib/profile/validate";
 
 // Edit everything except the (locked) birth year. Only onboarded users get here:
 // getCurrentUser() redirects everyone else to /onboarding.
@@ -21,6 +25,15 @@ export async function updateProfile(
   const style = parseStyle(values);
   if (!style.ok) return { error: style.error, values };
 
+  // What the personality embedding is built from, before and after this save.
+  const before = (await getMyProfile()).values;
+  const beforeText = profileEmbeddingText({
+    bio: before.bio || null,
+    hobbies: splitList(before.hobbies),
+    visitedCities: splitList(before.visitedCities),
+    travelInterests: before.travelInterests,
+  });
+
   const supabase = await createClient();
   const update = { ...basics.update, ...style.update };
   const { error } = await supabase
@@ -31,6 +44,15 @@ export async function updateProfile(
     console.error("updateProfile failed:", error.code);
     return { error: "Couldn't save your changes. Please check them and try again.", values };
   }
+
+  // Only re-embed when bio, hobbies, cities or interests changed (name/preferences are free).
+  const afterText = profileEmbeddingText({
+    bio: update.bio,
+    hobbies: update.hobbies,
+    visitedCities: update.visited_cities,
+    travelInterests: update.travel_interests,
+  });
+  if (afterText !== beforeText) await refreshMyProfileEmbedding(afterText);
 
   // Every page that shows profile data is re-rendered from the server (Next 16 client cache),
   // then a fresh /me/edit shows the stored values (trimmed, de-duplicated) and "Saved.".
