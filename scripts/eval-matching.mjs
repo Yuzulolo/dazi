@@ -42,7 +42,7 @@ for (const c of cases) {
     if (data.slice(0, 3).some((r) => accepted.includes(r.post_id))) hitsAny[name]++;
     ranks.push(rank === 0 ? "—" : `#${rank}`);
   }
-  const tag = `${c.picked_by === "director" ? "director" : "developer"}${c.pool_size ? `, pool ${c.pool_size}` : ""}`;
+  const tag = `${c.picked_by.startsWith("Yuzu") ? "Yuzu" : "Claude"}${c.pool_size ? `, pool ${c.pool_size}` : ""}`;
   console.log(`${c.viewer} → ${c.best_buddy}  (${tag})   ${WEIGHTS.map(([n], i) => `${n}: ${ranks[i]}`).join(" · ")}`);
 }
 console.log("\nTop-3 hit rate (best buddy)          | best buddy or an 'also good' pick");

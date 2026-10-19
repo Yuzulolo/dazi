@@ -35,7 +35,7 @@ Guest types one sentence on the homepage → AI trip card → 5 anonymised simil
 **Rule: quality over quantity.** The core flow (A–F) must work end-to-end and be polished. There is no stretch feature in the capstone (dropped 17 Oct).
 
 ### 0.4 Roadmap (not in capstone — mention in "What's next")
-Google login · avatar & travel stories with photos · **trip photo upload with a vision-AI check + mood description used in matching** (FLOWS 2.7; was stretch, dropped from the capstone 17 Oct — must follow all storage rules: own `{user_id}/` folder, EXIF/GPS stripped, server-side AI call) · Facebook verification + mutual social reveal · after-meeting feedback (safety check + positive tags) · group activities · match-break limit (2 per 30 days) · realtime chat · email notifications.
+Google login · avatar & travel stories with photos · **trip photo upload with a vision-AI check + mood description used in matching** (FLOWS 2.7; was stretch, dropped from the capstone 17 Oct — must follow all storage rules: own `{user_id}/` folder, EXIF/GPS stripped, server-side AI call) · Facebook verification + mutual social reveal · after-meeting feedback (safety check + positive tags) · group activities · match-break limit (2 per 30 days) · realtime chat · email notifications · **overlap length in the match score** (longer shared stays rank higher; today dates are a pass/fail filter).
 
 ### 0.5 Stretch
 None — the former stretch feature (trip photo + vision AI) moved to §0.4 Roadmap on 17 Oct.
@@ -133,7 +133,7 @@ None — the former stretch feature (trip photo + vision AI) moved to §0.4 Road
 - **Extraction:** 20 test sentences → ≥ 90% fields correct.
 - **Vision check:** 15 test photos (fine / contact details / inappropriate) → ≥ 13/15 correct decisions.
 - **Hard filters:** 10 crafted cases → 10/10 correctly excluded.
-- **Match quality:** 10 test users with a hand-picked best buddy → in top 3 for ≥ 8/10. Compare trip-only → +style → +personality.
+- **Match quality:** 10 test users with a hand-picked best buddy → in top 3 for ≥ 8/10. Compare trip-only → +style → +personality. **Result (19 Oct):** 10/10 at all three weightings — target met, ablation inconclusive (test set too easy); hard filters 10/10. Details: `evals/MATCHING-RESULTS.md`.
 - **Security:** two-account tests (no reading others' invites/messages/socials/feedback, no uploading to others' folders); guest response contains **no** names/avatars (check network tab); incognito test on live URL; `/security-scan` clean.
 
 ## 9. Course requirements checklist

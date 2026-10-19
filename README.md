@@ -31,7 +31,7 @@ Capstone scope (deadline 20 Oct 2026, see [`docs/SPEC.md`](docs/SPEC.md) §0):
 | A. Email auth, 18+ check, `profiles` + RLS, deploy | ✅ done |
 | B. Onboarding & profile (incl. travel style quiz), private birth year / gender / preferences | ✅ done |
 | C. Intent post (AI extraction, poster tones, embeddings, per-user AI quota) | ✅ done |
-| D. Matching + AI reasons + seed data | ⏳ |
+| D. Matching + AI reasons + seed data ([eval results](evals/MATCHING-RESULTS.md)) | ✅ done |
 | E. Homepage guest search (anonymised, rate-limited) | ⏳ |
 | F. Invites + simple message thread | ⏳ |
 | G. Safety & compliance (block/report, AI labels, delete my data) | ⏳ |
