@@ -31,7 +31,7 @@
 | M3 | `consume_ai_quota` can be called directly to use up slots without AI calls; ~15 throwaway accounts could exhaust the 1,000/day site ceiling; deleting an account resets personal limits | **Accepted** (graceful fallback to manual forms / rule-based reasons) → follow-up: consume quota only inside server-side AI paths. |
 | M4 | Preview and production share one database and the OpenRouter key | **Accepted** (documented in CLAUDE.md; previews are protected). Optional: separate OpenRouter key for Preview. |
 | M5 | The 18+ birth-year check only applies to email sign-up | **Accepted** — only Email is enabled (checklist). |
-| M6 | The owner's `+demo` email is in a committed migration (also in the README by design) | **Accepted** — it is the published demo login. |
+| M6 | The published demo login was a `+` alias of the owner's personal email (README, a committed migration) | **Fixed** — moved to the dedicated `demo@dazi-demo.invalid` (`20261019191240_move_demo_login.sql`); the old account is deleted (`20261019191241_delete_old_demo_login.sql`). The old address remains in an applied migration and in git history (history is not rewritten). The owner's personal email stays on `/privacy` on purpose, as the GDPR contact. |
 
 ### Low
 | # | Finding | Status |
