@@ -48,7 +48,13 @@ export function HomeWall({ trips, demo, viewer }: { trips: GuestTrip[]; demo: bo
   return (
     <>
       <div className="wall-caption">
-        A WALL OF LITTLE PLANS {demo && <span>DESIGN DEMO · FICTIONAL TRIPS</span>}
+        A WALL OF LITTLE PLANS{" "}
+        {demo && viewer.status === "guest" && <span>DESIGN DEMO · FICTIONAL TRIPS</span>}
+        {demo && viewer.status !== "guest" && (
+          <Link className="text-button caption-demo" href="/home">
+            Example posters — your real matches are on Home →
+          </Link>
+        )}
         {viewer.status === "guest" && <DemoButton className="text-button caption-demo" label="Try the demo account ↗" />}
       </div>
       <PosterCarousel items={items} />

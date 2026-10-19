@@ -2,7 +2,7 @@
 
 **🔗 Live app:** https://dazi-five-tau.vercel.app
 
-**🔑 Demo login for reviewers:** email `xiangquyuanfang+demo@hotmail.com` · password `k5nNGUEfygEgPLF` (a dedicated, shared demo account, 18+, already confirmed) — or just click **"Try the demo account"** on the homepage or the login page. The demo account can't be deleted and is reset before demos; anything you enter there is visible to other visitors. Privacy notice: [/privacy](https://dazi-five-tau.vercel.app/privacy)
+**🔑 Demo login for reviewers:** email `demo@dazi-demo.invalid` · password `88888888` (a dedicated, shared demo account, 18+, already confirmed) — or just click **"Try the demo account"** on the homepage or the login page. The demo account can't be deleted and is reset before demos; anything you enter there is visible to other visitors. Privacy notice: [/privacy](https://dazi-five-tau.vercel.app/privacy)
 
 ---
 
@@ -89,6 +89,7 @@ Apply the migrations in `supabase/migrations/` in filename order via the Supabas
 | `node --conditions=react-server --env-file=.env.local scripts/eval-extraction.mjs` | AI extraction eval (20 real AI calls) |
 | `node --env-file=.env.local scripts/eval-matching.mjs` | matching eval (no AI calls) |
 | `node --conditions=react-server --env-file=.env.local scripts/seed-demo.mjs [--cleanup]` | 30 demo users in Berlin |
+| `node --env-file=.env.local scripts/create-demo-account.mjs` | create the dedicated demo login (once) |
 | `node --conditions=react-server --env-file=.env.local scripts/reset-demo-account.mjs` | restore the public demo login |
 
 ## AI disclosure: built with Claude Code

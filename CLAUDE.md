@@ -71,6 +71,7 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 - `node --conditions=react-server --env-file=.env.local scripts/seed-demo.mjs` — 30 demo users in Berlin (idempotent; `--cleanup` removes them; 60 embedding calls)
 - `node --conditions=react-server --env-file=.env.local scripts/backfill-profile-embeddings.mjs` — personality embeddings for older profiles
 - `node --env-file=.env.local scripts/eval-matching.mjs` — matching eval (top-3 hit rate + hard filters; no AI calls)
+- `node --env-file=.env.local scripts/create-demo-account.mjs` — create the dedicated demo login (`DEMO_EMAIL` = `demo@dazi-demo.invalid`) if it does not exist; `profiles.is_protected` marks it
 - `node --conditions=react-server --env-file=.env.local scripts/reset-demo-account.mjs` — restore the public demo login (profile, plan, **password**, AI counters) before a demo or grading session. If a visitor changed the demo password, also sign out every demo session in the Supabase SQL Editor: `delete from auth.sessions where user_id = (select id from public.profiles where is_protected);`
 
 ## Non-negotiable rules
