@@ -475,7 +475,7 @@ try {
       ["match_my_post", {}],
       ["match_suggestion", {}],
       ["get_my_match_reasons", { p_candidate_post_ids: [] }],
-      ["save_my_match_reasons", { p_reasons: [] }],
+      ["save_my_match_reasons", { p_reasons: [], p_generated_at: new Date().toISOString() }],
       ["set_my_profile_embedding", { p_embedding: vector }],
       ["match_candidates_for_eval", { p_user: A.id, w_trip: 1, w_style: 0, w_personality: 0 }],
     ]) {
