@@ -27,6 +27,7 @@ const postOf = (userId) => buddyPosts.find((p) => p.user_id === userId)?.id;
 console.log("Ranking: is the hand-picked best buddy in the top 3?\n");
 const hits = Object.fromEntries(WEIGHTS.map(([name]) => [name, 0]));
 const hitsAny = Object.fromEntries(WEIGHTS.map(([name]) => [name, 0])); // best buddy OR one of the "also good"
+const scoredCount = cases.filter((c) => c.scored !== false).length;
 for (const c of cases) {
   const viewer = idOf(c.viewer);
   const buddyPost = postOf(idOf(c.best_buddy));
@@ -37,16 +38,16 @@ for (const c of cases) {
     });
     if (error) throw new Error(`${c.viewer}: ${error.message}`);
     const rank = data.findIndex((r) => r.post_id === buddyPost) + 1;
-    if (rank >= 1 && rank <= 3) hits[name]++;
+    if (c.scored !== false && rank >= 1 && rank <= 3) hits[name]++;
     const accepted = [buddyPost, ...(c.also_good ?? []).map((k) => postOf(idOf(k)))];
-    if (data.slice(0, 3).some((r) => accepted.includes(r.post_id))) hitsAny[name]++;
+    if (c.scored !== false && data.slice(0, 3).some((r) => accepted.includes(r.post_id))) hitsAny[name]++;
     ranks.push(rank === 0 ? "—" : `#${rank}`);
   }
-  const tag = `${c.picked_by.startsWith("Yuzu") ? "Yuzu" : "Claude"}${c.pool_size ? `, pool ${c.pool_size}` : ""}`;
+  const tag = `${c.picked_by.startsWith("Yuzu") ? "Yuzu" : "Claude"}${c.pool_size ? `, pool ${c.pool_size}` : ""}${c.scored === false ? ", NOT scored" : ""}`;
   console.log(`${c.viewer} → ${c.best_buddy}  (${tag})   ${WEIGHTS.map(([n], i) => `${n}: ${ranks[i]}`).join(" · ")}`);
 }
-console.log("\nTop-3 hit rate (best buddy)          | best buddy or an 'also good' pick");
-for (const [name] of WEIGHTS) console.log(`  ${name.padEnd(28)} ${hits[name]}/${cases.length}      | ${hitsAny[name]}/${cases.length}`);
+console.log(`\nTop-3 hit rate over ${scoredCount} scored cases (${cases.length - scoredCount} not scored)  | best buddy or an 'also good' pick`);
+for (const [name] of WEIGHTS) console.log(`  ${name.padEnd(28)} ${hits[name]}/${scoredCount}      | ${hitsAny[name]}/${scoredCount}`);
 
 // ---------- 2. hard filters ----------
 console.log("\nHard filters (Filtertown fixtures)\n");

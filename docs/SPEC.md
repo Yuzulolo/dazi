@@ -133,7 +133,7 @@ None — the former stretch feature (trip photo + vision AI) moved to §0.4 Road
 - **Extraction:** 20 test sentences → ≥ 90% fields correct.
 - **Vision check:** 15 test photos (fine / contact details / inappropriate) → ≥ 13/15 correct decisions.
 - **Hard filters:** 10 crafted cases → 10/10 correctly excluded.
-- **Match quality:** 10 test users with a hand-picked best buddy → in top 3 for ≥ 8/10. Compare trip-only → +style → +personality. **Result (19 Oct):** 10/10 at all three weightings — target met, ablation inconclusive (test set too easy); hard filters 10/10. Details: `evals/MATCHING-RESULTS.md`.
+- **Match quality:** 10 test users with a hand-picked best buddy → in top 3 for ≥ 8/10. Compare trip-only → +style → +personality. **Result (19 Oct):** 9/9 scored cases hit at all three weightings (1 case not scored: pool of 2) — target met, ablation inconclusive (test set too easy); hard filters 10/10. Details: `evals/MATCHING-RESULTS.md`.
 - **Security:** two-account tests (no reading others' invites/messages/socials/feedback, no uploading to others' folders); guest response contains **no** names/avatars (check network tab); incognito test on live URL; `/security-scan` clean.
 
 ## 9. Course requirements checklist

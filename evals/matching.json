@@ -32,9 +32,10 @@
   {
    "viewer": "demo-07",
    "best_buddy": "demo-15",
-   "why": "Director's pick (Greta). Scored like the others, but note: only 2 eligible candidates (Greta, Paul), so a top-3 hit is guaranteed.",
+   "why": "Director's pick (Greta). NOT scored: only 2 eligible candidates (Greta, Paul), so a top-3 hit is guaranteed.",
    "picked_by": "Yuzu (director)",
-   "pool_size": 2
+   "pool_size": 2,
+   "scored": false
   },
   {
    "viewer": "demo-10",
