@@ -47,7 +47,8 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 - `lib/matching/` — match types, `match_my_post` / `match_suggestion` wrappers, rule-based fallback reason; `lib/ai/match-reasons.ts` (cached, batched AI reasons), `lib/ai/profile-text.ts` + `profile-embedding.ts` (personality embedding)
 - `scripts/seed-demo.mjs` (+ `scripts/seed/demo-users.json`), `scripts/backfill-profile-embeddings.mjs`, `scripts/eval-matching.mjs` + `evals/matching.json` — local-only, service role
 - `scripts/rls-check.mjs` — two-account RLS test via the public Data API
-- `.claude/agents/` — `ai-code-reviewer`, `security-auditor` subagents
+- `.claude/` — project tools: agents `ai-code-reviewer` (PR reviews), `security-auditor`, `supabase-security-scanner`, `nextjs-security-scanner`, `vercel-security-scanner`; command **`/security-audit`** (runs the three scanners in parallel and merges their findings); skills `supabase`, `supabase-postgres-best-practices`; `references/` (Next.js data security, Vercel deployment security). Relative paths only, no secrets.
+- `docs/SECURITY-AUDIT.md` — latest security audit: findings, fixes, accepted risks, follow-ups, dashboard checklist
 - `next.config.ts` has `cacheComponents: true`: anything that reads cookies, `params` or `searchParams` must render inside `<Suspense>`, or the build fails.
 
 ## Environment variables
@@ -63,7 +64,8 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 - `npm run dev` — local dev server at http://localhost:3000
 - `npm run build` — production build (run before every PR)
 - `npm run lint` — lint (run before every PR)
-- `node --env-file=.env.local scripts/rls-check.mjs` — two-account RLS test (run after every migration)
+- `node --env-file=.env.local scripts/rls-check.mjs` — RLS / security test, 82 checks (two test accounts + temporary users via the service role key; run after every migration)
+- `/security-audit` (Claude Code command) — three-scanner security audit, report only
 - `npm test` — unit tests (`*.test.mjs`, Node's built-in test runner; e.g. the contact-details detector)
 - `node --conditions=react-server --env-file=.env.local scripts/eval-extraction.mjs` — AI extraction eval (20 real AI calls; run sparingly)
 - `node --conditions=react-server --env-file=.env.local scripts/seed-demo.mjs` — 30 demo users in Berlin (idempotent; `--cleanup` removes them; 60 embedding calls)
@@ -76,7 +78,7 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 - **Secrets never go in the repo.** Keys live in `.env.local` (git-ignored) and in Vercel env vars. Never print or commit them.
 - Only `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` may be exposed to the browser. The service-role key and `OPENROUTER_API_KEY` are **server-only**.
 - **Every AI call (chat + embeddings) runs server-side** (route handlers / server actions), never from client components.
-- **Every AI call is rate-limited:** signed-in users through `consume_ai_quota()` (20 drafts + 20 saves per user per rolling 24 h, 1,000 per day site-wide), guests through the per-IP limit (part E). No AI call without a quota check.
+- **Every AI call is rate-limited** through `consume_ai_quota()` before the call: per user per rolling 24 h 20 drafts (`extract`), 20 plan saves (`embed`), 20 match-reason calls (`reason`), 10 profile embeddings (`profile`); 1,000 calls per day site-wide. No AI call without a quota check. (Guests make no AI calls; full guest search is Roadmap.)
 - **"Delete my data":** `/settings` → `public.delete_my_account()` (security definer, pinned to `auth.uid()`, no service role key). Every user table must cascade from `auth.users` — add `on delete cascade` to any new table and extend `supabase/checks/phase5_delete_account_check.sql`. The public demo login (`profiles.is_protected`) and demo users (`is_demo`) can't be deleted.
 - **Posts are written only through `publish_post()` / `update_post()`** (security definer, pinned to `auth.uid()`); users have no direct INSERT/UPDATE, and the `posts_guard` trigger rejects contact details, past start dates and illegal status changes in the database itself.
 - **Row Level Security is enabled on every table that holds user data**, with explicit policies for select / insert / update / delete. Use `USING` + `WITH CHECK` scoped to `auth.uid()`.
@@ -99,6 +101,13 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 - Preview and production share one Supabase database. Every migration must stay compatible with the code currently on main (expand first, remove later). Check this before proposing any migration.
 - Read-only verification queries live in `supabase/checks/` (committed), so they can be copied with `pbcopy < file`.
 - Every new email user needs `birth_year` and `display_name` in its user metadata — the sign-up trigger refuses it otherwise. This includes Supabase Dashboard "Add user", `auth.admin.createUser` and seed scripts (error: "Database error creating new user").
+
+### Lessons learned (keep doing this)
+- **Shared database:** preview and production use the same Supabase project — every migration must be expand-only and compatible with the code on `main`; show the SQL and a read-only check query before applying.
+- **Trigger functions that call `private.*` helpers must be `SECURITY DEFINER` with `set search_path = ''`** (revoked from client roles). A trigger runs as whoever writes the row: `authenticated` users, the service role in scripts, or the definer `handle_new_user` at sign-up — client roles have no EXECUTE on `private` helpers, so an invoker trigger breaks writes in production.
+- **Tests must fail for the right reason:** every RLS check matches the expected error text (e.g. "permission denied for function", a named CHECK constraint), and positive controls prove an exclusion isn't an empty result.
+- **Demo login:** shared and public. Before a demo or grading: run `scripts/reset-demo-account.mjs` (password, profile, plan, AI counters) and sign out its sessions with the SQL above.
+- **Security headers** live in `next.config.ts` (`headers()`); a full CSP with `script-src` is a follow-up (nonces break prerendering).
 
 ### AI & compliance
 - Label every AI-generated text in the UI as "AI-generated" (EU AI Act Art. 50).

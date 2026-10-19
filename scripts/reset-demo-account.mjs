@@ -9,8 +9,9 @@
 // - restores the profile from scripts/seed/demo-account.json (+ personality embedding)
 // - replaces its plans with one Berlin plan starting 2 days from today (+ trip embedding)
 //   (deleting the old plans also removes their cached match reasons — cascade)
-// Costs: 2 embedding calls. Its AI usage counters are not reset (they live in the unexposed
-// private schema); they expire on their own after 24 h. Existing demo SESSIONS are not
+// - clears its AI usage counters via public.reset_demo_ai_quota() (service role only; it can
+//   only ever touch the account flagged is_protected)
+// Costs: 2 embedding calls. Existing demo SESSIONS are not
 // signed out by this script (the admin API can't list them): run the one-line SQL in
 // CLAUDE.md ("Demo account") in the Supabase SQL Editor when someone changed the password.
 import { readFile } from "node:fs/promises";
@@ -79,4 +80,8 @@ const { error: postError } = await admin.from("posts").insert({
 });
 if (postError) throw new Error(`plan: ${postError.message}`);
 console.log(`ok  plan restored: Berlin ${plan.startDate} → ${plan.endDate} "${post.headline.join(" ")}"`);
+
+const { data: cleared, error: quotaError } = await admin.rpc("reset_demo_ai_quota");
+if (quotaError) throw new Error(`AI counters: ${quotaError.message}`);
+console.log(`ok  AI usage counters cleared (${cleared} rows)`);
 console.log("\nDemo account reset.");
