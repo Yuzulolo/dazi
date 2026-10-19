@@ -4,18 +4,21 @@
 // 2. Hard filters: temporary fixture users in a fake city ("Filtertown") — 10 must be
 //    excluded, 1 positive control must appear. Fixtures are deleted afterwards.
 //
-//   node --env-file=.env.local scripts/eval-matching.mjs
+//   node --env-file=.env.local scripts/eval-matching.mjs                 (ranking + hard filters + age bands)
+//   node --env-file=.env.local scripts/eval-matching.mjs --filters-only  (hard filters + age bands only)
 import { readFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
-import { adminClient, isDemoEmail, listAllUsers } from "./lib/admin.mjs";
+import { adminClient, DEMO_DOMAIN, listDemoUsers } from "./lib/admin.mjs";
 
 const admin = adminClient();
 const { cases } = JSON.parse(await readFile(new URL("../evals/matching.json", import.meta.url), "utf8"));
-const users = (await listAllUsers(admin)).filter((u) => isDemoEmail(u.email));
-const domain = users[0]?.email.split("@")[1] ?? "dazi-demo.invalid"; // same domain the seed used
-const idOf = (key) => users.find((u) => u.email.startsWith(`${key}@`))?.id;
+const users = (await listDemoUsers(admin)).flagged;
+const idOf = (key) => users.find((u) => u.email === `${key}@${DEMO_DOMAIN}`)?.id;
+
+const filtersOnly = process.argv.includes("--filters-only");
 
 // ---------- 1. ranking ----------
+if (!filtersOnly) {
 const WEIGHTS = [
   ["trip only", [1, 0, 0]],
   ["trip + style", [0.4 / 0.75, 0.35 / 0.75, 0]],
@@ -48,6 +51,7 @@ for (const c of cases) {
 }
 console.log(`\nTop-3 hit rate over ${scoredCount} scored cases (${cases.length - scoredCount} not scored)  | best buddy or an 'also good' pick`);
 for (const [name] of WEIGHTS) console.log(`  ${name.padEnd(28)} ${hits[name]}/${scoredCount}      | ${hitsAny[name]}/${scoredCount}`);
+}
 
 // ---------- 2. hard filters ----------
 console.log("\nHard filters (Filtertown fixtures)\n");
@@ -73,7 +77,7 @@ const fixtures = [
 const created = [];
 async function makeUser(label, spec) {
   const { data, error } = await admin.auth.admin.createUser({
-    email: `eval-${randomUUID().slice(0, 8)}@${domain}`,
+    email: `eval-${randomUUID().replace(/-/g, "").slice(0, 8)}@${DEMO_DOMAIN}`,
     password: `${randomUUID()}Aa1!`,
     email_confirm: true,
     user_metadata: { display_name: "Eval", birth_year: year - spec.age },
@@ -115,3 +119,32 @@ try {
   for (const id of created) await admin.auth.admin.deleteUser(id);
 }
 console.log(`\nHard filters: ${excluded}/${fixtures.length - 1} excluded, control ${controlFound ? "found" : "MISSING"}. Fixtures deleted (${created.length}).`);
+
+// ---------- 3. age bands (review C1): a "31–31" preference may only narrow to the 30–34 band ----------
+console.log("\nAge bands: viewer prefers exactly 31–31 → only the 30–34 band may appear\n");
+const bandCreated = [];
+let bandOk = true;
+try {
+  const viewer = await makeUser("band viewer", { ...base, gender: "man", pref_gender: null, pref_age_min: 31, pref_age_max: 31 });
+  bandCreated.push(viewer.userId);
+  const ages = [[29, false], [30, true], [34, true], [35, false]];
+  const made = [];
+  for (const [age, shouldAppear] of ages) {
+    const f = await makeUser(`age ${age}`, { ...base, age });
+    bandCreated.push(f.userId);
+    made.push([age, shouldAppear, f]);
+  }
+  const { data, error } = await admin.rpc("match_candidates_for_eval", {
+    p_user: viewer.userId, w_trip: 0.4, w_style: 0.35, w_personality: 0.25, p_limit: 100,
+  });
+  if (error) throw error;
+  const seen = new Set(data.map((r) => r.post_id));
+  for (const [age, shouldAppear, f] of made) {
+    const appears = seen.has(f.postId);
+    if (appears !== shouldAppear) bandOk = false;
+    console.log(`${appears === shouldAppear ? "PASS" : "FAIL"}  candidate aged ${age}: ${appears ? "appears" : "excluded"} (expected ${shouldAppear ? "appears" : "excluded"})`);
+  }
+} finally {
+  for (const id of bandCreated) await admin.auth.admin.deleteUser(id);
+}
+console.log(`\nAge bands: ${bandOk ? "only 30 and 34 appear ✅" : "FAILED ❌"}. Fixtures deleted (${bandCreated.length}).`);

@@ -1,7 +1,8 @@
 import { TRAVEL_INTERESTS, LANGUAGES, labelOf } from "@/lib/profile/options";
 import { formatDateRange } from "@/lib/posts/format";
 import type { Match, MatchReason } from "@/lib/matching/types";
-import type { Tone } from "@/lib/posts/card";
+import { todayInBerlin, type Tone } from "@/lib/posts/card";
+import { upcomingOverlap } from "@/lib/matching/overlap";
 import { AIBadge, DemoBadge, Headline, Identity, Paper, Tags } from "./primitives";
 
 // One match on /home "For you": the other person's plan as a poster, the reason
@@ -18,7 +19,7 @@ export function MatchCard({ match, reason }: { match: Match; reason: MatchReason
       {match.isDemo && <DemoBadge />}
       <Headline lines={match.headline} />
       <p className="trip-date">
-        {match.city} / {formatDateRange(match.overlapStart, match.overlapEnd)}
+        {match.city} / {formatDateRange(...upcomingOverlap(match.overlapStart, match.overlapEnd, todayInBerlin().iso))}
       </p>
       <Tags values={match.interests.map((v) => labelOf(TRAVEL_INTERESTS, v))} label="Interests" />
       <Identity
@@ -30,7 +31,7 @@ export function MatchCard({ match, reason }: { match: Match; reason: MatchReason
       />
       <div className="glass match-reason">
         <p className="eyebrow">
-          Why you might get along {reason.ai ? <AIBadge /> : <span className="demo-badge">Suggested match</span>}
+          Why you might get along {reason.ai ? <AIBadge /> : <span className="rule-badge">Suggested match</span>}
         </p>
         <p>{reason.text}</p>
         <dl className="score-parts" aria-label="Why you match">

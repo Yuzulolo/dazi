@@ -41,7 +41,7 @@ async function Home({ searchParams }: { searchParams: PageProps<"/home">["search
             ? "Tell us your next plan and find your people."
             : post.ended
               ? "This plan has ended — post a new one."
-              : "Your active plan. Matches appear here soon."}
+              : "Your active plan — your matches are below."}
         </p>
         <div className="panel-links">
           {post && !post.ended ? (
@@ -93,6 +93,9 @@ async function Home({ searchParams }: { searchParams: PageProps<"/home">["search
 // cached / batched AI reasons. No matches → a date-widening suggestion computed in SQL.
 async function ForYou({ post }: { post: MyPost }) {
   const matches = await getMyMatches(5);
+  if (matches === null) {
+    return <p className="calm-lead">Matches are unavailable right now. Please try again in a moment.</p>;
+  }
   if (matches.length === 0) {
     const suggestion = await getMatchSuggestion();
     return (

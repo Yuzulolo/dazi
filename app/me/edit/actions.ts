@@ -6,10 +6,8 @@ import { getCurrentUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { parseBasics, parseStyle, readFormValues } from "@/lib/profile/validate";
 import type { ProfileFormState } from "@/lib/profile/types";
-import { getMyProfile } from "@/lib/profile/queries";
 import { profileEmbeddingText } from "@/lib/ai/profile-text";
-import { refreshMyProfileEmbedding } from "@/lib/ai/profile-embedding";
-import { splitList } from "@/lib/profile/validate";
+import { myProfileEmbeddingText, refreshMyProfileEmbedding } from "@/lib/ai/profile-embedding";
 
 // Edit everything except the (locked) birth year. Only onboarded users get here:
 // getCurrentUser() redirects everyone else to /onboarding.
@@ -25,14 +23,9 @@ export async function updateProfile(
   const style = parseStyle(values);
   if (!style.ok) return { error: style.error, values };
 
-  // What the personality embedding is built from, before and after this save.
-  const before = (await getMyProfile()).values;
-  const beforeText = profileEmbeddingText({
-    bio: before.bio || null,
-    hobbies: splitList(before.hobbies),
-    visitedCities: splitList(before.visitedCities),
-    travelInterests: before.travelInterests,
-  });
+  // What the personality embedding is built from before this save (null if unreadable —
+  // the save still goes ahead, review W4).
+  const beforeText = await myProfileEmbeddingText();
 
   const supabase = await createClient();
   const update = { ...basics.update, ...style.update };
@@ -52,7 +45,7 @@ export async function updateProfile(
     visitedCities: update.visited_cities,
     travelInterests: update.travel_interests,
   });
-  if (afterText !== beforeText) await refreshMyProfileEmbedding(afterText);
+  if (beforeText === null || afterText !== beforeText) await refreshMyProfileEmbedding(afterText);
 
   // Every page that shows profile data is re-rendered from the server (Next 16 client cache),
   // then a fresh /me/edit shows the stored values (trimmed, de-duplicated) and "Saved.".

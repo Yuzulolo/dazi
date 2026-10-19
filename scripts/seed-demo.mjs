@@ -8,16 +8,20 @@
 // Costs: 60 embedding calls (~$0.0002) on a seed run; nothing on --cleanup.
 import { readFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
-import { adminClient, DEMO_DOMAINS, isDemoEmail, listAllUsers } from "./lib/admin.mjs";
+import { adminClient, DEMO_DOMAIN, listDemoUsers } from "./lib/admin.mjs";
 import { embed } from "../lib/ai/openrouter.ts";
 import { tripEmbeddingText } from "../lib/ai/trip-text.ts";
 import { profileEmbeddingText } from "../lib/ai/profile-text.ts";
 import { todayInBerlin } from "../lib/posts/card.ts";
 
 const admin = adminClient();
-const existing = (await listAllUsers(admin)).filter((u) => isDemoEmail(u.email));
+const { flagged, unflagged } = await listDemoUsers(admin);
+// Seed may finish an account it created earlier but couldn't flag yet (demo address only).
+const existing = [...flagged, ...unflagged];
 
 if (process.argv.includes("--cleanup")) {
+  // Only accounts with an exact demo address AND is_demo = true (plus half-created ones that
+  // have a demo address but no profile flag yet) — never a real user.
   for (const user of existing) {
     const { error } = await admin.auth.admin.deleteUser(user.id); // cascades to profile + posts
     console.log(`${error ? "FAILED " : "deleted"}  ${user.email}${error ? `: ${error.message}` : ""}`);
@@ -30,26 +34,18 @@ const { users } = JSON.parse(await readFile(new URL("./seed/demo-users.json", im
 const today = todayInBerlin().iso;
 const shift = (days) => new Date(Date.parse(`${today}T00:00:00Z`) + days * 86_400_000).toISOString().slice(0, 10);
 
-let domain = existing[0]?.email.split("@")[1] ?? DEMO_DOMAINS[0];
 let created = 0;
 let updated = 0;
 
 for (const d of users) {
-  let user = existing.find((u) => u.email.startsWith(`${d.key}@`));
+  let user = existing.find((u) => u.email === `${d.key}@${DEMO_DOMAIN}`);
   if (!user) {
-    const attempt = (dom) =>
-      admin.auth.admin.createUser({
-        email: `${d.key}@${dom}`,
-        password: `${randomUUID()}Aa1!`, // never stored; nobody logs in as a demo user
-        email_confirm: true, // no confirmation email is sent
-        user_metadata: { display_name: d.display_name, birth_year: d.birth_year },
-      });
-    let { data, error } = await attempt(domain);
-    if (error && domain === DEMO_DOMAINS[0] && /email/i.test(error.message)) {
-      console.log(`Supabase refused @${domain} (${error.message}); falling back to @${DEMO_DOMAINS[1]}`);
-      domain = DEMO_DOMAINS[1];
-      ({ data, error } = await attempt(domain));
-    }
+    const { data, error } = await admin.auth.admin.createUser({
+      email: `${d.key}@${DEMO_DOMAIN}`,
+      password: `${randomUUID()}Aa1!`, // never stored; nobody logs in as a demo user
+      email_confirm: true, // no confirmation email is sent
+      user_metadata: { display_name: d.display_name, birth_year: d.birth_year },
+    });
     if (error) throw new Error(`createUser ${d.key}: ${error.message}`);
     user = data.user;
     created++;
@@ -108,4 +104,4 @@ for (const d of users) {
   console.log(`ok  ${user.email.padEnd(28)} ${d.display_name.padEnd(7)} Berlin ${post.startDate} → ${post.endDate}  "${p.headline.join(" ")}"`);
 }
 
-console.log(`\nDemo users: ${created} created, ${updated} updated (domain @${domain}). Today (Berlin): ${today}.`);
+console.log(`\nDemo users: ${created} created, ${updated} updated (@${DEMO_DOMAIN}). Today (Berlin): ${today}.`);

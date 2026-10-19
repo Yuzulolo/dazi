@@ -486,6 +486,10 @@ try {
     report(Boolean(evalError), "A signed-in user cannot call match_candidates_for_eval (service role only)", evalError?.message ?? "call succeeded!");
     const { error: embError } = await A.client.from("profiles").select("profile_embedding").eq("id", A.id);
     report(Boolean(embError), "Nobody can read profile_embedding, not even their own", embError?.message ?? "readable!");
+    const { error: stampError } = await A.client.from("profiles").update({ updated_at: "2000-01-01T00:00:00Z" }).eq("id", A.id);
+    report(/permission denied/.test(stampError?.message ?? ""), "Clients cannot write profiles.updated_at (set only by the trigger)", stampError?.message ?? "update succeeded!");
+    const { error: demoError } = await A.client.from("profiles").update({ is_demo: true }).eq("id", A.id);
+    report(/permission denied/.test(demoError?.message ?? ""), "Clients cannot set is_demo", demoError?.message ?? "update succeeded!");
   }
 
   // Mutual preferences: B posts in A's city on A's dates; B's age preference first excludes A,

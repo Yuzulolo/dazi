@@ -6,10 +6,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { parseBasics, parseBirthYear, parseStyle, readFormValues } from "@/lib/profile/validate";
 import type { ProfileFormState } from "@/lib/profile/types";
-import { getMyProfile } from "@/lib/profile/queries";
-import { profileEmbeddingText } from "@/lib/ai/profile-text";
-import { refreshMyProfileEmbedding } from "@/lib/ai/profile-embedding";
-import { splitList } from "@/lib/profile/validate";
+import { myProfileEmbeddingText, refreshMyProfileEmbedding } from "@/lib/ai/profile-embedding";
 
 const SAVE_FAILED = "Couldn't save your answers. Please check them and try again.";
 
@@ -70,16 +67,10 @@ export async function saveStyle(
     return { error: message, values };
   }
 
-  // Onboarding is complete: compute the personality embedding (one "save" quota slot).
-  const profile = await getMyProfile();
-  await refreshMyProfileEmbedding(
-    profileEmbeddingText({
-      bio: profile.values.bio || null,
-      hobbies: splitList(profile.values.hobbies),
-      visitedCities: splitList(profile.values.visitedCities),
-      travelInterests: profile.values.travelInterests,
-    }),
-  );
+  // Onboarding is complete: compute the personality embedding (one "profile" quota slot).
+  // Never blocks onboarding: a failed read or AI call just leaves personality at 0 for now.
+  const text = await myProfileEmbeddingText();
+  if (text) await refreshMyProfileEmbedding(text);
 
   revalidatePath("/home");
   revalidatePath("/me/edit");

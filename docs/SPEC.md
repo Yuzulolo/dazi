@@ -37,6 +37,14 @@ Guest types one sentence on the homepage → AI trip card → 5 anonymised simil
 ### 0.4 Roadmap (not in capstone — mention in "What's next")
 Google login · avatar & travel stories with photos · **trip photo upload with a vision-AI check + mood description used in matching** (FLOWS 2.7; was stretch, dropped from the capstone 17 Oct — must follow all storage rules: own `{user_id}/` folder, EXIF/GPS stripped, server-side AI call) · Facebook verification + mutual social reveal · after-meeting feedback (safety check + positive tags) · group activities · match-break limit (2 per 30 days) · realtime chat · email notifications · **overlap length in the match score** (longer shared stays rank higher; today dates are a pass/fail filter).
 
+### 0.4b Follow-ups from the PR #6 review (after the capstone)
+- Preferred age as **band dropdowns** in the profile form (matching already uses bands).
+- Save match reasons without re-running matching per item (S1); retry a failed profile embedding when the text is unchanged (S4); `--limit` / dry run for the seed and backfill scripts (S5).
+- Card headlines as `h3` under "For you" (S10); remove the unused total score and a redundant `connection()` (S12).
+- Secrets test across the whole repo (S13); RLS positive control that respects A's own gender preference (S14); de-duplicate the 18-column match type (S15).
+- Hard-filter fixtures for "self", "ended trip" and "archived post" (S16).
+- Overlap length as a score factor (from the matching eval).
+
 ### 0.5 Stretch
 None — the former stretch feature (trip photo + vision AI) moved to §0.4 Roadmap on 17 Oct.
 
