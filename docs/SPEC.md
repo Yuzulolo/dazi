@@ -16,7 +16,7 @@ Guest types one sentence on the homepage → AI trip card → 5 anonymised simil
 | A | Email auth + 18+ + `profiles` + RLS + Vercel | ✅ **Done** (PR #1, live). **No Google login.** |
 | B | Onboarding & profile | ✅ **Done** (phase 2 PR). Display name, birth year, gender (optional), languages, home city, bio, **cities visited**, **hobbies**, matching prefs (age range, gender pref), **travel style quiz** (pace, day rhythm, interests). Profile page = these fields only. **No avatar upload, no stories, no photos.** |
 | C | Intent post | ✅ **Done** (phase 3 PR). One sentence → AI extraction → editable card → save. Max 1 active post. **Covers = the 4 poster tones** (lavender / forest / mint / pink, `docs/DESIGN.md`): AI suggests a tone from the trip's mood, the user can change it — no cover images, no upload, no vision AI. The AI extraction also returns a **two-line poster headline** (`headline: [line1, line2]`, each ≤ ~22 characters ending with a full stop, e.g. "Flea markets." / "Good coffee."), editable on the card and shown on the posters. Edit allowed; changing city/dates expires pending invites and ends accepted ones (FLOWS 2.6) — **no monthly limit**. |
-| D | Matching | Hard filters (§5 step 1) + `score = 0.4 × trip + 0.35 × style + 0.25 × personality`. Personality embedding = bio + hobbies + cities visited (no stories). AI reason for top 5. Seed 30 demo users. **The seed script must always set `birth_year` (and `display_name`) in the user metadata** — the sign-up trigger refuses any email user without a birth year. **Open question (decide in D):** gender `other` can't be picked as a preference, so under the mutual gender rule those users are hidden from anyone who set a preference — same as "no gender". Keep that (and say so in the gender help text) or add `other` to the preference options? |
+| D | Matching | Hard filters (§5 step 1) + `score = 0.4 × trip + 0.35 × style + 0.25 × personality`. Personality embedding = bio + hobbies + cities visited (no stories). AI reason for top 5. Seed 30 demo users. **The seed script must always set `birth_year` (and `display_name`) in the user metadata** — the sign-up trigger refuses any email user without a birth year. **Gender "other" (decided in D):** it can't be picked as a preference, so — like "no gender" — those users are visible only to people without a gender preference (mutual rule, `private.match_candidates`). **Privacy trade-off (accepted):** a user with a gender preference only ever sees people of that gender, so gender is implicitly revealed to them; inherent to preference filtering. ✅ **Done** (phase 4 PR): personality embeddings, `match_my_post()` (the only way others' posts are shown), cached batched AI reasons, `/home` "For you", 30 demo users (`is_demo`, badge). |
 | E | Homepage guest search | Anonymised server-side, trip-only ranking, rate limit per IP, search carries over after sign-up. |
 | F | Invites + messages | Invite (optional note), accept / decline / expire, max 10 pending, mutual invites auto-accept. After acceptance: **simple message thread, no realtime** (refresh to see new messages). |
 | G | Safety & compliance | Block, report, safety tips page, AI-generated labels, **Delete my data**, privacy page. |
@@ -35,7 +35,15 @@ Guest types one sentence on the homepage → AI trip card → 5 anonymised simil
 **Rule: quality over quantity.** The core flow (A–F) must work end-to-end and be polished. There is no stretch feature in the capstone (dropped 17 Oct).
 
 ### 0.4 Roadmap (not in capstone — mention in "What's next")
-Google login · avatar & travel stories with photos · **trip photo upload with a vision-AI check + mood description used in matching** (FLOWS 2.7; was stretch, dropped from the capstone 17 Oct — must follow all storage rules: own `{user_id}/` folder, EXIF/GPS stripped, server-side AI call) · Facebook verification + mutual social reveal · after-meeting feedback (safety check + positive tags) · group activities · match-break limit (2 per 30 days) · realtime chat · email notifications.
+Google login · avatar & travel stories with photos · **trip photo upload with a vision-AI check + mood description used in matching** (FLOWS 2.7; was stretch, dropped from the capstone 17 Oct — must follow all storage rules: own `{user_id}/` folder, EXIF/GPS stripped, server-side AI call) · Facebook verification + mutual social reveal · after-meeting feedback (safety check + positive tags) · group activities · match-break limit (2 per 30 days) · realtime chat · email notifications · **overlap length in the match score** (longer shared stays rank higher; today dates are a pass/fail filter).
+
+### 0.4b Follow-ups from the PR #6 review (after the capstone)
+- Preferred age as **band dropdowns** in the profile form (matching already uses bands).
+- Save match reasons without re-running matching per item (S1); retry a failed profile embedding when the text is unchanged (S4); `--limit` / dry run for the seed and backfill scripts (S5).
+- Card headlines as `h3` under "For you" (S10); remove the unused total score and a redundant `connection()` (S12).
+- Secrets test across the whole repo (S13); RLS positive control that respects A's own gender preference (S14); de-duplicate the 18-column match type (S15).
+- Hard-filter fixtures for "self", "ended trip" and "archived post" (S16).
+- Overlap length as a score factor (from the matching eval).
 
 ### 0.5 Stretch
 None — the former stretch feature (trip photo + vision AI) moved to §0.4 Roadmap on 17 Oct.
@@ -133,7 +141,7 @@ None — the former stretch feature (trip photo + vision AI) moved to §0.4 Road
 - **Extraction:** 20 test sentences → ≥ 90% fields correct.
 - **Vision check:** 15 test photos (fine / contact details / inappropriate) → ≥ 13/15 correct decisions.
 - **Hard filters:** 10 crafted cases → 10/10 correctly excluded.
-- **Match quality:** 10 test users with a hand-picked best buddy → in top 3 for ≥ 8/10. Compare trip-only → +style → +personality.
+- **Match quality:** 10 test users with a hand-picked best buddy → in top 3 for ≥ 8/10. Compare trip-only → +style → +personality. **Result (19 Oct):** 9/9 scored cases hit at all three weightings (1 case not scored: pool of 2) — target met, ablation inconclusive (test set too easy); hard filters 10/10. Details: `evals/MATCHING-RESULTS.md`.
 - **Security:** two-account tests (no reading others' invites/messages/socials/feedback, no uploading to others' folders); guest response contains **no** names/avatars (check network tab); incognito test on live URL; `/security-scan` clean.
 
 ## 9. Course requirements checklist

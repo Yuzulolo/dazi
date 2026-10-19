@@ -22,9 +22,9 @@ export function SiteShell({
     <div className="dazi-root" data-variant={variant}>
       <div className="wall-background" aria-hidden="true" />
       <header className="dazi-header">
-        <Link className="wordmark" href="/">
-          dazi
-        </Link>
+        <Suspense fallback={<Wordmark href="/" />}>
+          <AuthWordmark />
+        </Suspense>
         <span className="header-note">LITTLE PLANS, GOOD COMPANY.</span>
         <nav aria-label="Main navigation">
           <InfoButton content={HOW_IT_WORKS}>How it works</InfoButton>
@@ -40,6 +40,22 @@ export function SiteShell({
       </footer>
     </div>
   );
+}
+
+function Wordmark({ href }: { href: string }) {
+  return (
+    <Link className="wordmark" href={href}>
+      dazi
+    </Link>
+  );
+}
+
+// Signed-in users go to /home (their plan and matches), not the public demo wall.
+async function AuthWordmark() {
+  await connection();
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  return <Wordmark href={data?.claims ? "/home" : "/"} />;
 }
 
 function SignedOutLinks() {

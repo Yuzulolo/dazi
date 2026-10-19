@@ -42,6 +42,8 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 - `lib/ai/` — OpenRouter wrapper, trip extraction (prompt + JSON schema), embedding text builder (server-only; `.ts` import extensions so scripts can run them)
 - `lib/posts/` — trip card rules (shared by AI cleanup and form validation), queries, date formatting; `app/posts/` — editor, `/posts/new`, `/posts/edit`, server actions
 - `evals/extraction.json` + `scripts/eval-extraction.mjs` — AI extraction eval
+- `lib/matching/` — match types, `match_my_post` / `match_suggestion` wrappers, rule-based fallback reason; `lib/ai/match-reasons.ts` (cached, batched AI reasons), `lib/ai/profile-text.ts` + `profile-embedding.ts` (personality embedding)
+- `scripts/seed-demo.mjs` (+ `scripts/seed/demo-users.json`), `scripts/backfill-profile-embeddings.mjs`, `scripts/eval-matching.mjs` + `evals/matching.json` — local-only, service role
 - `scripts/rls-check.mjs` — two-account RLS test via the public Data API
 - `.claude/agents/` — `ai-code-reviewer`, `security-auditor` subagents
 - `next.config.ts` has `cacheComponents: true`: anything that reads cookies, `params` or `searchParams` must render inside `<Suspense>`, or the build fails.
@@ -49,6 +51,7 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 ## Environment variables
 - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` — public
 - `OPENROUTER_API_KEY` — server-only (Production + Preview in Vercel, marked Sensitive). School key: **no spending limit**, so quotas are the only protection
+- `SUPABASE_SERVICE_ROLE_KEY` — **local scripts only** (seed, backfill, eval via `scripts/lib/admin.mjs`). It bypasses RLS: **never** imported by `app/` or `lib/`, **never** added to Vercel, **never** `NEXT_PUBLIC_`. `tests/secrets.test.mjs` fails if app or lib code mentions it.
 - `SITE_URL` — server-only; where auth emails send people back to (`http://localhost:3000` locally, the Vercel URL in production / the branch URL in preview)
 - Test-only (local `.env.local`): `TEST_A_EMAIL`, `TEST_A_PASSWORD`, `TEST_B_EMAIL`, `TEST_B_PASSWORD`
 - Names (no values) are listed in `.env.example`.
@@ -60,6 +63,9 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 - `node --env-file=.env.local scripts/rls-check.mjs` — two-account RLS test (run after every migration)
 - `npm test` — unit tests (`*.test.mjs`, Node's built-in test runner; e.g. the contact-details detector)
 - `node --conditions=react-server --env-file=.env.local scripts/eval-extraction.mjs` — AI extraction eval (20 real AI calls; run sparingly)
+- `node --conditions=react-server --env-file=.env.local scripts/seed-demo.mjs` — 30 demo users in Berlin (idempotent; `--cleanup` removes them; 60 embedding calls)
+- `node --conditions=react-server --env-file=.env.local scripts/backfill-profile-embeddings.mjs` — personality embeddings for older profiles
+- `node --env-file=.env.local scripts/eval-matching.mjs` — matching eval (top-3 hit rate + hard filters; no AI calls)
 
 ## Non-negotiable rules
 ### Security

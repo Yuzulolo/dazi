@@ -27,7 +27,7 @@
 8. After the trip: post closes automatically; user can write a new story
 
 ### 1.3 Returning user — `/home`
-Pending invites · my active post · latest recommendations
+Pending invites · my active post · **"For you"**: top 5 matches as posters, each with a reason ("AI-generated", cached per pair; rule-based "Suggested match" if the AI is unavailable) and a Trip · Style · Personality breakdown. No matches → *"No buddies yet for these dates"* + a SQL-computed suggestion (*"Try ±3 days → 4 people"*). Demo users carry a "Demo profile" badge.
 
 ### 1.4 Page map
 | Page | Access | Purpose |
@@ -68,7 +68,11 @@ Pending invites · my active post · latest recommendations
 ### 2.0b Profile privacy & gender (part B, used by part D)
 - **Private (owner only):** birth year, gender, preferred age range, preferred gender. Other signed-in users see an **age range** (e.g. "30–34"), never the year.
 - **Gender is optional and only used for matching, never shown.** UI text: *"Only used for matching, never shown. If you leave it empty, people who set a gender preference won't see you."*
-- **Matching rule (part D):** a user with **no gender set is hidden from anyone who has set a gender preference**; gender preferences must match **mutually**.
+- **Matching rule (part D):** a user with **no gender set — or gender "other", which can't be chosen as a preference — is hidden from anyone who has set a gender preference**; gender and age preferences must match **mutually** (both directions).
+- **Accepted privacy trade-off:** someone with a gender preference only ever sees people of that gender, so their matches' gender is implicitly revealed to them.
+- **Accepted privacy trade-off (probing):** by switching their *own* gender and watching who disappears, a user can infer a match's private gender preference. Preventing it would mean limiting how often people may change their own gender, which we don't do.
+- **Ages are matched in bands** (18–24, 25–29, 30–34, 35–39, 40–49, 50–59, 60+ — the ranges people see). Age preferences are widened to whole bands, so even an exact "31–31" preference only narrows to "30–34" and never reveals an exact age or birth year.
+- Other users' posts reach the app **only** through `match_my_post()` (server-side, all hard filters, safe fields only — never birth year, gender, preferences, embeddings or raw text).
 <!-- invite statuses: pending, accepted, declined, expired, cancelled, ended_trip_changed -->
 
 ### 2.1 Post

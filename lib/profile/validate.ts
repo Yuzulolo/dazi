@@ -55,7 +55,7 @@ export function readFormValues(formData: FormData): ProfileFormValues {
 }
 
 // "Berlin, Paris, berlin" -> ["Berlin", "Paris"] (trimmed, case-insensitive de-dupe).
-function splitList(value: string): string[] {
+export function splitList(value: string): string[] {
   const seen = new Set<string>();
   const items: string[] = [];
   for (const raw of value.split(",")) {

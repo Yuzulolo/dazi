@@ -1,4 +1,4 @@
-// Two-account Row Level Security check for public.profiles and public.posts.
+// Two-account Row Level Security check for profiles, posts and matching.
 // Talks to Supabase through the public Data API with the anon key — exactly
 // what any browser (or attacker) can do. Never prints keys or passwords.
 //
@@ -33,6 +33,7 @@ const newClient = () =>
   });
 
 let failures = 0;
+const today = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Berlin" }).format(new Date());
 function report(ok, label, detail = "") {
   if (!ok) failures++;
   console.log(`${ok ? "PASS" : "FAIL"}  ${label}${detail ? `  (${detail})` : ""}`);
@@ -464,6 +465,80 @@ try {
       const owner = writer ?? A;
       const { error } = await owner.client.from("posts").delete().in("id", createdPosts);
       if (error) console.log(`      WARNING: could not delete test posts: ${error.message}`);
+    }
+  }
+
+  // ======================= matching (phase 4) =======================
+  console.log("\nRow Level Security check: matching (phase 4)\n");
+  {
+    for (const [fn, params] of [
+      ["match_my_post", {}],
+      ["match_suggestion", {}],
+      ["get_my_match_reasons", { p_candidate_post_ids: [] }],
+      ["save_my_match_reasons", { p_reasons: [], p_generated_at: new Date().toISOString() }],
+      ["set_my_profile_embedding", { p_embedding: vector }],
+      ["match_candidates_for_eval", { p_user: A.id, w_trip: 1, w_style: 0, w_personality: 0 }],
+    ]) {
+      const { error } = await anon.rpc(fn, params);
+      report(Boolean(error), `Signed-out (anon) cannot call ${fn}`, error?.message ?? "call succeeded!");
+    }
+    const { error: evalError } = await A.client.rpc("match_candidates_for_eval", { p_user: B.id, w_trip: 1, w_style: 0, w_personality: 0 });
+    report(Boolean(evalError), "A signed-in user cannot call match_candidates_for_eval (service role only)", evalError?.message ?? "call succeeded!");
+    const { error: embError } = await A.client.from("profiles").select("profile_embedding").eq("id", A.id);
+    report(Boolean(embError), "Nobody can read profile_embedding, not even their own", embError?.message ?? "readable!");
+    const { error: stampError } = await A.client.from("profiles").update({ updated_at: "2000-01-01T00:00:00Z" }).eq("id", A.id);
+    report(/permission denied/.test(stampError?.message ?? ""), "Clients cannot write profiles.updated_at (set only by the trigger)", stampError?.message ?? "update succeeded!");
+    const { error: demoError } = await A.client.from("profiles").update({ is_demo: true }).eq("id", A.id);
+    report(/permission denied/.test(demoError?.message ?? ""), "Clients cannot set is_demo", demoError?.message ?? "update succeeded!");
+  }
+
+  // Mutual preferences: B posts in A's city on A's dates; B's age preference first excludes A,
+  // then includes A (positive control). B's profile and post are restored afterwards.
+  {
+    const { data: aPost } = await A.client.from("posts").select("city, start_date, end_date").eq("status", "active").maybeSingle();
+    const bHasActive = (await B.client.from("posts").select("id").eq("status", "active").maybeSingle()).data !== null;
+    if (!aPost || bHasActive) {
+      console.log(`SKIP  mutual-preference checks: ${!aPost ? "A has no active post" : "B has a real active post (left untouched)"}`);
+    } else {
+      const SAFE = ["post_id", "headline", "tone", "city", "overlap_start", "overlap_end", "interests", "display_name",
+        "age_range", "languages", "is_demo", "travel_pace", "day_rhythm", "shared_interests",
+        "trip_score", "style_score", "personality_score", "total_score"].sort().join(",");
+      const { data: aPub } = await A.client.from("profiles").select("languages").eq("id", A.id).single();
+      const { data: bPrivate } = await B.client.rpc("get_my_private_profile").single();
+      const { data: bPub } = await B.client.from("profiles").select("languages").eq("id", B.id).single();
+      let bPostId = null;
+      try {
+        const { data: postId, error: pubError } = await publish(B.client, {
+          city: aPost.city, start_date: aPost.start_date < today() ? today() : aPost.start_date, end_date: aPost.end_date,
+        });
+        if (pubError) throw new Error(`B could not publish the test post: ${pubError.message}`);
+        bPostId = postId;
+        const setB = (values) => B.client.from("profiles").update(values).eq("id", B.id);
+        await setB({ languages: [...new Set([...(bPub?.languages ?? []), ...(aPub?.languages ?? ["en"])])].slice(0, 10), pref_gender: null, pref_age_min: 18, pref_age_max: 19 });
+        // Counted over ALL of A's eligible candidates (match_suggestion has no top-10 cut-off),
+        // so ranking can't hide or fake the result.
+        const eligibleCount = async () => {
+          const { data, error } = await A.client.rpc("match_suggestion");
+          if (error) throw new Error(`match_suggestion: ${error.message}`);
+          return data.find((r) => r.extra_days === 3)?.matches ?? 0;
+        };
+        const { data: excludedRows, error: e1 } = await A.client.rpc("match_my_post");
+        const countExcluded = await eligibleCount();
+        report(!e1 && !(excludedRows ?? []).some((r) => r.post_id === bPostId), "A never sees B when A is outside B's age preference (mutual)", e1?.message ?? `B absent from A's top ${(excludedRows ?? []).length}`);
+        await setB({ pref_age_min: 18, pref_age_max: 99 });
+        const countIncluded = await eligibleCount();
+        report(countIncluded === countExcluded + 1, "Positive control: relaxing B's age preference adds exactly B to A's eligible candidates", `${countExcluded} → ${countIncluded}`);
+        const { data: rows, error: e2 } = await A.client.rpc("match_my_post");
+        const anyRow = (rows ?? [])[0];
+        report(!e2 && anyRow && Object.keys(anyRow).sort().join(",") === SAFE, "match_my_post returns only the safe columns", e2?.message ?? (anyRow ? Object.keys(anyRow).filter((k) => !SAFE.includes(k)).join(", ") || "exact safe set" : "no rows to inspect"));
+      } finally {
+        if (bPostId) await B.client.from("posts").delete().eq("id", bPostId);
+        if (bPrivate) {
+          await B.client.from("profiles").update({
+            languages: bPub?.languages, pref_gender: bPrivate.pref_gender, pref_age_min: bPrivate.pref_age_min, pref_age_max: bPrivate.pref_age_max,
+          }).eq("id", B.id);
+        }
+      }
     }
   }
 } finally {

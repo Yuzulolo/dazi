@@ -6,6 +6,10 @@ import { signOut } from "@/app/auth/actions";
 import { SiteShell } from "@/app/_components/dazi/site-shell";
 import { PostPoster } from "@/app/_components/dazi/post-poster";
 import { ClearStoredPlan } from "./clear-stored-plan";
+import { MatchCard } from "@/app/_components/dazi/match-card";
+import { getMyMatches, getMatchSuggestion } from "@/lib/matching/queries";
+import { getMatchReasons } from "@/lib/ai/match-reasons";
+import type { MyPost } from "@/lib/posts/queries";
 
 export default function HomePage({ searchParams }: PageProps<"/home">) {
   return (
@@ -37,7 +41,7 @@ async function Home({ searchParams }: { searchParams: PageProps<"/home">["search
             ? "Tell us your next plan and find your people."
             : post.ended
               ? "This plan has ended — post a new one."
-              : "Your active plan. Matches appear here soon."}
+              : "Your active plan — your matches are below."}
         </p>
         <div className="panel-links">
           {post && !post.ended ? (
@@ -72,6 +76,48 @@ async function Home({ searchParams }: { searchParams: PageProps<"/home">["search
       {post && (
         <PostPoster {...post} ai={post.aiAssisted ? "assisted" : null} eyebrow={post.ended ? "Ended plan" : "My plan"} />
       )}
+      {post && !post.ended && (
+        <section className="for-you" aria-labelledby="for-you-title">
+          <h2 id="for-you-title">For you</h2>
+          {/* Own boundary: the page never waits for the AI reasons. */}
+          <Suspense fallback={<p className="calm-lead">Finding your matches…</p>}>
+            <ForYou post={post} />
+          </Suspense>
+        </section>
+      )}
+    </div>
+  );
+}
+
+// Top 5 from public.match_my_post() (hard filters + scoring in the database) with
+// cached / batched AI reasons. No matches → a date-widening suggestion computed in SQL.
+async function ForYou({ post }: { post: MyPost }) {
+  const matches = await getMyMatches(5);
+  if (matches === null) {
+    return <p className="calm-lead">Matches are unavailable right now. Please try again in a moment.</p>;
+  }
+  if (matches.length === 0) {
+    const suggestion = await getMatchSuggestion();
+    return (
+      <div className="glass empty-state">
+        <h3>No buddies yet for these dates.</h3>
+        <p>
+          {suggestion
+            ? `Try ±${suggestion.extraDays} days → ${suggestion.matches} ${suggestion.matches === 1 ? "person" : "people"}.`
+            : "New plans arrive every day — check back soon."}
+        </p>
+        <Link className="outline-button" href="/posts/edit">
+          Change my dates
+        </Link>
+      </div>
+    );
+  }
+  const reasons = await getMatchReasons(post, matches);
+  return (
+    <div className="match-grid">
+      {matches.map((m) => (
+        <MatchCard key={m.postId} match={m} reason={reasons.get(m.postId)!} />
+      ))}
     </div>
   );
 }

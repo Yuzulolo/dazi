@@ -128,3 +128,23 @@
   .dazi-root .post-preview { position: static; }
   .dazi-root .post-poster { min-height: 0; }
 }
+
+/* ---------- Matches: /home "For you" ---------- */
+.dazi-root .for-you { grid-column: 1 / -1; }
+.dazi-root .for-you > h2 { font-size: 28px; margin: 12px 0 14px; }
+.dazi-root .match-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 20px; }
+.dazi-root .match-card { display: flex; flex-direction: column; padding: 24px 22px; }
+.dazi-root .match-card h2 { font-size: clamp(28px, 2.6vw, 36px); margin: 12px 0 10px; }
+.dazi-root .match-card .trip-date { font-size: 16px; margin-bottom: 10px; }
+.dazi-root .match-card .tags { margin-bottom: 12px; }
+.dazi-root .match-card .match-reason { margin-top: auto; }
+.dazi-root .score-parts { display: grid; gap: 6px; margin: 4px 0 0; }
+.dazi-root .score-parts > div { display: grid; grid-template-columns: 96px 1fr; align-items: center; gap: 8px; }
+.dazi-root .score-parts dt { font-size: 12px; letter-spacing: 0.5px; margin: 0; }
+.dazi-root .score-parts dd { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.dazi-root .score-bar { flex: 1; height: 6px; border-radius: 3px; background: #ffffff30; overflow: hidden; }
+.dazi-root .score-bar > span { display: block; height: 100%; background: #fff; }
+.dazi-root .for-you .empty-state { margin: 0; max-width: 640px; }
+.dazi-root .for-you .empty-state h3 { font-size: 24px; margin: 0 0 8px; }
+/* Rule-based reason (no AI): distinct from the AI badge and the "Demo profile" badge (review S11). */
+.dazi-root .rule-badge { display: inline-block; font-size: 12px; line-height: 1.5; padding: 2px 8px; border-radius: 6px; border: 1px dashed currentColor; text-transform: none; letter-spacing: 0; margin-left: 6px; vertical-align: middle; }

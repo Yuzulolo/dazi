@@ -1,0 +1,80 @@
+{
+ "about": "Matching eval (SPEC §8: hand-picked best buddy in the top 3 for ≥ 8/10). Seed data and initial picks by the developer; the director reviewed the full profiles (evals/demo-users-review.csv) and eligible pools (evals/eligible-pools.md) and made their own picks, marked picked_by: director. Viewers and buddies are keys in scripts/seed/demo-users.json.",
+ "picked_by": "mixed — Yuzu (director) / Claude (developer), see each case",
+ "cases": [
+  {
+   "viewer": "demo-01",
+   "best_buddy": "demo-02",
+   "picked_by": "Claude (developer)",
+   "why": "Same slow market-and-bakery weekend, both early birds at pace 2, both into photography and cafés; Kevin has a similar plan but is a pace-5 night owl.",
+   "correction": "A recording error had stored 'Mira → Lena' as the director's pick; the director's intended pick was Arda → Lena (case demo-05). Corrected before the final run: Mira's case uses Claude's original pick, Jonas."
+  },
+  {
+   "viewer": "demo-04",
+   "best_buddy": "demo-05",
+   "why": "Both travel for techno and record shops, both pace-4 night owls with music hobbies; Sophie has the same clubbing plan but is an early-rising gallery person.",
+   "picked_by": "Claude (developer)"
+  },
+  {
+   "viewer": "demo-05",
+   "best_buddy": "demo-04",
+   "picked_by": "Yuzu (director)",
+   "also_good": [
+    "demo-13",
+    "demo-12",
+    "demo-09"
+   ],
+   "stretch_excluded": [
+    "demo-06"
+   ],
+   "why": "Director: Lena is the best candidate; Carlos, Chloé and Tim are also good choices. Sophie would be a stretch, but she is excluded by the mutual age filter (her range ends at 32, Arda is 33)."
+  },
+  {
+   "viewer": "demo-07",
+   "best_buddy": "demo-15",
+   "why": "Director's pick (Greta). NOT scored: only 2 eligible candidates (Greta, Paul), so a top-3 hit is guaranteed.",
+   "picked_by": "Yuzu (director)",
+   "pool_size": 2,
+   "scored": false
+  },
+  {
+   "viewer": "demo-10",
+   "best_buddy": "demo-11",
+   "why": "Both want early lake hikes and swims, identical pace 3 early-bird style and outdoor hobbies; Chloé mentions lakes but is a shopping night owl.",
+   "picked_by": "Claude (developer)"
+  },
+  {
+   "viewer": "demo-13",
+   "best_buddy": "demo-14",
+   "why": "Chef and food blogger on the same street-food tour, both flexible pace 3, hidden-kitchen hunters; Greta has a market plan but books fine dining by the hour.",
+   "picked_by": "Claude (developer)"
+  },
+  {
+   "viewer": "demo-16",
+   "best_buddy": "demo-17",
+   "why": "Photographer and zine illustrator both chasing street art with a camera, both pace 4 and flexible; Robert has the same mural plan but is a planned, high-budget lawyer.",
+   "picked_by": "Claude (developer)"
+  },
+  {
+   "viewer": "demo-19",
+   "best_buddy": "demo-20",
+   "why": "Director: exact same dates, ages and gender preference fit, lifestyle match (vintage and cafés). Marta is also a good buddy.",
+   "picked_by": "Yuzu (director)",
+   "also_good": [
+    "demo-21"
+   ]
+  },
+  {
+   "viewer": "demo-22",
+   "best_buddy": "demo-23",
+   "why": "Director: interests highly overlapping, same dates and preferences.",
+   "picked_by": "Yuzu (director)"
+  },
+  {
+   "viewer": "demo-25",
+   "best_buddy": "demo-26",
+   "why": "Remote researcher and novelist both want café days, bookshops and slow evenings, pace 2 flexible; Leon also works from cafés but goes out every night.",
+   "picked_by": "Claude (developer)"
+  }
+ ]
+}

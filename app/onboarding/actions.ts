@@ -6,6 +6,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { parseBasics, parseBirthYear, parseStyle, readFormValues } from "@/lib/profile/validate";
 import type { ProfileFormState } from "@/lib/profile/types";
+import { myProfileEmbeddingText, refreshMyProfileEmbedding } from "@/lib/ai/profile-embedding";
 
 const SAVE_FAILED = "Couldn't save your answers. Please check them and try again.";
 
@@ -65,6 +66,11 @@ export async function saveStyle(
     const message = error.code === "23514" ? "Please complete step 1 first." : SAVE_FAILED;
     return { error: message, values };
   }
+
+  // Onboarding is complete: compute the personality embedding (one "profile" quota slot).
+  // Never blocks onboarding: a failed read or AI call just leaves personality at 0 for now.
+  const text = await myProfileEmbeddingText();
+  if (text) await refreshMyProfileEmbedding(text);
 
   revalidatePath("/home");
   revalidatePath("/me/edit");
