@@ -1,13 +1,28 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { usePlanDraft } from "./plan-draft";
+import type { HomeViewer } from "./types";
 
 // The homepage composer poster: "Your next plan" in one sentence. The sentence stays in
 // this browser (plan-draft.ts) and submitting opens the sign-up prompt; after sign-up
 // and onboarding it pre-fills the first plan (FLOWS 1.1). Full guest search: Roadmap.
-export function PlanComposerContent({ current, onSubmitted }: { current: boolean; onSubmitted: () => void }) {
-  const [storedPlan, storePlan] = usePlanDraft();
+// Signed-in members go straight to /posts/new (pre-filled), not-yet-onboarded users to
+// /onboarding; only guests get the sign-up prompt. Signed-in state comes from the server.
+export function PlanComposerContent({
+  current,
+  viewer,
+  onGuestSubmit,
+}: {
+  current: boolean;
+  viewer: HomeViewer;
+  onGuestSubmit: () => void;
+}) {
+  const router = useRouter();
+  const owner = viewer.status === "guest" ? null : viewer.userId;
+  const [stored, storePlan] = usePlanDraft(owner);
+  const storedPlan = stored && stored.owner === owner ? stored.text : null;
   const [draft, setDraft] = useState<string | null>(null);
   const [error, setError] = useState("");
   const plan = draft ?? storedPlan ?? "";
@@ -20,7 +35,10 @@ export function PlanComposerContent({ current, onSubmitted }: { current: boolean
       return;
     }
     setError("");
-    onSubmitted();
+    storePlan(plan);
+    if (viewer.status === "member") router.push("/posts/new");
+    else if (viewer.status === "onboarding") router.push("/onboarding");
+    else onGuestSubmit();
   }
 
   return (

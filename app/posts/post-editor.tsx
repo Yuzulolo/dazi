@@ -4,7 +4,7 @@ import { useActionState, useRef, useState, useTransition } from "react";
 import { PostPoster } from "@/app/_components/dazi/post-poster";
 import { InfoDialog } from "@/app/_components/dazi/info-dialog";
 import { AIBadge } from "@/app/_components/dazi/primitives";
-import { usePlanDraft } from "@/app/_components/dazi/plan-draft";
+import { draftBelongsTo, usePlanDraft } from "@/app/_components/dazi/plan-draft";
 import { FormError } from "@/app/_components/profile-fields";
 import { TRAVEL_INTERESTS } from "@/lib/profile/options";
 import {
@@ -48,14 +48,17 @@ export function PostEditor({
   action,
   initial,
   hasActivePost = false,
+  user,
 }: {
   mode: "new" | "edit";
   action: (state: PostFormState, formData: FormData) => Promise<PostFormState>;
   initial?: Draft;
   hasActivePost?: boolean;
+  user: { id: string; accountCreatedAt: string };
 }) {
-  const [draftPlan] = usePlanDraft();
-  const storedPlan = mode === "new" ? draftPlan : null;
+  const [planDraft] = usePlanDraft();
+  // Only this user's own homepage sentence pre-fills the box (shared-computer safe).
+  const storedPlan = mode === "new" && planDraft && draftBelongsTo(planDraft, user) ? planDraft.text : null;
   const [sentence, setSentence] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft | null>(initial ?? null);
   const [notice, setNotice] = useState("");

@@ -44,7 +44,13 @@ async function Home({ searchParams }: { searchParams: PageProps<"/home">["search
               ? "This plan has ended — post a new one."
               : "Your active plan — your matches are below."}
         </p>
-        {posted !== "1" && <ContinuePlan />}
+        {user.isDemoLogin && (
+          <p className="notice shared-demo" role="note">
+            <strong>Shared demo account.</strong> Other visitors use it too — anything you enter here is visible to them,
+            and AI limits are shared. It is reset before demos.
+          </p>
+        )}
+        {posted !== "1" && !user.isDemoLogin && <ContinuePlan user={{ id: user.id, accountCreatedAt: user.accountCreatedAt }} />}
         <div className="panel-links">
           {post && !post.ended ? (
             <>

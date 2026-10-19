@@ -1,8 +1,10 @@
 import { Suspense } from "react";
 import { SiteShell } from "@/app/_components/dazi/site-shell";
 import { HomeWall } from "@/app/_components/dazi/walls";
+import type { HomeViewer } from "@/app/_components/dazi/types";
 import { ClearStoredPlan } from "@/app/home/clear-stored-plan";
 import { DEMO_MATCHES, demoTrips } from "@/lib/demo/trips";
+import { getViewer } from "@/lib/auth";
 
 const NOTICES: Record<string, string> = {
   deleted: "Your account and data have been deleted.",
@@ -18,15 +20,29 @@ export default function LandingPage({ searchParams }: PageProps<"/">) {
       <Suspense>
         <Notice searchParams={searchParams} />
       </Suspense>
-      <HomeWall trips={DEMO_MATCHES ? demoTrips.slice(0, 2) : []} demo={DEMO_MATCHES} />
+      {/* The wall first renders as for a guest; the server then tells the composer who is
+          looking (signed-in members go straight to /posts/new). */}
+      <Suspense fallback={<Wall viewer={{ status: "guest" }} />}>
+        <WallForViewer />
+      </Suspense>
     </SiteShell>
   );
+}
+
+function Wall({ viewer }: { viewer: HomeViewer }) {
+  return <HomeWall trips={DEMO_MATCHES ? demoTrips.slice(0, 2) : []} demo={DEMO_MATCHES} viewer={viewer} />;
+}
+
+async function WallForViewer() {
+  const v = await getViewer();
+  return <Wall viewer={v.status === "guest" ? v : { status: v.status, userId: v.userId }} />;
 }
 
 async function Notice({ searchParams }: { searchParams: PageProps<"/">["searchParams"] }) {
   const { deleted, demo } = await searchParams;
   const key = deleted === "1" ? "deleted" : typeof demo === "string" ? demo : null;
-  const message = key ? NOTICES[key] : undefined;
+  // Own properties only: "?demo=__proto__" must not reach Object.prototype (review W4).
+  const message = key && Object.hasOwn(NOTICES, key) ? NOTICES[key] : undefined;
   if (!message) return null;
   return (
     <>

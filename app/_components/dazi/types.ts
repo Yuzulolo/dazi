@@ -31,3 +31,6 @@ export type DialogContent = {
   eyebrow?: string;
   signUp?: boolean; // show "Sign up" / "Not now" instead of "Got it"
 };
+
+// Who is looking at the homepage, decided on the server (lib/auth.ts getViewer).
+export type HomeViewer = { status: "guest" } | { status: "onboarding" | "member"; userId: string };

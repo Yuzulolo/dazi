@@ -10,7 +10,8 @@ export type DeleteState = { error?: string };
 // auth.users; every user table cascades (profile, plans, cached match reasons, AI usage).
 // No service role key: the database function is pinned to auth.uid().
 export async function deleteAccount(_prev: DeleteState, formData: FormData): Promise<DeleteState> {
-  await getCurrentUser();
+  // Deleting must not require finishing onboarding first (review W1).
+  await getCurrentUser({ allowIncompleteOnboarding: true });
   if (String(formData.get("confirm") ?? "").trim() !== "DELETE") {
     return { error: "Please type DELETE (in capitals) to confirm." };
   }

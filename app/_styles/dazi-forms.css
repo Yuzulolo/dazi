@@ -156,3 +156,4 @@
 .dazi-root .continue-plan > p:not(.eyebrow) { margin: 6px 0 12px; overflow-wrap: anywhere; }
 .dazi-root .privacy ul { padding-left: 20px; margin: 0 0 12px; display: grid; gap: 6px; font-size: 15px; line-height: 1.6; }
 .dazi-root .privacy code { font-size: 13px; background: #ffffff1a; padding: 1px 6px; border-radius: 4px; }
+.dazi-root .shared-demo { border: 1px dashed #ffffff80; border-radius: 12px; padding: 10px 14px; color: var(--cream); }

@@ -25,5 +25,5 @@ async function EditPost() {
   // key = last save time: Next 16 keeps visited pages alive (Activity) and the editor
   // reads `initial` only once, so fresh data must remount it — otherwise it shows old values.
   // aiAssisted false here: the AI badge belongs to an unsaved AI draft only.
-  return <PostEditor key={post.updatedAt} mode="edit" action={updatePost} initial={{ ...post, aiAssisted: false }} />;
+  return <PostEditor key={post.updatedAt} user={{ id: user.id, accountCreatedAt: user.accountCreatedAt }} mode="edit" action={updatePost} initial={{ ...post, aiAssisted: false }} />;
 }

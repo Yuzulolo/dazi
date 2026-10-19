@@ -10,7 +10,9 @@
 // - replaces its plans with one Berlin plan starting 2 days from today (+ trip embedding)
 //   (deleting the old plans also removes their cached match reasons — cascade)
 // Costs: 2 embedding calls. Its AI usage counters are not reset (they live in the unexposed
-// private schema); they expire on their own after 24 h.
+// private schema); they expire on their own after 24 h. Existing demo SESSIONS are not
+// signed out by this script (the admin API can't list them): run the one-line SQL in
+// CLAUDE.md ("Demo account") in the Supabase SQL Editor when someone changed the password.
 import { readFile } from "node:fs/promises";
 import { adminClient } from "./lib/admin.mjs";
 import { embed } from "../lib/ai/openrouter.ts";
@@ -59,7 +61,8 @@ const plan = {
   city: "Berlin", startDate: shift(post.start_offset), endDate: shift(post.start_offset + post.days - 1),
   interests: post.interests, budget: post.budget, vibe: post.vibe, rawText: post.raw_text,
 };
-await admin.from("posts").delete().eq("user_id", id);
+const { error: deleteError } = await admin.from("posts").delete().eq("user_id", id);
+if (deleteError) throw new Error(`old plans: ${deleteError.message}`);
 const { error: postError } = await admin.from("posts").insert({
   user_id: id,
   raw_text: plan.rawText,

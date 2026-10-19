@@ -15,13 +15,17 @@ async function files(dir) {
   return out;
 }
 
-test("DEMO_EMAIL / DEMO_PASSWORD are never NEXT_PUBLIC_ and only read in the server action", async () => {
+test("DEMO_EMAIL / DEMO_PASSWORD are never NEXT_PUBLIC_ and only read in server-only files", async () => {
   for (const file of [...(await files("app")), ...(await files("lib"))]) {
     const source = await readFile(join(root, file), "utf8");
     assert.ok(!/NEXT_PUBLIC_DEMO/.test(source), `${file} must not expose demo credentials as NEXT_PUBLIC_`);
-    if (/DEMO_(EMAIL|PASSWORD)/.test(source)) {
-      assert.equal(file, join("app", "auth", "actions.ts"), `${file} must not read the demo credentials`);
+    if (/DEMO_PASSWORD/.test(source)) {
+      assert.equal(file, join("app", "auth", "actions.ts"), `${file} must not read the demo password`);
       assert.match(source, /^"use server";/, "the demo sign-in must stay a server action");
+    }
+    if (/DEMO_EMAIL/.test(source)) {
+      assert.ok([join("app", "auth", "actions.ts"), join("lib", "auth.ts")].includes(file), `${file} must not read DEMO_EMAIL`);
+      assert.match(source, /^"use server";|^import "server-only";/, `${file} must be server-only`);
     }
   }
 });

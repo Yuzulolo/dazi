@@ -552,7 +552,8 @@ try {
 console.log("\nRow Level Security check: delete my account (phase 5)\n");
 {
   const { error } = await anon.rpc("delete_my_account");
-  report(Boolean(error), "Signed-out (anon) cannot call delete_my_account", error?.message ?? "call succeeded!");
+  // Must be refused by the GRANT, not by the function's own "Not signed in" check.
+  report(/permission denied for function/.test(error?.message ?? ""), "Signed-out (anon) cannot call delete_my_account", error?.message ?? "call succeeded!");
   const { error: readFlag } = await A.client.from("profiles").select("is_protected").eq("id", A.id);
   report(/permission denied/.test(readFlag?.message ?? ""), "Clients cannot read is_protected", readFlag?.message ?? "readable!");
   const { error: writeFlag } = await A.client.from("profiles").update({ is_protected: true }).eq("id", A.id);
@@ -566,6 +567,7 @@ if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
   const temps = [];
   const year = Number(today().slice(0, 4));
   async function tempUser(flags = {}) {
+    // Same prefix scripts/lib/admin.mjs recognises, so `seed-demo --cleanup` removes leftovers.
     const email = `delete-test-${crypto.randomUUID().slice(0, 8)}@dazi-demo.invalid`;
     const password = `${crypto.randomUUID()}Aa1!`;
     const { data, error } = await admin.auth.admin.createUser({
@@ -617,7 +619,11 @@ if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
         error?.message ?? "deleted!");
     }
   } finally {
-    for (const id of temps) await admin.auth.admin.deleteUser(id).catch(() => undefined); // already-deleted ones are fine
+    for (const id of temps) {
+      const { error } = await admin.auth.admin.deleteUser(id);
+      // The user deleted by delete_my_account is already gone ("not found") — that's fine.
+      if (error && !/not.?found/i.test(error.message)) console.log(`      WARNING: could not remove temporary user ${id}: ${error.message}`);
+    }
   }
 }
 

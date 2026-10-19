@@ -20,7 +20,8 @@ export default function SettingsPage() {
 }
 
 async function Settings() {
-  await getCurrentUser();
+  // Reachable before onboarding is finished: deleting must not require giving more data (review W1).
+  const user = await getCurrentUser({ allowIncompleteOnboarding: true });
   return (
     <>
       <h2>Delete my account</h2>
@@ -30,7 +31,7 @@ async function Settings() {
       </p>
       <DeleteAccountForm />
       <p className="panel-footer">
-        <Link href="/home">← Home</Link>
+        <Link href={user.onboarded ? "/home" : "/onboarding"}>← {user.onboarded ? "Home" : "Back to onboarding"}</Link>
       </p>
     </>
   );

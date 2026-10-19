@@ -107,10 +107,16 @@ export async function signInDemo() {
   const password = process.env.DEMO_PASSWORD;
   if (!email || !password) redirect("/?demo=unavailable");
   const supabase = await createClient();
+  // Already signed in: never silently swap someone's own session for the demo (review W6).
+  const { data: claims } = await supabase.auth.getClaims();
+  if (claims?.claims?.sub) redirect("/home");
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) {
-    console.error("demo sign-in failed:", error.code ?? error.status);
-    redirect("/?demo=busy");
+    // Wrong credentials usually means a visitor changed the demo password: say "unavailable"
+    // (run scripts/reset-demo-account.mjs). Anything else (e.g. auth rate limit): "busy".
+    const wrongPassword = error.code === "invalid_credentials";
+    console.error(wrongPassword ? "demo sign-in failed: invalid credentials — run reset-demo-account" : `demo sign-in failed: ${error.code ?? error.status}`);
+    redirect(wrongPassword ? "/?demo=unavailable" : "/?demo=busy");
   }
   redirect("/home");
 }

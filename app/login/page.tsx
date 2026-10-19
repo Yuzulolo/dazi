@@ -37,7 +37,7 @@ async function CallbackError({
   searchParams: PageProps<"/login">["searchParams"];
 }) {
   const { error } = await searchParams;
-  const message = typeof error === "string" ? CALLBACK_ERRORS[error] : undefined;
+  const message = typeof error === "string" && Object.hasOwn(CALLBACK_ERRORS, error) ? CALLBACK_ERRORS[error] : undefined;
   if (!message) return null;
   return (
     <p className="form-error" role="alert">

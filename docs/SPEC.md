@@ -19,7 +19,7 @@ Guest types one sentence on the homepage → AI trip card → 5 anonymised simil
 | D | Matching | Hard filters (§5 step 1) + `score = 0.4 × trip + 0.35 × style + 0.25 × personality`. Personality embedding = bio + hobbies + cities visited (no stories). AI reason for top 5. Seed 30 demo users. **The seed script must always set `birth_year` (and `display_name`) in the user metadata** — the sign-up trigger refuses any email user without a birth year. **Gender "other" (decided in D):** it can't be picked as a preference, so — like "no gender" — those users are visible only to people without a gender preference (mutual rule, `private.match_candidates`). **Privacy trade-off (accepted):** a user with a gender preference only ever sees people of that gender, so gender is implicitly revealed to them; inherent to preference filtering. ✅ **Done** (phase 4 PR): personality embeddings, `match_my_post()` (the only way others' posts are shown), cached batched AI reasons, `/home` "For you", 30 demo users (`is_demo`, badge). |
 | E | Homepage guest search | Anonymised server-side, trip-only ranking, rate limit per IP, search carries over after sign-up. |
 | F | Invites + messages | Invite (optional note), accept / decline / expire, max 10 pending, mutual invites auto-accept. After acceptance: **simple message thread, no realtime** (refresh to see new messages). |
-| G | ✅ **Partly done** (phase 5 PR): delete my data (`/settings`), `/privacy`, AI labels audited; block & report still open. Safety & compliance | Block, report, safety tips page, AI-generated labels, **Delete my data**, privacy page. |
+| G | Safety & compliance | ✅ **Partly done** (phase 5 PR): delete my data (`/settings`), `/privacy`, AI labels audited; block & report still open.  Block, report, safety tips page, AI-generated labels, **Delete my data**, privacy page. |
 | H | Delivery | Design applied to homepage + cards (half a day max), `/security-scan`, README (live URL + demo login), evaluation (extraction + match quality + RLS), presentation. |
 
 ### 0.3 Build order (one branch + PR each)
@@ -44,6 +44,7 @@ Google login · avatar & travel stories with photos · **trip photo upload with 
 - Secrets test across the whole repo (S13); RLS positive control that respects A's own gender preference (S14); de-duplicate the 18-column match type (S15).
 - Hard-filter fixtures for "self", "ended trip" and "archived post" (S16).
 - Overlap length as a score factor (from the matching eval).
+- **From the PR #7 review:** ask for the password again before deleting an account (today typing DELETE is the only barrier); small clean-ups (unused `describeModel().name`, the embedding notice duplicated in onboarding and `/me/edit`, `shift()` duplicated in two scripts); a script-free way to sign out demo sessions.
 
 ### 0.5 Stretch
 None — the former stretch feature (trip photo + vision AI) moved to §0.4 Roadmap on 17 Oct.

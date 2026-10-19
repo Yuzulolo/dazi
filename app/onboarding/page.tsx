@@ -31,6 +31,9 @@ async function Onboarding({ searchParams }: { searchParams: PageProps<"/onboardi
   if (showStep === 1) {
     return (
       <>
+        <p className="notice">
+          Changed your mind? <Link href="/settings">Delete my account</Link>
+        </p>
         <StepProgress step={1} />
         <h2>About you</h2>
         <p className="notice">
