@@ -69,7 +69,7 @@ npm install
 cp .env.example .env.local   # fill in the values
 npm run dev                  # http://localhost:3000
 ```
-Apply the migrations in `supabase/migrations/` in filename order via the Supabase SQL Editor (each has a read-only check query in `supabase/checks/`). In Supabase → Authentication → URL Configuration set the Site URL to `http://localhost:3000` and add `http://localhost:3000/**` to Redirect URLs.
+Apply the migrations in `supabase/migrations/` in filename order via the Supabase SQL Editor (each has a read-only check query in `supabase/checks/`). Before `20261019191240_move_demo_login.sql`, run `scripts/create-demo-account.mjs` (it needs `DEMO_EMAIL` / `DEMO_PASSWORD` in `.env.local`), or skip the two demo-login migrations if you do not want a public demo account. In Supabase → Authentication → URL Configuration set the Site URL to `http://localhost:3000` and add `http://localhost:3000/**` to Redirect URLs.
 
 ### Environment variables (names in `.env.example`)
 | Name | Used by | Exposure |

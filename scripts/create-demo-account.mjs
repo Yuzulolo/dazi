@@ -17,6 +17,9 @@ if (!email || !password) {
 const admin = adminClient();
 const existing = (await listAllUsers(admin)).find((u) => u.email === email);
 if (existing) {
+  if (!existing.email_confirmed_at) console.warn(`warn ${email} exists but its email is not confirmed`);
+  const { data: profile } = await admin.from("profiles").select("id").eq("id", existing.id).maybeSingle();
+  if (!profile) console.warn(`warn ${email} exists but has no profile row — the move migration will refuse it`);
   console.log(`ok  ${email} already exists (${existing.id}) — nothing changed`);
   process.exit(0);
 }
