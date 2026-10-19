@@ -32,7 +32,7 @@ Guest types one sentence on the homepage → AI trip card → 5 anonymised simil
 | 19 Oct | F (invites + messages) + G (safety/compliance) + **user testing with 3–5 classmates** |
 | 20 Oct (morning) | Polish pass (incl. 320/768px checks) + H: `/security-scan`, README, evaluation, showcase, presentation |
 
-**Rule: quality over quantity.** The core flow (A–F) must work end-to-end and be polished. There is no stretch feature in the capstone (dropped 17 Oct).
+**Rule: quality over quantity.** The core flow (A–E; F invites + messages moved to the Roadmap) must work end-to-end and be polished. There is no stretch feature in the capstone (dropped 17 Oct).
 
 ### 0.4 Roadmap (not in capstone — mention in "What's next")
 **Invites + messages (part F):** matching is live; mutual-accept contact is the next milestone. Google login · avatar & travel stories with photos · **trip photo upload with a vision-AI check + mood description used in matching** (FLOWS 2.7; was stretch, dropped from the capstone 17 Oct — must follow all storage rules: own `{user_id}/` folder, EXIF/GPS stripped, server-side AI call) · Facebook verification + mutual social reveal · after-meeting feedback (safety check + positive tags) · group activities · match-break limit (2 per 30 days) · realtime chat · email notifications · **overlap length in the match score** (longer shared stays rank higher; today dates are a pass/fail filter).

@@ -7,7 +7,7 @@ Dazi is a web app for finding a travel or food buddy (搭子). A user writes one
 
 Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `docs/FLOWS.md`. Read both before starting any phase. If code and docs disagree, stop and ask me.
 
-**Capstone deadline: 20 Oct 2026 (morning). `docs/SPEC.md` §0 defines the capstone scope and overrides the rest of the docs.** Anything listed in §0.4 Roadmap is out of scope — do not build it. **Quality over quantity:** the core flow (A–F) must work end-to-end and be polished. There is no stretch feature (the trip photo moved to Roadmap).
+**Capstone deadline: 20 Oct 2026 (morning). `docs/SPEC.md` §0 defines the capstone scope and overrides the rest of the docs.** Anything listed in §0.4 Roadmap is out of scope — do not build it. **Quality over quantity:** the core flow (A–E; F invites + messages is Roadmap) must work end-to-end and be polished. There is no stretch feature (the trip photo moved to Roadmap).
 
 **Pace for the deadline:** do a whole phase in one go, then stop for one round of testing. Always stop and show me (1) any SQL before it is applied to the database and (2) the code review result before a PR is merged.
 
@@ -64,14 +64,14 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 - `npm run dev` — local dev server at http://localhost:3000
 - `npm run build` — production build (run before every PR)
 - `npm run lint` — lint (run before every PR)
-- `node --env-file=.env.local scripts/rls-check.mjs` — RLS / security test, 82 checks (two test accounts + temporary users via the service role key; run after every migration)
+- `node --env-file=.env.local scripts/rls-check.mjs` — RLS / security test, 84 checks (two test accounts + temporary users via the service role key; run after every migration)
 - `/security-audit` (Claude Code command) — three-scanner security audit, report only
 - `npm test` — unit tests (`*.test.mjs`, Node's built-in test runner; e.g. the contact-details detector)
 - `node --conditions=react-server --env-file=.env.local scripts/eval-extraction.mjs` — AI extraction eval (20 real AI calls; run sparingly)
 - `node --conditions=react-server --env-file=.env.local scripts/seed-demo.mjs` — 30 demo users in Berlin (idempotent; `--cleanup` removes them; 60 embedding calls)
 - `node --conditions=react-server --env-file=.env.local scripts/backfill-profile-embeddings.mjs` — personality embeddings for older profiles
 - `node --env-file=.env.local scripts/eval-matching.mjs` — matching eval (top-3 hit rate + hard filters; no AI calls)
-- `node --conditions=react-server --env-file=.env.local scripts/reset-demo-account.mjs` — restore the public demo login (profile, plan, **password**) before a demo or grading session. If a visitor changed the demo password, also sign out every demo session in the Supabase SQL Editor: `delete from auth.sessions where user_id = (select id from public.profiles where is_protected);`
+- `node --conditions=react-server --env-file=.env.local scripts/reset-demo-account.mjs` — restore the public demo login (profile, plan, **password**, AI counters) before a demo or grading session. If a visitor changed the demo password, also sign out every demo session in the Supabase SQL Editor: `delete from auth.sessions where user_id = (select id from public.profiles where is_protected);`
 
 ## Non-negotiable rules
 ### Security
@@ -104,7 +104,7 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 
 ### Lessons learned (keep doing this)
 - **Shared database:** preview and production use the same Supabase project — every migration must be expand-only and compatible with the code on `main`; show the SQL and a read-only check query before applying.
-- **Trigger functions that call `private.*` helpers must be `SECURITY DEFINER` with `set search_path = ''`** (revoked from client roles). A trigger runs as whoever writes the row: `authenticated` users, the service role in scripts, or the definer `handle_new_user` at sign-up — client roles have no EXECUTE on `private` helpers, so an invoker trigger breaks writes in production.
+- **A trigger runs as whoever writes the row.** If client roles (`authenticated`) write the table directly, a trigger that calls `private.*` helpers must be `SECURITY DEFINER` with `set search_path = ''` (revoked from client roles) — e.g. `private.profiles_guard`, because users update profiles directly and have no EXECUTE on `private` helpers. `private.posts_guard` can stay invoker only because posts are written exclusively by definer functions (owner) and the service role (which has EXECUTE on the helpers). Before every trigger change, list every role that writes the table.
 - **Tests must fail for the right reason:** every RLS check matches the expected error text (e.g. "permission denied for function", a named CHECK constraint), and positive controls prove an exclusion isn't an empty result.
 - **Demo login:** shared and public. Before a demo or grading: run `scripts/reset-demo-account.mjs` (password, profile, plan, AI counters) and sign out its sessions with the SQL above.
 - **Security headers** live in `next.config.ts` (`headers()`); a full CSP with `script-src` is a follow-up (nonces break prerendering).

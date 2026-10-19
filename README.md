@@ -27,7 +27,7 @@ Full product spec: [`docs/SPEC.md`](docs/SPEC.md) · flows and rules: [`docs/FLO
 ## Security & privacy
 - **Row Level Security on every table**; plans are owner-only and only written through two database functions pinned to the signed-in user; private columns (birth year, gender, preferences, embeddings) can't be selected by any client.
 - **The database enforces the safety rules itself:** 18+ (birth year only, shown as an age range), no phone numbers or emails in plans or profiles, valid dates and statuses.
-- **Secrets are server-only:** only the Supabase URL and publishable key reach the browser; the OpenRouter key and the demo credentials are server-only; the service role key is used only by local scripts (enforced by tests). No secret was ever committed.
+- **Secrets are server-only:** only the Supabase URL and publishable key reach the browser; the OpenRouter key is server-only; the "Try the demo account" button reads its credentials from server-only env vars (the demo login itself is public by design, see the top of this page); the service role key is used only by local scripts (enforced by tests). No secret was ever committed.
 - **Delete my data:** Settings → Delete my account removes the account and every row linked to it, immediately.
 - **AI labels (EU AI Act Art. 50):** every AI-written text is labelled; inputs say when they are processed by AI.
 - **Browser hardening:** framing blocked, `nosniff`, strict referrer and permissions policies.
@@ -36,10 +36,10 @@ Full product spec: [`docs/SPEC.md`](docs/SPEC.md) · flows and rules: [`docs/FLO
 ## Evaluation
 | What | Result | Details |
 |---|---|---|
-| AI extraction (20 sentences EN/DE/ZH, incl. missing info, contact details, a prompt-injection attempt) | **98.8%** of fields correct (target ≥ 90%) | [`evals/extraction.json`](evals/extraction.json) |
+| AI extraction (20 sentences EN/DE/ZH, incl. missing info, contact details, a prompt-injection attempt) | **98.8%** of fields correct (target ≥ 90%; 97.5% before relative dates were computed in code) | [`evals/EXTRACTION-RESULTS.md`](evals/EXTRACTION-RESULTS.md) |
 | Matching hard filters (10 crafted exclusions + a positive control; age bands) | **10/10** excluded, control found; "31–31" narrows only to 30–34 | [`evals/MATCHING-RESULTS.md`](evals/MATCHING-RESULTS.md) |
 | Matching ranking (hand-picked best buddy in the top 3) | **9/9 scored cases hit, 1 case not scored** (pool of 2) — target met, but the trip/style/personality ablation is inconclusive because the test set is too easy | [`evals/MATCHING-RESULTS.md`](evals/MATCHING-RESULTS.md) |
-| Security (two-account RLS test + temporary users) | **82/82** checks pass | [`docs/SECURITY-AUDIT.md`](docs/SECURITY-AUDIT.md) |
+| Security (two-account RLS test + temporary users) | **84/84** checks pass | [`docs/SECURITY-AUDIT.md`](docs/SECURITY-AUDIT.md) |
 
 ## Build status (capstone scope, deadline 20 Oct 2026 — [`docs/SPEC.md`](docs/SPEC.md) §0)
 | Part | Status |
@@ -85,7 +85,7 @@ Apply the migrations in `supabase/migrations/` in filename order via the Supabas
 | Command | What it does |
 |---|---|
 | `npm run dev` / `npm run build` / `npm run lint` / `npm test` | dev server / production build / lint / unit tests |
-| `node --env-file=.env.local scripts/rls-check.mjs` | security test (82 checks) |
+| `node --env-file=.env.local scripts/rls-check.mjs` | security test (84 checks) |
 | `node --conditions=react-server --env-file=.env.local scripts/eval-extraction.mjs` | AI extraction eval (20 real AI calls) |
 | `node --env-file=.env.local scripts/eval-matching.mjs` | matching eval (no AI calls) |
 | `node --conditions=react-server --env-file=.env.local scripts/seed-demo.mjs [--cleanup]` | 30 demo users in Berlin |

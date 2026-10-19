@@ -35,18 +35,10 @@ available to you, they are useful supporting material. The reference file remain
 
 ## Scoping the audit
 
-Find the deployed app before auditing it. This workspace holds several Next.js projects side
-by side, so identify each one with a `next.config.*` or a `next` dependency, and work out
-which the request means. If more than one is in scope, audit each separately and label every
-finding with its project. Never scan `node_modules` or `.next`.
-
-**The sub-projects are each independent git repositories, deliberately untracked by the
-workspace repo.** This is the single most important thing to get right: running `git log`
-from the workspace root tells you nothing about a project's history. `cd` into the project
-directory first and confirm you are in its own repository (`git rev-parse --show-toplevel`)
-before drawing any conclusion from history. A clean-looking history is worthless if you read
-the wrong repository, and reporting "no committed secrets" from the wrong git root is worse
-than reporting nothing.
+The deployed app is the Dazi Next.js app at the root of this repository. Never scan
+`node_modules` or `.next`. Before drawing any conclusion from history, confirm you are in this
+repository's own git root (`git rev-parse --show-toplevel`): reporting "no committed secrets"
+from the wrong git root is worse than reporting nothing.
 
 Then establish what you can actually see:
 

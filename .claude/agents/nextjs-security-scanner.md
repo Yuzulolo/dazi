@@ -20,10 +20,8 @@ that your audit is then not grounded in the current published guidance.
 
 ## Scoping the app
 
-Find the app before you audit it. This repository may hold several Next.js projects side by
-side, so locate each `next.config.*` / `package.json` with a `next` dependency and work out
-which one the request means. If more than one is in scope, audit each separately and label
-findings by project. Never scan `node_modules`, `.next`, or build output.
+The app to audit is the Dazi Next.js app at the root of this repository (`next.config.ts`,
+`package.json`). Never scan `node_modules`, `.next`, or build output.
 
 Orient yourself first: is this App Router or Pages Router, which auth library is in use
 (`@/lib/auth`, NextAuth/Auth.js, Clerk, Supabase Auth, custom cookies), and which of the

@@ -13,10 +13,8 @@ find into a single report. Nothing you or they do may change a file.
 The target is `$ARGUMENTS` if given. Otherwise use the Next.js project in the working
 directory — the one with a `next.config.*` or a `next` dependency.
 
-This workspace holds several projects side by side, and each is its own git repository.
-If more than one could be meant and nothing in the request settles it, ask which before
-dispatching; three scanners pointed at the wrong project is three wasted runs. If exactly
-one project is in scope, say which one you are scanning and proceed without asking.
+In this repository the target is always the Dazi app at the repository root. Say so and
+proceed without asking.
 
 ## 2. Dispatch all three scanners in parallel
 
@@ -101,7 +99,7 @@ Then close with:
 Do not pad a severity band. An empty band, with what was checked behind it, is a better
 result than a padded one. Do not soften a real finding because the surrounding work is
 good, and do not re-raise anything the project has already recorded as a deliberate
-trade-off — check `docs/accepted-risks.md` if the project keeps one, and if a documented
+trade-off — check `docs/SECURITY-AUDIT.md` if the project keeps one, and if a documented
 trade-off's own stated trigger for revisiting it has now been met, raise that instead and
 quote the trigger.
 

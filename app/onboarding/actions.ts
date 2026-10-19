@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { parseBasics, parseBirthYear, parseStyle, readFormValues } from "@/lib/profile/validate";
+import { parseBasics, parseBirthYear, parseStyle, profileSaveError, readFormValues } from "@/lib/profile/validate";
 import type { ProfileFormState } from "@/lib/profile/types";
 import { myProfileEmbeddingText, refreshMyProfileEmbedding } from "@/lib/ai/profile-embedding";
 
@@ -36,7 +36,7 @@ export async function saveBasics(
   const { error } = await supabase.from("profiles").update(update).eq("id", user.id);
   if (error) {
     console.error("saveBasics failed:", error.code);
-    return { error: SAVE_FAILED, values, birthYear: birthYearRaw };
+    return { error: profileSaveError(error, SAVE_FAILED), values, birthYear: birthYearRaw };
   }
 
   revalidatePath("/onboarding");

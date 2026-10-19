@@ -10,7 +10,7 @@
 - **Report only**: the scanners changed nothing. All three now live in this repo's `.claude/` (agents, command, references, skills — relative paths only), so `/security-audit` can be re-run.
 - **Severity reconciliation**: where scanners disagreed, the highest rating was kept.
 
-**Confirmed sound by all three:** no secret was ever committed (all 55 commits checked for Supabase secret keys, JWTs, OpenRouter keys and other credential shapes; `.env*` git-ignored since commit 1); the service role key is used only by local scripts; only `NEXT_PUBLIC_SUPABASE_URL` / `…_ANON_KEY` reach the browser; RLS is on for every table; every security-definer function pins `search_path = ''` and derives the user from `auth.uid()` (or is service-role only); no mutation accepts a client-supplied id; previews are behind Vercel Authentication; HSTS is on.
+**Confirmed sound by all three:** no secret was ever committed (all 54 commits of `main` @ `778ec71` checked — 55 across all branches — for Supabase secret keys, JWTs, OpenRouter keys and other credential shapes; `.env*` git-ignored since commit 1); the service role key is used only by local scripts; only `NEXT_PUBLIC_SUPABASE_URL` / `…_ANON_KEY` reach the browser; RLS is on for every table; every security-definer function pins `search_path = ''` and derives the user from `auth.uid()` (or is service-role only) — one exception, `private.age_range(uuid)`, accepts any user id and is unreachable only because the `private` schema is not exposed (L6, verified); no mutation accepts a client-supplied id; previews are behind Vercel Authentication; HSTS is on.
 
 ## Findings by severity
 
@@ -19,14 +19,14 @@
 ### High
 | # | Finding | Flagged by | Status |
 |---|---|---|---|
-| H1 | Profile text accepted phone numbers / emails via the Data API (the rule was app-only) — visible on `/u/[id]` and match cards, bypassing "contact only after both accept" | Supabase (high), Next.js (medium) | **Fixed** — `private.profiles_guard` trigger (security definer, checks only changed fields) in `20261019145950_security_scan_fixes.sql`, commit `1bcf7c4`. The app's sign-up form still shows a friendly message first. |
+| H1 | Profile text accepted phone numbers / emails via the Data API (the rule was app-only) — visible on `/u/[id]` and match cards, bypassing "contact only after both accept" | Supabase (high), Next.js (medium) | **Fixed** — `private.profiles_guard` trigger (security definer, checks only changed fields) in `20261019145950_security_scan_fixes.sql`, commit `1bcf7c4`; lists (hobbies, cities, plan headline lines) checked **per item** like the app in `20261019155453_contact_check_per_item.sql`, commit `4926d71` (PR #8 review W1: joined lists could turn "1850" + "10000" into a fake phone number). If the database refuses, the app shows the same friendly "Please remove contact details…" message. |
 | H2 | Another user's private gender / gender preference can be inferred by changing your own settings and watching who disappears from your matches | Supabase (high), Next.js (low) | **Accepted** — inherent to mutual gender filtering; documented in FLOWS 2.0b and `/privacy`. Mitigation (delayed preference changes, rate-limited matching) → follow-up. Ages are matched in bands, so exact age / birth year can't be inferred. |
 | H3 | No browser security headers (no CSP, framing allowed, no `nosniff`) | Vercel (high/medium/low), Next.js (low) | **Partly fixed** — `next.config.ts` now sends `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy: camera=(), microphone=(), geolocation=()` and `Content-Security-Policy: frame-ancestors 'none'; object-src 'none'; base-uri 'self'`. A full CSP with `script-src` → follow-up (nonces break prerendering; needs SRI). |
 
 ### Medium
 | # | Finding | Status |
 |---|---|---|
-| M1 | The shared demo login can be abused: password / email change (locks graders out), profile text, its AI quota | **Partly fixed** — `public.reset_demo_ai_quota()` (no parameter, only the `is_protected` account, service role only); `scripts/reset-demo-account.mjs` now resets password, profile, plan **and** AI counters. **Accepted** otherwise (public demo): reset + sign out demo sessions before grading (checklist). |
+| M1 | The shared demo login can be abused: password / email change (locks graders out), profile text, its AI quota | **Partly fixed** — `public.reset_demo_ai_quota()` (no parameter, only the `is_protected` account, service role only); `scripts/reset-demo-account.mjs` now resets password, profile, plan **and** AI counters. Side effect: clearing the demo's counters also frees those slots under the site-wide 1,000/day ceiling (same table) — minor and manual. **Accepted** otherwise (public demo): reset + sign out demo sessions before grading (checklist). |
 | M2 | Every signed-in user could read every profile row, including half-finished sign-ups | **Fixed** — policy "read own or onboarded" (`1bcf7c4`). |
 | M3 | `consume_ai_quota` can be called directly to use up slots without AI calls; ~15 throwaway accounts could exhaust the 1,000/day site ceiling; deleting an account resets personal limits | **Accepted** (graceful fallback to manual forms / rule-based reasons) → follow-up: consume quota only inside server-side AI paths. |
 | M4 | Preview and production share one database and the OpenRouter key | **Accepted** (documented in CLAUDE.md; previews are protected). Optional: separate OpenRouter key for Preview. |
@@ -45,11 +45,11 @@
 | L7 | Access tokens stay valid until expiry after account deletion (then match no rows) | Accepted; keep JWT expiry short. |
 | L8 | Structure: no single data-access layer, `process.env` outside `lib/`, unused `lib/supabase/client.ts`; eval script could leave flagged test users after a crash | Follow-up. |
 
-## Verification — RLS script: **82/82 pass, 0 skipped**
+## Verification — RLS script: **84/84 pass, 0 skipped**
 `node --env-file=.env.local scripts/rls-check.mjs` (two test accounts + temporary users created and deleted with the service role key). New for this audit, each passing for the intended reason:
-- A can still update own bio; the database refuses a phone number in the bio, an email in the display name and a phone number in hobbies ("Contact details are not allowed in profiles").
+- A can still update own bio; hobbies `["Chess Elo 1850", "10000 steps"]` save (lists checked per item); the database refuses a phone number in the bio, an email in the display name and a phone number inside one hobby item ("Contact details are not allowed in profiles").
 - A real sign-up still creates its profile row; a sign-up with contact details in the name is refused by the database.
-- A cannot read a profile that hasn't finished onboarding.
+- A cannot read a profile that hasn't finished onboarding — and can once it is onboarded (positive control).
 - Requests to the `private` schema are rejected (signed out and signed in).
 - `reset_demo_ai_quota` refused for signed-in and signed-out callers ("permission denied for function").
 - `save_my_match_reasons` refuses more than 10 items.

@@ -60,7 +60,8 @@ async function nameOf(client, id) {
 
 console.log("Row Level Security check: profiles\n");
 
-// 1. Signed-in users can read profiles.
+// 1. Signed-in users can read profiles. Since the security audit (M2) only their own and
+//    ONBOARDED profiles — so both test accounts must have finished onboarding.
 {
   const { data, error } = await A.client.from("profiles").select("id");
   const ids = (data ?? []).map((row) => row.id);
@@ -631,25 +632,36 @@ if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
 console.log("\nRow Level Security check: security scan fixes (phase 6)\n");
 {
   // (2) A can still edit their own profile — the new profiles_guard trigger must not block it.
-  const { data: before } = await A.client.from("profiles").select("bio").eq("id", A.id).single();
-  const { data: upd, error: updError } = await A.client.from("profiles").update({ bio: "RLS check bio (temporary)" }).eq("id", A.id).select("id");
-  report(!updError && upd?.length === 1, "A can still update own bio (profiles_guard allows normal edits)", updError?.message ?? "1 row changed");
-  // H1: the database itself refuses contact details in profile text.
-  for (const [label, values] of [
-    ["a phone number in the bio", { bio: "WhatsApp +49 151 23456789" }],
-    ["an email in the display name", { display_name: "mail me a@b.de" }],
-    ["a phone number in hobbies", { hobbies: ["call 0151 2345678"] }],
-  ]) {
-    const { error } = await A.client.from("profiles").update(values).eq("id", A.id);
-    report((error?.message ?? "").includes("Contact details are not allowed in profiles"), `The database refuses ${label} (profiles_guard)`, error?.message ?? "update succeeded!");
+  // Every field these checks may touch is snapshotted and restored in finally (review W2).
+  const { data: before, error: snapError } = await A.client.from("profiles").select("display_name, bio, hobbies").eq("id", A.id).single();
+  if (snapError || !before) throw new Error(`could not snapshot A's profile: ${snapError?.message}`);
+  try {
+    const { data: upd, error: updError } = await A.client.from("profiles").update({ bio: "RLS check bio (temporary)" }).eq("id", A.id).select("id");
+    report(!updError && upd?.length === 1, "A can still update own bio (profiles_guard allows normal edits)", updError?.message ?? "1 row changed");
+    // W1: list items are checked one by one, like the app — numbers in neighbouring items
+    // must not join into a fake phone number.
+    const { data: ok, error: okError } = await A.client.from("profiles").update({ hobbies: ["Chess Elo 1850", "10000 steps"] }).eq("id", A.id).select("hobbies");
+    report(!okError && ok?.length === 1, 'Hobbies ["Chess Elo 1850", "10000 steps"] save (checked per item)', okError?.message ?? "saved");
+    // H1: the database itself refuses contact details in profile text.
+    for (const [label, values] of [
+      ["a phone number in the bio", { bio: "WhatsApp +49 151 23456789" }],
+      ["an email in the display name", { display_name: "mail me a@b.de" }],
+      ["a phone number inside one hobby item", { hobbies: ["vinyl", "call 0151 23456789"] }],
+    ]) {
+      const { error } = await A.client.from("profiles").update(values).eq("id", A.id);
+      report((error?.message ?? "").includes("Contact details are not allowed in profiles"), `The database refuses ${label} (profiles_guard)`, error?.message ?? "update succeeded!");
+    }
+  } finally {
+    const { error: restoreError } = await A.client.from("profiles")
+      .update({ display_name: before.display_name, bio: before.bio, hobbies: before.hobbies }).eq("id", A.id);
+    if (restoreError) console.log(`      WARNING: could not restore A's name/bio/hobbies: ${restoreError.message}`);
   }
-  await A.client.from("profiles").update({ bio: before?.bio ?? null }).eq("id", A.id);
 
   // (3) The private schema is not reachable through the Data API.
   const { error: privError } = await anon.schema("private").from("ai_calls").select("user_id").limit(1);
-  report(Boolean(privError), "Signed-out request to the private schema (Accept-Profile: private) is rejected", privError?.message ?? "readable!");
+  report(/Invalid schema|PGRST106/.test(privError?.message ?? ""), "Signed-out request to the private schema (Accept-Profile: private) is rejected", privError?.message ?? "readable!");
   const { error: privAuthError } = await A.client.schema("private").from("match_reasons").select("reason").limit(1);
-  report(Boolean(privAuthError), "Signed-in request to the private schema is rejected", privAuthError?.message ?? "readable!");
+  report(/Invalid schema|PGRST106/.test(privAuthError?.message ?? ""), "Signed-in request to the private schema is rejected", privAuthError?.message ?? "readable!");
 
   // M1: only the service role may clear the demo account's AI counters.
   const { error: resetError } = await A.client.rpc("reset_demo_ai_quota");
@@ -684,6 +696,15 @@ if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
       ? await A.client.from("profiles").select("id").eq("id", created.user.id)
       : { data: null, error: { message: "no temporary user" } };
     report(!seenError && seen?.length === 0, "A cannot read a profile that hasn't finished onboarding", seenError?.message ?? `${seen?.length} rows visible`);
+    // Positive control (review S3): once that user is onboarded, A can see them.
+    if (created?.user) {
+      await admin.from("profiles").update({
+        languages: ["en"], home_city: "Testtown", travel_pace: 3, day_rhythm: "flexible", travel_interests: ["cafes"],
+        onboarding_completed_at: new Date().toISOString(),
+      }).eq("id", created.user.id);
+      const { data: seenNow } = await A.client.from("profiles").select("id").eq("id", created.user.id);
+      report(seenNow?.length === 1, "Positive control: after onboarding, A can read that profile", `${seenNow?.length} rows visible`);
+    }
 
     // H1 on sign-up: a display name with contact details is refused by the database too
     // (the app's sign-up form shows a friendly error before it ever gets here).
@@ -692,6 +713,8 @@ if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
       user_metadata: { display_name: "call 0151 23456789", birth_year: year - 30 },
     });
     if (bad?.user) made.push(bad.user.id);
+    // GoTrue only returns its generic "Database error creating new user", so the text can't be
+    // matched; the positive control above (same request, clean name) shows the request itself works.
     report(Boolean(badError) && !bad?.user, "A sign-up with contact details in the name is refused by the database", badError?.message ?? "user created!");
   } finally {
     for (const id of made) {
