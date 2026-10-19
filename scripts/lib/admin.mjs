@@ -13,11 +13,11 @@ export function adminClient() {
   return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
 }
 
-// Demo accounts: exactly demo-NN@ / eval-xxxxxxxx@ on the reserved .invalid domain (it can
+// Demo/test accounts: exactly demo-NN@ / eval-xxxxxxxx@ / delete-test-xxxxxxxx@ on the reserved .invalid domain (it can
 // never receive mail). Destructive paths also require profiles.is_demo = true (clients can't
 // set it), so a real account is never touched — review W1.
 export const DEMO_DOMAIN = "dazi-demo.invalid";
-const DEMO_EMAIL = /^(demo-\d{2}|eval-[0-9a-f]{8})@dazi-demo\.invalid$/;
+const DEMO_EMAIL = /^(demo-\d{2}|eval-[0-9a-f]{8}|delete-test-[0-9a-f]{8})@dazi-demo\.invalid$/;
 export const isDemoEmail = (email) => DEMO_EMAIL.test(email ?? "");
 
 // Auth users that are BOTH a demo address AND flagged is_demo in their profile.

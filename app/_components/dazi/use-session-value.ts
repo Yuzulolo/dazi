@@ -47,6 +47,5 @@ export function useSessionValue(key: string | null): [string | null, (value: str
   return [value, setValue];
 }
 
-// Keys. The plan text is kept so it can become the first post after sign-up (FLOWS 1.1.6).
-export const PLAN_KEY = "dazi:plan:v1";
+// Keys. (The guest's plan sentence lives in localStorage instead: plan-draft.ts.)
 export const POSITION_KEY = "dazi:matches-position:v1";

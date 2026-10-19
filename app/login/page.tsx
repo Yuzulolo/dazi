@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { SiteShell } from "@/app/_components/dazi/site-shell";
 import { LoginForm } from "./login-form";
+import { DemoButton } from "@/app/_components/dazi/auth-buttons";
 
 // Messages for problems reported by /auth/callback and /auth/signout.
 const CALLBACK_ERRORS: Record<string, string> = {
@@ -22,6 +23,9 @@ export default function LoginPage({ searchParams }: PageProps<"/login">) {
         <p className="panel-footer">
           New to Dazi? <Link href="/signup">Sign up</Link>
         </p>
+        <div className="panel-links">
+          <DemoButton />
+        </div>
       </section>
     </SiteShell>
   );
@@ -33,7 +37,7 @@ async function CallbackError({
   searchParams: PageProps<"/login">["searchParams"];
 }) {
   const { error } = await searchParams;
-  const message = typeof error === "string" ? CALLBACK_ERRORS[error] : undefined;
+  const message = typeof error === "string" && Object.hasOwn(CALLBACK_ERRORS, error) ? CALLBACK_ERRORS[error] : undefined;
   if (!message) return null;
   return (
     <p className="form-error" role="alert">

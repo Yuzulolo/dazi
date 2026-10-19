@@ -31,8 +31,15 @@ async function Onboarding({ searchParams }: { searchParams: PageProps<"/onboardi
   if (showStep === 1) {
     return (
       <>
+        <p className="notice">
+          Changed your mind? <Link href="/settings">Delete my account</Link>
+        </p>
         <StepProgress step={1} />
         <h2>About you</h2>
+        <p className="notice">
+          Your bio, hobbies, cities and travel interests are turned into an AI “embedding” (a list of numbers) for
+          matching. <Link href="/privacy">How we use AI</Link>
+        </p>
         <ProfileForm
           key="basics"
           action={saveBasics}

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { InfoButton } from "./info-dialog";
-import { HOW_IT_WORKS, PRIVACY } from "./copy";
+import { HOW_IT_WORKS } from "./copy";
 
 // Page frame for every screen (docs/DESIGN.md → Page variants):
 // "wall" = poster carousel pages, "calm" = forms and profile pages.
@@ -36,7 +36,9 @@ export function SiteShell({
       <main className={mainClassName ?? (variant === "calm" ? "calm-main" : undefined)}>{children}</main>
       <footer className="dazi-footer">
         <span>{demo ? "FICTIONAL DEMO DATA · NO INVITES ARE SENT" : "GOOD PLANS. BETTER COMPANY."}</span>
-        <InfoButton content={PRIVACY}>Your privacy, first ↗</InfoButton>
+        <Link className="text-button" href="/privacy">
+          Privacy ↗
+        </Link>
       </footer>
     </div>
   );

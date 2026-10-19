@@ -2,10 +2,11 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { getMyActivePost } from "@/lib/posts/queries";
-import { signOut } from "@/app/auth/actions";
 import { SiteShell } from "@/app/_components/dazi/site-shell";
 import { PostPoster } from "@/app/_components/dazi/post-poster";
 import { ClearStoredPlan } from "./clear-stored-plan";
+import { ContinuePlan } from "./continue-plan";
+import { SignOutButton } from "@/app/_components/dazi/auth-buttons";
 import { MatchCard } from "@/app/_components/dazi/match-card";
 import { getMyMatches, getMatchSuggestion } from "@/lib/matching/queries";
 import { getMatchReasons } from "@/lib/ai/match-reasons";
@@ -43,6 +44,13 @@ async function Home({ searchParams }: { searchParams: PageProps<"/home">["search
               ? "This plan has ended — post a new one."
               : "Your active plan — your matches are below."}
         </p>
+        {user.isDemoLogin && (
+          <p className="notice shared-demo" role="note">
+            <strong>Shared demo account.</strong> Other visitors use it too — anything you enter here is visible to them,
+            and AI limits are shared. It is reset before demos.
+          </p>
+        )}
+        {posted !== "1" && !user.isDemoLogin && <ContinuePlan user={{ id: user.id, accountCreatedAt: user.accountCreatedAt }} />}
         <div className="panel-links">
           {post && !post.ended ? (
             <>
@@ -67,11 +75,12 @@ async function Home({ searchParams }: { searchParams: PageProps<"/home">["search
             Edit profile
           </Link>
         </div>
-        <form action={signOut} className="panel-footer">
-          <button type="submit" className="text-button">
-            Sign out
-          </button>
-        </form>
+        <div className="panel-footer panel-links">
+          <Link className="text-button" href="/settings">
+            Settings
+          </Link>
+          <SignOutButton />
+        </div>
       </section>
       {post && (
         <PostPoster {...post} ai={post.aiAssisted ? "assisted" : null} eyebrow={post.ended ? "Ended plan" : "My plan"} />
@@ -79,6 +88,10 @@ async function Home({ searchParams }: { searchParams: PageProps<"/home">["search
       {post && !post.ended && (
         <section className="for-you" aria-labelledby="for-you-title">
           <h2 id="for-you-title">For you</h2>
+          <p className="notice">
+            Ranked by AI similarity of plans and profiles plus your travel style. Reasons marked “AI-generated”
+            are written by AI. <Link href="/privacy">How we use AI</Link>
+          </p>
           {/* Own boundary: the page never waits for the AI reasons. */}
           <Suspense fallback={<p className="calm-lead">Finding your matches…</p>}>
             <ForYou post={post} />

@@ -7,9 +7,11 @@ import { PlanComposerContent } from "./plan-composer";
 import { PosterCarousel, type CarouselItem } from "./poster-carousel";
 import { TripPosterContent } from "./trip-poster";
 import { AIBadge, DemoBadge, Headline, Identity, Paper, Tags } from "./primitives";
-import { PLAN_KEY, POSITION_KEY, useSessionValue } from "./use-session-value";
-import { CONNECT_DEMO, SAFETY_TIPS } from "./copy";
-import type { DialogContent, GuestTrip } from "./types";
+import { POSITION_KEY } from "./use-session-value";
+import { usePlanDraft } from "./plan-draft";
+import { CONNECT_DEMO, SAFETY_TIPS, SIGNUP_PROMPT } from "./copy";
+import { DemoButton } from "./auth-buttons";
+import type { DialogContent, GuestTrip, HomeViewer } from "./types";
 
 // `demo` is required on purpose: fictional fixtures must always be labelled,
 // and a page without demo data shows real (server-redacted) trips or nothing.
@@ -29,26 +31,41 @@ function connectContent(demo: boolean): DialogContent {
 }
 
 // Homepage: the composer poster first, then the wall of plans.
-export function HomeWall({ trips, demo }: { trips: GuestTrip[]; demo: boolean }) {
+export function HomeWall({ trips, demo, viewer }: { trips: GuestTrip[]; demo: boolean; viewer: HomeViewer }) {
   const [dialog, setDialog] = useState<DialogContent | null>(null);
+  const [prompt, setPrompt] = useState(false);
   const items: CarouselItem[] = [
     {
       key: "composer",
       tone: "mint",
       label: "Your next plan",
       className: "composer",
-      content: (current) => <PlanComposerContent current={current} />,
+      content: (current) => <PlanComposerContent current={current} viewer={viewer} onGuestSubmit={() => setPrompt(true)} />,
     },
     ...tripItems(trips, demo, () => setDialog(connectContent(demo))),
   ];
 
   return (
     <>
-      <p className="wall-caption">
+      <div className="wall-caption">
         A WALL OF LITTLE PLANS {demo && <span>DESIGN DEMO · FICTIONAL TRIPS</span>}
-      </p>
+        {viewer.status === "guest" && <DemoButton className="text-button caption-demo" label="Try the demo account ↗" />}
+      </div>
       <PosterCarousel items={items} />
       {dialog && <InfoDialog content={dialog} onClose={() => setDialog(null)} />}
+      {prompt && (
+        <InfoDialog content={SIGNUP_PROMPT} onClose={() => setPrompt(false)}>
+          <div className="modal-actions">
+            <Link className="primary-button" href="/signup">
+              Sign up
+            </Link>
+            <DemoButton />
+            <Link className="text-button" href="/matches">
+              See example matches
+            </Link>
+          </div>
+        </InfoDialog>
+      )}
     </>
   );
 }
@@ -57,7 +74,8 @@ const COUNT_WORDS = ["No", "One", "Two", "Three", "Four", "Five", "Six", "Seven"
 
 // Guest results: the plan summary, then the matching posters.
 export function MatchesWall({ trips, demo }: { trips: GuestTrip[]; demo: boolean }) {
-  const [plan, savePlan] = useSessionValue(PLAN_KEY);
+  const [planDraft, savePlan] = usePlanDraft();
+  const plan = planDraft?.text ?? null;
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
   function updatePlan(event: FormEvent<HTMLFormElement>) {
@@ -155,7 +173,7 @@ export function PlanDetail({ trip, demo }: { trip: GuestTrip; demo: boolean }) {
         </Paper>
         <aside className="glass detail-glass">
           <h2>Why this plan fits</h2>
-          <AIBadge />
+          {demo ? <span className="rule-badge">Example reason (illustrative)</span> : <AIBadge />}
           {demo && <p className="small-copy">Illustrative AI explanation for the sample Berlin trip, not an analysis of your input.</p>}
           <dl className="match-facts">
             <div>

@@ -2,13 +2,27 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { PLAN_KEY, useSessionValue } from "./use-session-value";
+import { usePlanDraft } from "./plan-draft";
+import type { HomeViewer } from "./types";
 
-// The homepage composer poster: "Your next plan" in one sentence.
-// For now it opens the demo matches; real AI search is wired in parts C–E.
-export function PlanComposerContent({ current }: { current: boolean }) {
+// The homepage composer poster: "Your next plan" in one sentence. The sentence stays in
+// this browser (plan-draft.ts) and submitting opens the sign-up prompt; after sign-up
+// and onboarding it pre-fills the first plan (FLOWS 1.1). Full guest search: Roadmap.
+// Signed-in members go straight to /posts/new (pre-filled), not-yet-onboarded users to
+// /onboarding; only guests get the sign-up prompt. Signed-in state comes from the server.
+export function PlanComposerContent({
+  current,
+  viewer,
+  onGuestSubmit,
+}: {
+  current: boolean;
+  viewer: HomeViewer;
+  onGuestSubmit: () => void;
+}) {
   const router = useRouter();
-  const [storedPlan, storePlan] = useSessionValue(PLAN_KEY);
+  const owner = viewer.status === "guest" ? null : viewer.userId;
+  const [stored, storePlan] = usePlanDraft(owner);
+  const storedPlan = stored && stored.owner === owner ? stored.text : null;
   const [draft, setDraft] = useState<string | null>(null);
   const [error, setError] = useState("");
   const plan = draft ?? storedPlan ?? "";
@@ -21,7 +35,10 @@ export function PlanComposerContent({ current }: { current: boolean }) {
       return;
     }
     setError("");
-    router.push("/matches");
+    storePlan(plan);
+    if (viewer.status === "member") router.push("/posts/new");
+    else if (viewer.status === "onboarding") router.push("/onboarding");
+    else onGuestSubmit();
   }
 
   return (
@@ -58,7 +75,7 @@ export function PlanComposerContent({ current }: { current: boolean }) {
           {error}
         </p>
       )}
-      <p className="input-helper">Tell us your plan. Find your people.</p>
+      <p className="input-helper">After you sign up, AI (via OpenRouter) turns this sentence into your poster.</p>
       <p className="paper-privacy">Connect only when you both say yes.</p>
     </>
   );

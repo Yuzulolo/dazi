@@ -4,7 +4,7 @@ import { useActionState, useRef, useState, useTransition } from "react";
 import { PostPoster } from "@/app/_components/dazi/post-poster";
 import { InfoDialog } from "@/app/_components/dazi/info-dialog";
 import { AIBadge } from "@/app/_components/dazi/primitives";
-import { PLAN_KEY, useSessionValue } from "@/app/_components/dazi/use-session-value";
+import { draftBelongsTo, usePlanDraft } from "@/app/_components/dazi/plan-draft";
 import { FormError } from "@/app/_components/profile-fields";
 import { TRAVEL_INTERESTS } from "@/lib/profile/options";
 import {
@@ -48,13 +48,17 @@ export function PostEditor({
   action,
   initial,
   hasActivePost = false,
+  user,
 }: {
   mode: "new" | "edit";
   action: (state: PostFormState, formData: FormData) => Promise<PostFormState>;
   initial?: Draft;
   hasActivePost?: boolean;
+  user: { id: string; accountCreatedAt: string };
 }) {
-  const [storedPlan] = useSessionValue(mode === "new" ? PLAN_KEY : null);
+  const [planDraft] = usePlanDraft();
+  // Only this user's own homepage sentence pre-fills the box (shared-computer safe).
+  const storedPlan = mode === "new" && planDraft && draftBelongsTo(planDraft, user) ? planDraft.text : null;
   const [sentence, setSentence] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft | null>(initial ?? null);
   const [notice, setNotice] = useState("");
@@ -104,7 +108,8 @@ export function PostEditor({
               aria-describedby="sentence-help"
             />
             <small id="sentence-help" className="field-help">
-              English, German or Chinese. No phone numbers or emails — they are removed automatically.
+              English, German or Chinese. No phone numbers or emails — they are removed automatically. Your sentence is
+              processed by AI via OpenRouter (see Privacy).
             </small>
           </p>
           <FormError error={notice} />

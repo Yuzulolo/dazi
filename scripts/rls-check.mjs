@@ -546,6 +546,87 @@ try {
   if (error) console.log(`      WARNING: could not restore A's profile: ${error.message}`);
 }
 
+// ======================= delete my account (phase 5) =======================
+// Uses temporary users created with the service role key (local only); each one calls
+// delete_my_account() with its OWN session, exactly like the app. Real accounts are never deleted.
+console.log("\nRow Level Security check: delete my account (phase 5)\n");
+{
+  const { error } = await anon.rpc("delete_my_account");
+  // Must be refused by the GRANT, not by the function's own "Not signed in" check.
+  report(/permission denied for function/.test(error?.message ?? ""), "Signed-out (anon) cannot call delete_my_account", error?.message ?? "call succeeded!");
+  const { error: readFlag } = await A.client.from("profiles").select("is_protected").eq("id", A.id);
+  report(/permission denied/.test(readFlag?.message ?? ""), "Clients cannot read is_protected", readFlag?.message ?? "readable!");
+  const { error: writeFlag } = await A.client.from("profiles").update({ is_protected: true }).eq("id", A.id);
+  report(/permission denied/.test(writeFlag?.message ?? ""), "Clients cannot set is_protected", writeFlag?.message ?? "update succeeded!");
+}
+if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  console.log("SKIP  deletion tests with temporary users: SUPABASE_SERVICE_ROLE_KEY is not in .env.local");
+} else {
+  const { adminClient } = await import("./lib/admin.mjs");
+  const admin = adminClient();
+  const temps = [];
+  const year = Number(today().slice(0, 4));
+  async function tempUser(flags = {}) {
+    // Same prefix scripts/lib/admin.mjs recognises, so `seed-demo --cleanup` removes leftovers.
+    const email = `delete-test-${crypto.randomUUID().slice(0, 8)}@dazi-demo.invalid`;
+    const password = `${crypto.randomUUID()}Aa1!`;
+    const { data, error } = await admin.auth.admin.createUser({
+      email, password, email_confirm: true, user_metadata: { display_name: "Delete test", birth_year: year - 30 },
+    });
+    if (error) throw new Error(`temp user: ${error.message}`);
+    temps.push(data.user.id);
+    const { error: pe } = await admin.from("profiles").update({
+      languages: ["en"], home_city: "Testtown", travel_pace: 3, day_rhythm: "flexible", travel_interests: ["cafes"],
+      onboarding_completed_at: new Date().toISOString(), ...flags,
+    }).eq("id", data.user.id);
+    if (pe) throw new Error(`temp profile: ${pe.message}`);
+    const client = newClient();
+    const { error: se } = await client.auth.signInWithPassword({ email, password });
+    if (se) throw new Error(`temp sign-in: ${se.message}`);
+    return { id: data.user.id, client };
+  }
+  try {
+    const { count: aPostsBefore } = await A.client.from("posts").select("id", { count: "exact", head: true });
+
+    // 1. A normal user deletes themself: auth user, profile and plans are gone.
+    const t = await tempUser();
+    const { data: postId, error: pubError } = await t.client.rpc("publish_post", {
+      p_raw_text: "Delete test plan", p_city: "Testtown", p_start_date: today(), p_end_date: today(),
+      p_interests: ["cafes"], p_budget: null, p_vibe: null, p_headline: ["Delete test.", "Ignore."], p_tone: "mint",
+      p_ai_assisted: false, p_embedding: `[${Array(1536).fill(0.01).join(",")}]`,
+    });
+    if (pubError) throw new Error(`temp publish: ${pubError.message}`);
+    const { error: delError } = await t.client.rpc("delete_my_account");
+    const { data: authAfter } = await admin.auth.admin.getUserById(t.id);
+    const { data: profAfter } = await admin.from("profiles").select("id").eq("id", t.id);
+    const { data: postsAfter } = await admin.from("posts").select("id").eq("id", postId);
+    report(!delError && !authAfter?.user && profAfter?.length === 0 && postsAfter?.length === 0,
+      "delete_my_account really deletes the caller: auth user, profile and plans are gone",
+      delError?.message ?? `auth user ${authAfter?.user ? "STILL EXISTS" : "gone"}, profile rows ${profAfter?.length}, plan rows ${postsAfter?.length}`);
+
+    // 2. ...and only the caller: A is untouched.
+    const { data: aProfile } = await A.client.from("profiles").select("id").eq("id", A.id);
+    const { count: aPostsAfter } = await A.client.from("posts").select("id", { count: "exact", head: true });
+    report(aProfile?.length === 1 && aPostsAfter === aPostsBefore, "Deleting one account leaves other users untouched (A's profile and plans)",
+      `A profile rows ${aProfile?.length}, A plans ${aPostsBefore} → ${aPostsAfter}`);
+
+    // 3. Protected (the public demo login) and demo accounts are refused and still exist.
+    for (const [label, flags] of [["a protected account", { is_protected: true }], ["a demo account (is_demo)", { is_demo: true }]]) {
+      const u = await tempUser(flags);
+      const { error } = await u.client.rpc("delete_my_account");
+      const { data: still } = await admin.auth.admin.getUserById(u.id);
+      report((error?.message ?? "").includes("cannot be deleted") && Boolean(still?.user), `delete_my_account refuses ${label}`,
+        error?.message ?? "deleted!");
+    }
+  } finally {
+    for (const id of temps) {
+      const { error } = await admin.auth.admin.deleteUser(id);
+      // The user deleted by delete_my_account is already gone ("not found") — that's fine.
+      if (error && !/not.?found/i.test(error.message)) console.log(`      WARNING: could not remove temporary user ${id}: ${error.message}`);
+    }
+  }
+}
+
 await Promise.all([A.client.auth.signOut(), B.client.auth.signOut()]);
 
 console.log(failures === 0 ? "\nAll checks passed." : `\n${failures} check(s) FAILED.`);

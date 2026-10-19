@@ -28,6 +28,10 @@ async function EditProfile({ searchParams }: { searchParams: PageProps<"/me/edit
       <p className="calm-lead">
         <Link href={`/u/${user.id}`}>View my public profile</Link> · <Link href="/home">Home</Link>
       </p>
+      <p className="notice">
+        Your bio, hobbies, cities and travel interests are turned into an AI “embedding” (a list of numbers) to find
+        people like you. <Link href="/privacy">How we use AI</Link> · <Link href="/settings">Settings</Link>
+      </p>
       {saved === "1" && (
         <p className="form-success" aria-live="polite">
           Saved.

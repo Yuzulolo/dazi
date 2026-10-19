@@ -1,0 +1,49 @@
+{
+ "about": "Known state of the public demo login (profiles.is_protected = true), restored by scripts/reset-demo-account.mjs. Snapshot of the profile as set up in onboarding, 19 Oct 2026.",
+ "profile": {
+  "display_name": "Demo",
+  "gender": "woman",
+  "languages": [
+   "en",
+   "de",
+   "zh"
+  ],
+  "home_city": "Beijing",
+  "bio": "A foodie who just moved to Berlin and enjoys browsing flea markets and hunting for delicious Vietnamese noodles on the weekends",
+  "visited_cities": [
+   "Berlin",
+   "Barcelona",
+   "Lisbon"
+  ],
+  "hobbies": [
+   "tennis",
+   "bouldering"
+  ],
+  "pref_age_min": 20,
+  "pref_age_max": 40,
+  "pref_gender": null,
+  "travel_pace": 3,
+  "day_rhythm": "flexible",
+  "travel_interests": [
+   "museums_galleries",
+   "cafes"
+  ]
+ },
+ "post": {
+  "start_offset": 2,
+  "days": 4,
+  "raw_text": "Berlin for a few days: flea markets, small cafés and a slow walk along the canal.",
+  "interests": [
+   "food_markets",
+   "cafes",
+   "local_hidden_spots"
+  ],
+  "budget": "low",
+  "vibe": "slow, curious",
+  "headline": [
+   "Flea markets.",
+   "Canal walks."
+  ],
+  "tone": "lavender"
+ }
+}

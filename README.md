@@ -2,7 +2,7 @@
 
 **🔗 Live app:** https://dazi-five-tau.vercel.app
 
-**🔑 Demo login for reviewers:** email `xiangquyuanfang+demo@hotmail.com` · password `k5nNGUEfygEgPLF` (a dedicated demo account, 18+, already confirmed)
+**🔑 Demo login for reviewers:** email `xiangquyuanfang+demo@hotmail.com` · password `k5nNGUEfygEgPLF` (a dedicated demo account, 18+, already confirmed) — or just click **"Try the demo account"** on the homepage or the login page. The demo account can't be deleted; it is reset before demos. Privacy notice: [/privacy](https://dazi-five-tau.vercel.app/privacy)
 
 ---
 
@@ -34,7 +34,7 @@ Capstone scope (deadline 20 Oct 2026, see [`docs/SPEC.md`](docs/SPEC.md) §0):
 | D. Matching + AI reasons + seed data ([eval results](evals/MATCHING-RESULTS.md)) | ✅ done |
 | E. Homepage guest search (anonymised, rate-limited) | ⏳ |
 | F. Invites + simple message thread | ⏳ |
-| G. Safety & compliance (block/report, AI labels, delete my data) | ⏳ |
+| G. Safety & compliance (delete my data ✅, privacy page ✅, AI labels ✅, block/report ⏳) | 🟡 partly |
 | Design foundation (poster wall, design system — [`docs/DESIGN.md`](docs/DESIGN.md)) | ✅ done |
 | H. Design polish, security scan, evaluation | ⏳ |
 

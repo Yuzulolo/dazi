@@ -24,6 +24,7 @@ async function NewPost() {
   // key = current active post: after publishing, a kept-alive editor starts fresh.
   return (
     <PostEditor
+      user={{ id: user.id, accountCreatedAt: user.accountCreatedAt }}
       key={active?.id ?? "none"}
       mode="new"
       action={publishPost}
