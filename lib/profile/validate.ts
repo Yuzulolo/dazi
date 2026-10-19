@@ -74,6 +74,15 @@ function pickAll(values: string[], options: Option[]) {
 
 const NO_CONTACTS = "Please remove contact details (email or phone number)";
 
+// Shown when the DATABASE refuses a profile save (private.profiles_guard) — same wording as
+// the app's own checks, never a generic "couldn't save" (PR #8 review W1).
+export function profileSaveError(error: { code?: string; message?: string }, fallback: string) {
+  if (error.code === "23514" && (error.message ?? "").includes("Contact details")) {
+    return `${NO_CONTACTS} from your profile.`;
+  }
+  return fallback;
+}
+
 // Shared by sign-up and the profile forms.
 export function parseDisplayName(value: string): string | null {
   if (value.length < 1 || value.length > 50) return "Please enter a display name (1–50 characters).";

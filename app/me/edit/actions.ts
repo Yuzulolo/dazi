@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { parseBasics, parseStyle, readFormValues } from "@/lib/profile/validate";
+import { parseBasics, parseStyle, profileSaveError, readFormValues } from "@/lib/profile/validate";
 import type { ProfileFormState } from "@/lib/profile/types";
 import { profileEmbeddingText } from "@/lib/ai/profile-text";
 import { myProfileEmbeddingText, refreshMyProfileEmbedding } from "@/lib/ai/profile-embedding";
@@ -35,7 +35,7 @@ export async function updateProfile(
     .eq("id", user.id);
   if (error) {
     console.error("updateProfile failed:", error.code);
-    return { error: "Couldn't save your changes. Please check them and try again.", values };
+    return { error: profileSaveError(error, "Couldn't save your changes. Please check them and try again."), values };
   }
 
   // Only re-embed when bio, hobbies, cities or interests changed (name/preferences are free).

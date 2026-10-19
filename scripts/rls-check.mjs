@@ -60,7 +60,8 @@ async function nameOf(client, id) {
 
 console.log("Row Level Security check: profiles\n");
 
-// 1. Signed-in users can read profiles.
+// 1. Signed-in users can read profiles. Since the security audit (M2) only their own and
+//    ONBOARDED profiles — so both test accounts must have finished onboarding.
 {
   const { data, error } = await A.client.from("profiles").select("id");
   const ids = (data ?? []).map((row) => row.id);
@@ -622,6 +623,102 @@ if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
     for (const id of temps) {
       const { error } = await admin.auth.admin.deleteUser(id);
       // The user deleted by delete_my_account is already gone ("not found") — that's fine.
+      if (error && !/not.?found/i.test(error.message)) console.log(`      WARNING: could not remove temporary user ${id}: ${error.message}`);
+    }
+  }
+}
+
+// ======================= security scan fixes (phase 6) =======================
+console.log("\nRow Level Security check: security scan fixes (phase 6)\n");
+{
+  // (2) A can still edit their own profile — the new profiles_guard trigger must not block it.
+  // Every field these checks may touch is snapshotted and restored in finally (review W2).
+  const { data: before, error: snapError } = await A.client.from("profiles").select("display_name, bio, hobbies").eq("id", A.id).single();
+  if (snapError || !before) throw new Error(`could not snapshot A's profile: ${snapError?.message}`);
+  try {
+    const { data: upd, error: updError } = await A.client.from("profiles").update({ bio: "RLS check bio (temporary)" }).eq("id", A.id).select("id");
+    report(!updError && upd?.length === 1, "A can still update own bio (profiles_guard allows normal edits)", updError?.message ?? "1 row changed");
+    // W1: list items are checked one by one, like the app — numbers in neighbouring items
+    // must not join into a fake phone number.
+    const { data: ok, error: okError } = await A.client.from("profiles").update({ hobbies: ["Chess Elo 1850", "10000 steps"] }).eq("id", A.id).select("hobbies");
+    report(!okError && ok?.length === 1, 'Hobbies ["Chess Elo 1850", "10000 steps"] save (checked per item)', okError?.message ?? "saved");
+    // H1: the database itself refuses contact details in profile text.
+    for (const [label, values] of [
+      ["a phone number in the bio", { bio: "WhatsApp +49 151 23456789" }],
+      ["an email in the display name", { display_name: "mail me a@b.de" }],
+      ["a phone number inside one hobby item", { hobbies: ["vinyl", "call 0151 23456789"] }],
+    ]) {
+      const { error } = await A.client.from("profiles").update(values).eq("id", A.id);
+      report((error?.message ?? "").includes("Contact details are not allowed in profiles"), `The database refuses ${label} (profiles_guard)`, error?.message ?? "update succeeded!");
+    }
+  } finally {
+    const { error: restoreError } = await A.client.from("profiles")
+      .update({ display_name: before.display_name, bio: before.bio, hobbies: before.hobbies }).eq("id", A.id);
+    if (restoreError) console.log(`      WARNING: could not restore A's name/bio/hobbies: ${restoreError.message}`);
+  }
+
+  // (3) The private schema is not reachable through the Data API.
+  const { error: privError } = await anon.schema("private").from("ai_calls").select("user_id").limit(1);
+  report(/Invalid schema|PGRST106/.test(privError?.message ?? ""), "Signed-out request to the private schema (Accept-Profile: private) is rejected", privError?.message ?? "readable!");
+  const { error: privAuthError } = await A.client.schema("private").from("match_reasons").select("reason").limit(1);
+  report(/Invalid schema|PGRST106/.test(privAuthError?.message ?? ""), "Signed-in request to the private schema is rejected", privAuthError?.message ?? "readable!");
+
+  // M1: only the service role may clear the demo account's AI counters.
+  const { error: resetError } = await A.client.rpc("reset_demo_ai_quota");
+  report(/permission denied for function/.test(resetError?.message ?? ""), "Signed-in users cannot call reset_demo_ai_quota (service role only)", resetError?.message ?? "call succeeded!");
+  const { error: resetAnon } = await anon.rpc("reset_demo_ai_quota");
+  report(/permission denied for function/.test(resetAnon?.message ?? ""), "Signed-out (anon) cannot call reset_demo_ai_quota", resetAnon?.message ?? "call succeeded!");
+
+  // L1: at most 10 reasons per call.
+  const eleven = Array.from({ length: 11 }, () => ({ post_id: crypto.randomUUID(), reason: "x" }));
+  const { error: capError } = await A.client.rpc("save_my_match_reasons", { p_reasons: eleven, p_generated_at: new Date().toISOString() });
+  report((capError?.message ?? "").includes("At most 10 reasons"), "save_my_match_reasons refuses more than 10 items", capError?.message ?? "accepted!");
+}
+if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  const { adminClient } = await import("./lib/admin.mjs");
+  const admin = adminClient();
+  const year = Number(today().slice(0, 4));
+  const made = [];
+  try {
+    // (1) A real sign-up still works: creating an auth user runs the same database path as the
+    // public sign-up (auth.users insert → handle_new_user → profiles insert → profiles_guard).
+    const email = `delete-test-${crypto.randomUUID().slice(0, 8)}@dazi-demo.invalid`;
+    const { data: created, error: signUpError } = await admin.auth.admin.createUser({
+      email, password: `${crypto.randomUUID()}Aa1!`, email_confirm: true,
+      user_metadata: { display_name: "Sign-up check", birth_year: year - 30 },
+    });
+    if (created?.user) made.push(created.user.id);
+    const { data: prof } = created?.user ? await admin.from("profiles").select("id").eq("id", created.user.id) : { data: [] };
+    report(!signUpError && prof?.length === 1, "A real sign-up still works after the migration (profile row created)", signUpError?.message ?? `${prof?.length} profile row`);
+
+    // M2: A cannot read a profile that hasn't finished onboarding.
+    const { data: seen, error: seenError } = created?.user
+      ? await A.client.from("profiles").select("id").eq("id", created.user.id)
+      : { data: null, error: { message: "no temporary user" } };
+    report(!seenError && seen?.length === 0, "A cannot read a profile that hasn't finished onboarding", seenError?.message ?? `${seen?.length} rows visible`);
+    // Positive control (review S3): once that user is onboarded, A can see them.
+    if (created?.user) {
+      await admin.from("profiles").update({
+        languages: ["en"], home_city: "Testtown", travel_pace: 3, day_rhythm: "flexible", travel_interests: ["cafes"],
+        onboarding_completed_at: new Date().toISOString(),
+      }).eq("id", created.user.id);
+      const { data: seenNow } = await A.client.from("profiles").select("id").eq("id", created.user.id);
+      report(seenNow?.length === 1, "Positive control: after onboarding, A can read that profile", `${seenNow?.length} rows visible`);
+    }
+
+    // H1 on sign-up: a display name with contact details is refused by the database too
+    // (the app's sign-up form shows a friendly error before it ever gets here).
+    const { data: bad, error: badError } = await admin.auth.admin.createUser({
+      email: `delete-test-${crypto.randomUUID().slice(0, 8)}@dazi-demo.invalid`, password: `${crypto.randomUUID()}Aa1!`, email_confirm: true,
+      user_metadata: { display_name: "call 0151 23456789", birth_year: year - 30 },
+    });
+    if (bad?.user) made.push(bad.user.id);
+    // GoTrue only returns its generic "Database error creating new user", so the text can't be
+    // matched; the positive control above (same request, clean name) shows the request itself works.
+    report(Boolean(badError) && !bad?.user, "A sign-up with contact details in the name is refused by the database", badError?.message ?? "user created!");
+  } finally {
+    for (const id of made) {
+      const { error } = await admin.auth.admin.deleteUser(id);
       if (error && !/not.?found/i.test(error.message)) console.log(`      WARNING: could not remove temporary user ${id}: ${error.message}`);
     }
   }
