@@ -33,7 +33,7 @@ Capstone scope (deadline 20 Oct 2026, see [`docs/SPEC.md`](docs/SPEC.md) §0):
 | C. Intent post (AI extraction, poster tones, embeddings, per-user AI quota) | ✅ done |
 | D. Matching + AI reasons + seed data ([eval results](evals/MATCHING-RESULTS.md)) | ✅ done |
 | E. Homepage guest search (anonymised, rate-limited) | ⏳ |
-| F. Invites + simple message thread | ⏳ |
+| F. Invites + simple message thread | ⏭️ Roadmap — matching is live; mutual-accept contact is the next milestone |
 | G. Safety & compliance (delete my data ✅, privacy page ✅, AI labels ✅, block/report ⏳) | 🟡 partly |
 | Design foundation (poster wall, design system — [`docs/DESIGN.md`](docs/DESIGN.md)) | ✅ done |
 | H. Design polish, security scan, evaluation | ⏳ |
