@@ -1,14 +1,13 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
-import { PLAN_KEY, useSessionValue } from "./use-session-value";
+import { usePlanDraft } from "./plan-draft";
 
-// The homepage composer poster: "Your next plan" in one sentence.
-// For now it opens the demo matches; real AI search is wired in parts C–E.
-export function PlanComposerContent({ current }: { current: boolean }) {
-  const router = useRouter();
-  const [storedPlan, storePlan] = useSessionValue(PLAN_KEY);
+// The homepage composer poster: "Your next plan" in one sentence. The sentence stays in
+// this browser (plan-draft.ts) and submitting opens the sign-up prompt; after sign-up
+// and onboarding it pre-fills the first plan (FLOWS 1.1). Full guest search: Roadmap.
+export function PlanComposerContent({ current, onSubmitted }: { current: boolean; onSubmitted: () => void }) {
+  const [storedPlan, storePlan] = usePlanDraft();
   const [draft, setDraft] = useState<string | null>(null);
   const [error, setError] = useState("");
   const plan = draft ?? storedPlan ?? "";
@@ -21,7 +20,7 @@ export function PlanComposerContent({ current }: { current: boolean }) {
       return;
     }
     setError("");
-    router.push("/matches");
+    onSubmitted();
   }
 
   return (
@@ -58,7 +57,7 @@ export function PlanComposerContent({ current }: { current: boolean }) {
           {error}
         </p>
       )}
-      <p className="input-helper">Tell us your plan. Find your people.</p>
+      <p className="input-helper">After you sign up, AI (via OpenRouter) turns this sentence into your poster.</p>
       <p className="paper-privacy">Connect only when you both say yes.</p>
     </>
   );

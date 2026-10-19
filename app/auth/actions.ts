@@ -97,3 +97,20 @@ export async function signOut() {
   await supabase.auth.signOut();
   redirect("/");
 }
+
+// "Try the demo account": signs in as the public demo login on the server. The
+// credentials are server-only env vars (DEMO_EMAIL / DEMO_PASSWORD, never NEXT_PUBLIC_).
+// Every demo sign-in comes from Vercel's servers, so Supabase's auth rate limit can kick
+// in — any failure shows a friendly "busy" message on the homepage, never an error page.
+export async function signInDemo() {
+  const email = process.env.DEMO_EMAIL;
+  const password = process.env.DEMO_PASSWORD;
+  if (!email || !password) redirect("/?demo=unavailable");
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) {
+    console.error("demo sign-in failed:", error.code ?? error.status);
+    redirect("/?demo=busy");
+  }
+  redirect("/home");
+}

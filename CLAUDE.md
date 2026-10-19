@@ -36,7 +36,9 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 - `lib/auth.ts` — `getCurrentUser()`: the single server-side gate for every protected page and server action
 - `supabase/migrations/` — all schema changes (applied by pasting into the Supabase SQL Editor)
 - `app/_components/dazi/` — design-system components (`SiteShell`, `Paper`, `PosterCarousel`, dialogs, badges); `app/_styles/dazi-*.css` — their styles, loaded once via `app/globals.css`
-- `app/matches`, `app/plans/[id]` — guest results and recruitment detail (demo trips until part E)
+- `app/matches`, `app/plans/[id]` — guest results and recruitment detail (demo trips; full guest search is Roadmap)
+- `app/settings` (delete my account), `app/privacy` (privacy notice; model names rendered from `lib/ai/providers.ts`)
+- `vercel.json` — server functions run in Frankfurt (`fra1`), next to Supabase (EU)
 - `lib/demo/trips.ts` — fictional, labelled demo trips + the `DEMO_MATCHES` flag
 - `lib/profile/` — profile options, validation, contact-details detector/stripper, queries
 - `lib/ai/` — OpenRouter wrapper, trip extraction (prompt + JSON schema), embedding text builder (server-only; `.ts` import extensions so scripts can run them)
@@ -51,6 +53,7 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 ## Environment variables
 - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` — public
 - `OPENROUTER_API_KEY` — server-only (Production + Preview in Vercel, marked Sensitive). School key: **no spending limit**, so quotas are the only protection
+- `DEMO_EMAIL`, `DEMO_PASSWORD` — server-only (Production + Preview in Vercel, Sensitive): the "Try the demo account" button signs in on the server (`signInDemo` in `app/auth/actions.ts`). `tests/demo-env.test.mjs` keeps them out of client code.
 - `SUPABASE_SERVICE_ROLE_KEY` — **local scripts only** (seed, backfill, eval via `scripts/lib/admin.mjs`). It bypasses RLS: **never** imported by `app/` or `lib/`, **never** added to Vercel, **never** `NEXT_PUBLIC_`. `tests/secrets.test.mjs` fails if app or lib code mentions it.
 - `SITE_URL` — server-only; where auth emails send people back to (`http://localhost:3000` locally, the Vercel URL in production / the branch URL in preview)
 - Test-only (local `.env.local`): `TEST_A_EMAIL`, `TEST_A_PASSWORD`, `TEST_B_EMAIL`, `TEST_B_PASSWORD`
@@ -66,6 +69,7 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 - `node --conditions=react-server --env-file=.env.local scripts/seed-demo.mjs` — 30 demo users in Berlin (idempotent; `--cleanup` removes them; 60 embedding calls)
 - `node --conditions=react-server --env-file=.env.local scripts/backfill-profile-embeddings.mjs` — personality embeddings for older profiles
 - `node --env-file=.env.local scripts/eval-matching.mjs` — matching eval (top-3 hit rate + hard filters; no AI calls)
+- `node --conditions=react-server --env-file=.env.local scripts/reset-demo-account.mjs` — restore the public demo login (profile, plan, **password**) before a demo or grading session
 
 ## Non-negotiable rules
 ### Security
@@ -73,6 +77,7 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 - Only `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` may be exposed to the browser. The service-role key and `OPENROUTER_API_KEY` are **server-only**.
 - **Every AI call (chat + embeddings) runs server-side** (route handlers / server actions), never from client components.
 - **Every AI call is rate-limited:** signed-in users through `consume_ai_quota()` (20 drafts + 20 saves per user per rolling 24 h, 1,000 per day site-wide), guests through the per-IP limit (part E). No AI call without a quota check.
+- **"Delete my data":** `/settings` → `public.delete_my_account()` (security definer, pinned to `auth.uid()`, no service role key). Every user table must cascade from `auth.users` — add `on delete cascade` to any new table and extend `supabase/checks/phase5_delete_account_check.sql`. The public demo login (`profiles.is_protected`) and demo users (`is_demo`) can't be deleted.
 - **Posts are written only through `publish_post()` / `update_post()`** (security definer, pinned to `auth.uid()`); users have no direct INSERT/UPDATE, and the `posts_guard` trigger rejects contact details, past start dates and illegal status changes in the database itself.
 - **Row Level Security is enabled on every table that holds user data**, with explicit policies for select / insert / update / delete. Use `USING` + `WITH CHECK` scoped to `auth.uid()`.
 - Messages are readable only by the participants of an **accepted** invite or the **approved** members of an activity.

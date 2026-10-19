@@ -33,6 +33,10 @@ async function Onboarding({ searchParams }: { searchParams: PageProps<"/onboardi
       <>
         <StepProgress step={1} />
         <h2>About you</h2>
+        <p className="notice">
+          Your bio, hobbies, cities and travel interests are turned into an AI “embedding” (a list of numbers) for
+          matching. <Link href="/privacy">How we use AI</Link>
+        </p>
         <ProfileForm
           key="basics"
           action={saveBasics}

@@ -29,7 +29,7 @@ export function TripPosterContent({
       <Identity trip={trip} />
       <div className="glass match-reason">
         <p className="eyebrow">
-          Why you might get along <AIBadge />
+          Why you might get along {demo ? <span className="rule-badge">Example AI reason</span> : <AIBadge />}
         </p>
         <p>{trip.matchReason}</p>
         <div className="poster-actions">

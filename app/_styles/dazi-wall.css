@@ -275,3 +275,8 @@
   .dazi-root .carousel-arrow[data-side="next"] { right: 16px; }
   .dazi-root .detail-glass { position: static; }
 }
+.dazi-root .wall-caption { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; column-gap: 16px; }
+.dazi-root .wall-caption form { display: inline; }
+.dazi-root .caption-demo { min-height: 32px; padding: 4px 0; font-size: 12px; letter-spacing: 1.2px; text-decoration: underline; text-underline-offset: 3px; }
+.dazi-root .home-notice { max-width: 560px; margin: 0 auto 10px; padding: 12px 18px; text-align: center; font-size: 15px; }
+@media (max-width: 800px) { .dazi-root .wall-caption { flex-direction: column; } }

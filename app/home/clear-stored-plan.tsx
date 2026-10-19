@@ -1,16 +1,12 @@
 "use client";
 
 import { useEffect } from "react";
-import { PLAN_KEY } from "@/app/_components/dazi/use-session-value";
+import { clearPlanDraft } from "@/app/_components/dazi/plan-draft";
 
-// After a post is saved, the guest sentence in sessionStorage has done its job.
+// After a post is saved (or the account is deleted), the guest sentence has done its job.
 export function ClearStoredPlan() {
   useEffect(() => {
-    try {
-      sessionStorage.removeItem(PLAN_KEY);
-    } catch {
-      // Storage unavailable: nothing to clear.
-    }
+    clearPlanDraft();
   }, []);
   return null;
 }

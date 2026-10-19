@@ -14,7 +14,7 @@
    - **Never sent to the browser:** real name, real avatar, stories, profile link, socials
 4. Guest clicks "Connect" → sign-up dialog (Sign up / Not now).
 5. Guest ranking uses **trip similarity + city + dates only** (no profile yet). Banner: *"Complete your profile for more accurate matches."*
-6. The guest's search text is kept in the browser (sessionStorage) so it can become their first post after sign-up. Nothing about the guest is stored in the database except a rate-limit log. sessionStorage is tab-local and best-effort: continuing in another tab or device does not carry the plan over. On `/matches` the guest can edit the sentence in place ("Edit plan"). Only the guest's own plan text (and the carousel position) is stored — never another user's data. Remembering which recruitment the guest wanted to connect with is part F (server-side, after sign-up), not browser storage.
+6. The guest's sentence is kept **only in this browser (localStorage, `dazi:plan-draft:v1`)** so it survives the sign-up email-confirmation tab. Submitting the homepage composer opens a sign-up prompt (Sign up / Try the demo account / See example matches). After onboarding, `/home` shows "Continue with your plan" and `/posts/new` is pre-filled. The draft is cleared when the first plan is published, on sign-out, after account deletion, and after 7 days at the latest. Full guest search (real anonymised results) is Roadmap.
 
 ### 1.2 Sign-up → first match
 1. Sign up (email or Google) → confirm 18+ (Google users enter birth year on `/onboarding` first, see 2.0)
@@ -44,8 +44,9 @@ Pending invites · my active post · **"For you"**: top 5 matches as posters, ea
 | `/stories/new` | owner | Write story + photos |
 | `/invites` | owner | Received / sent |
 | `/chat/[id]` | 2 participants | Private chat after acceptance |
-| `/settings` | owner | Blocked users, delete my data |
-| `/safety`, `/privacy` | everyone | Safety tips, privacy notice |
+| `/settings` | owner | **Delete my account** (type DELETE to confirm); blocked users later (part G) |
+| `/privacy` | everyone | Privacy notice (what we store, AI via OpenRouter, where data lives, retention, deletion, contact) |
+| `/safety` | everyone | Safety tips (later) |
 
 ### 1.5 Social verification (confirmed)
 - **Facebook:** linked via OAuth (Supabase identity linking) → "Facebook verified" badge. Proves a real account was logged into; the profile link itself stays hidden.
@@ -70,6 +71,7 @@ Pending invites · my active post · **"For you"**: top 5 matches as posters, ea
 - **Gender is optional and only used for matching, never shown.** UI text: *"Only used for matching, never shown. If you leave it empty, people who set a gender preference won't see you."*
 - **Matching rule (part D):** a user with **no gender set — or gender "other", which can't be chosen as a preference — is hidden from anyone who has set a gender preference**; gender and age preferences must match **mutually** (both directions).
 - **Accepted privacy trade-off:** someone with a gender preference only ever sees people of that gender, so their matches' gender is implicitly revealed to them.
+- **Account deletion** (`/settings`) removes the account and every row linked to it, including its AI-usage counters — so a deleted-and-recreated account starts with fresh per-user quotas. **Accepted trade-off:** the site-wide ceiling (1,000 AI calls / 24 h) still caps cost.
 - **Accepted privacy trade-off (probing):** by switching their *own* gender and watching who disappears, a user can infer a match's private gender preference. Preventing it would mean limiting how often people may change their own gender, which we don't do.
 - **Ages are matched in bands** (18–24, 25–29, 30–34, 35–39, 40–49, 50–59, 60+ — the ranges people see). Age preferences are widened to whole bands, so even an exact "31–31" preference only narrows to "30–34" and never reveals an exact age or birth year.
 - Other users' posts reach the app **only** through `match_my_post()` (server-side, all hard filters, safe fields only — never birth year, gender, preferences, embeddings or raw text).
