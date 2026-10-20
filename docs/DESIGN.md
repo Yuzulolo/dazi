@@ -64,6 +64,7 @@ Radius: glass 20px (inner border 14px), buttons/inputs 12px, tags 30px, badges 5
 | `Headline` | `primitives.tsx` | Two-line poster headline (`h1` or `h2`). |
 | `InfoDialog` / `InfoButton` | `info-dialog.tsx` | Native `<dialog>`: Escape + backdrop close, focus returns to the opener. Texts in `copy.ts`. |
 | `PosterCarousel` | `poster-carousel.tsx` | Active poster frontal, neighbours angled (±14°, ±22°). Drag/swipe, arrow keys, wraparound, dots + live "2 of 5" text. Arrows at the left/right edges, vertically centred (desktop); beside the dots under the poster (≤ 800px). Non-active posters' controls are untabbable. `positionKey` remembers the poster across detail ↔ back. |
+| `LanguagePicker` | `app/_components/language-picker.tsx` | Selected languages as white removable tags (× = 44px target) + a search box (`role="combobox"`) with a dark listbox; "Add “…”" for unlisted languages. ↑/↓, Enter, Escape, Backspace. Submits hidden `languages` inputs. |
 | `NavLink` | `nav-link.tsx` | Header text link; marks the current section with `aria-current="page"` (underlined, cream instead of muted). |
 | `PlanComposerContent` | `plan-composer.tsx` | Eyebrow kicker "Good plans. Better company." + headline "What's your next plan?" (the one poster headline that is a question) + "One sentence — we'll find your buddy." + the input. Keeps the text in sessionStorage (`dazi:plan:v1`). |
 | `TripPosterContent`, `HomeWall`, `MatchesWall`, `PlanDetail` | `trip-poster.tsx`, `walls.tsx` | Page-level views. All take a **required** `demo` prop. |

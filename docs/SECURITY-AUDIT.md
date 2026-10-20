@@ -45,7 +45,7 @@
 | L7 | Access tokens stay valid until expiry after account deletion (then match no rows) | Accepted; keep JWT expiry short. |
 | L8 | Structure: no single data-access layer, `process.env` outside `lib/`, unused `lib/supabase/client.ts`; eval script could leave flagged test users after a crash | Follow-up. |
 
-## Verification — RLS script: **84/84 pass, 0 skipped**
+## Verification — RLS script: **87/87 pass, 0 skipped** (phase 7a, 20 Oct)
 `node --env-file=.env.local scripts/rls-check.mjs` (two test accounts + temporary users created and deleted with the service role key). New for this audit, each passing for the intended reason:
 - A can still update own bio; hobbies `["Chess Elo 1850", "10000 steps"]` save (lists checked per item); the database refuses a phone number in the bio, an email in the display name and a phone number inside one hobby item ("Contact details are not allowed in profiles").
 - A real sign-up still creates its profile row; a sign-up with contact details in the name is refused by the database.
@@ -53,6 +53,7 @@
 - Requests to the `private` schema are rejected (signed out and signed in).
 - `reset_demo_ai_quota` refused for signed-in and signed-out callers ("permission denied for function").
 - `save_my_match_reasons` refuses more than 10 items.
+- Phase 7a (languages are free text, migration `20261020143000_languages_custom.sql`): the old "unknown language" check is replaced by: a 31-character language and 11 languages are refused (`profiles_languages_check`), an email in languages is refused ("Contact details are not allowed in profiles"), and a custom language ("Klingon") is accepted (positive control, restored afterwards).
 
 ## Follow-ups (after the capstone)
 Full CSP with `script-src` (SRI) · rate-limit preference changes / matching (H2) · quota consumed only inside server-side AI paths (M3) · separate OpenRouter key per environment (M4) · rate-limit `publish_post`, POST-only sign-out (L2, L3) · single data-access layer, remove unused files (L8) · re-run `/security-audit` after part F (invites + messages).

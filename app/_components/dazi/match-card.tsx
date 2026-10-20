@@ -1,4 +1,5 @@
-import { TRAVEL_INTERESTS, LANGUAGES, labelOf } from "@/lib/profile/options";
+import { TRAVEL_INTERESTS, labelOf } from "@/lib/profile/options";
+import { languageLabel } from "@/lib/profile/languages";
 import { formatDateRange } from "@/lib/posts/format";
 import type { Match, MatchReason } from "@/lib/matching/types";
 import { todayInBerlin, type Tone } from "@/lib/posts/card";
@@ -26,7 +27,7 @@ export function MatchCard({ match, reason }: { match: Match; reason: MatchReason
         trip={{
           name: match.displayName,
           ageRange: match.ageRange ?? "—",
-          languages: match.languages.map((v) => labelOf(LANGUAGES, v)),
+          languages: match.languages.map(languageLabel),
         }}
       />
       <div className="glass match-reason">

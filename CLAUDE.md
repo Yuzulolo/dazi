@@ -41,7 +41,7 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 - `app/settings` (delete my account), `app/privacy` (privacy notice; model names rendered from `lib/ai/providers.ts`)
 - `vercel.json` — server functions run in Frankfurt (`fra1`), next to Supabase (EU)
 - `lib/demo/trips.ts` — fictional, labelled demo trips + the `DEMO_MATCHES` flag
-- `lib/profile/` — profile options, validation, contact-details detector/stripper, queries
+- `lib/profile/` — profile options, validation, contact-details detector/stripper, queries; `languages.ts` = language list + aliases + `normalizeLanguage()` (every language value goes through it; known → ISO code, unlisted → tidied name)
 - `lib/ai/` — OpenRouter wrapper, trip extraction (prompt + JSON schema), embedding text builder (server-only; `.ts` import extensions so scripts can run them)
 - `lib/posts/` — trip card rules (shared by AI cleanup and form validation), queries, date formatting; `app/posts/` — editor, `/posts/new`, `/posts/edit`, server actions
 - `evals/extraction.json` + `scripts/eval-extraction.mjs` — AI extraction eval
@@ -65,7 +65,7 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 - `npm run dev` — local dev server at http://localhost:3000
 - `npm run build` — production build (run before every PR)
 - `npm run lint` — lint (run before every PR)
-- `node --env-file=.env.local scripts/rls-check.mjs` — RLS / security test, 84 checks (two test accounts + temporary users via the service role key; run after every migration)
+- `node --env-file=.env.local scripts/rls-check.mjs` — RLS / security test, 87 checks (two test accounts + temporary users via the service role key; run after every migration)
 - `/security-audit` (Claude Code command) — three-scanner security audit, report only
 - `npm test` — unit tests (`*.test.mjs`, Node's built-in test runner; e.g. the contact-details detector)
 - `node --conditions=react-server --env-file=.env.local scripts/eval-extraction.mjs` — AI extraction eval (20 real AI calls; run sparingly)
