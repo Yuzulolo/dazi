@@ -38,6 +38,7 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 - `app/_components/dazi/` — design-system components (`SiteShell`, `Paper`, `PosterCarousel`, dialogs, badges); `app/_styles/dazi-*.css` — their styles, loaded once via `app/globals.css`
 - `app/plan` — signed-in hub (my active plan; sign-in/onboarding land here; `app/home` only redirects here). `app/matches` — members: "For you" (real matches); guests: demo results. `app/plans/[id]` — demo recruitment detail (full guest search is Roadmap)
 - Header for members: My plan · Matches · Profile (`NavLink`, `aria-current`); Settings, How it works and Sign out are on your own `/u/[id]`. The logo always goes to `/`
+- `lib/messaging/` (`flag.ts` kill switch, `queries.ts`), `app/messaging/actions.ts`, `app/chat/[id]` (chat, 15 s refresh), `app/plan/invites.tsx`, `app/_components/dazi/invite-controls.tsx` — invites + chat + block (phase 7b-1), all hidden unless `MESSAGING_ENABLED=true`
 - `app/settings` (delete my account), `app/privacy` (privacy notice; model names rendered from `lib/ai/providers.ts`)
 - `vercel.json` — server functions run in Frankfurt (`fra1`), next to Supabase (EU)
 - `lib/demo/trips.ts` — fictional, labelled demo trips + the `DEMO_MATCHES` flag
@@ -55,6 +56,7 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 ## Environment variables
 - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` — public
 - `OPENROUTER_API_KEY` — server-only (Production + Preview in Vercel, marked Sensitive). School key: **no spending limit**, so quotas are the only protection
+- `MESSAGING_ENABLED` — server-only kill switch for invites + chat: `true` on Preview, unset on Production until tested. Read only in `lib/messaging/flag.ts` (`tests/messaging-env.test.mjs`)
 - `DEMO_EMAIL`, `DEMO_PASSWORD` — server-only (Production + Preview in Vercel, Sensitive): the "Try the demo account" button signs in on the server (`signInDemo` in `app/auth/actions.ts`). `tests/demo-env.test.mjs` keeps them out of client code.
 - `SUPABASE_SERVICE_ROLE_KEY` — **local scripts only** (seed, backfill, eval via `scripts/lib/admin.mjs`). It bypasses RLS: **never** imported by `app/` or `lib/`, **never** added to Vercel, **never** `NEXT_PUBLIC_`. `tests/secrets.test.mjs` fails if app or lib code mentions it.
 - `SITE_URL` — server-only; where auth emails send people back to (`http://localhost:3000` locally, the Vercel URL in production / the branch URL in preview)
@@ -65,7 +67,7 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 - `npm run dev` — local dev server at http://localhost:3000
 - `npm run build` — production build (run before every PR)
 - `npm run lint` — lint (run before every PR)
-- `node --env-file=.env.local scripts/rls-check.mjs` — RLS / security test, 87 checks (two test accounts + temporary users via the service role key; run after every migration)
+- `node --env-file=.env.local scripts/rls-check.mjs` — RLS / security test, 117 checks (two test accounts + temporary users via the service role key; run after every migration)
 - `/security-audit` (Claude Code command) — three-scanner security audit, report only
 - `npm test` — unit tests (`*.test.mjs`, Node's built-in test runner; e.g. the contact-details detector)
 - `node --conditions=react-server --env-file=.env.local scripts/eval-extraction.mjs` — AI extraction eval (20 real AI calls; run sparingly)

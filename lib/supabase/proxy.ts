@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 // Pages that need a signed-in user, and pages only for signed-out users.
-const PROTECTED_PREFIXES = ["/home", "/plan", "/onboarding", "/me", "/u", "/posts", "/settings"];
+const PROTECTED_PREFIXES = ["/home", "/plan", "/chat", "/onboarding", "/me", "/u", "/posts", "/settings"];
 const AUTH_PAGES = ["/login", "/signup"];
 
 function matches(pathname: string, prefixes: string[]) {

@@ -33,6 +33,7 @@ export default function PrivacyPage() {
           <li><strong>AI usage counters:</strong> how many AI actions you used in the last 24 hours — only to cap costs.</li>
           <li><strong>Embeddings:</strong> number lists computed by AI from your plan and from your bio, hobbies, cities and travel interests — used only to rank matches, never shown.</li>
           <li><strong>Match explanations:</strong> AI-written reasons why a plan fits yours, cached so reloading costs nothing.</li>
+          <li><strong>Invites, messages and blocks</strong> (when invites are switched on): who invited whom for which plan, your optional note, the answer, the messages of a chat both of you accepted, and the people you blocked. Only the two people of an invite can read it; nobody can read a chat before it is accepted or after a block. Messages are limited to 30 per hour. Exception: the public demo account is shared, so every visitor using it can read its chat (contact details are refused there).</li>
           <li><strong>Technical logs:</strong> Supabase (login) and Vercel (hosting) keep standard request logs, which include IP addresses and browser information, for security and debugging.</li>
         </ul>
 
@@ -56,12 +57,15 @@ export default function PrivacyPage() {
         </ul>
 
         <h2>How long we keep it</h2>
-        <p>Until you delete your account. Ended plans stay in your own history until then.</p>
+        <p>
+          Until you delete your account. Ended plans stay in your own history until then. Deleting your account also
+          removes the chats you were part of, for the other person too.
+        </p>
 
         <h2>Deleting your data</h2>
         <p>
           Go to <Link href="/settings">Settings → Delete my account</Link> (also possible before you finish onboarding). Your
-          account, profile, plans, embeddings, match explanations and AI usage records are deleted from the database
+          account, profile, plans, embeddings, match explanations, AI usage records, invites, messages and blocks are deleted from the database
           immediately. Copies in our providers&rsquo; backups and logs expire on their own schedules.
         </p>
 

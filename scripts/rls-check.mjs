@@ -747,6 +747,192 @@ if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
   }
 }
 
+// ======================= invites, messages, blocks (phase 7b) =======================
+// Temporary users only (service role): five "real" people in a private test city, a stand-in
+// for the shared demo login (is_protected) and one seeded-style demo profile (is_demo).
+// The real demo login is never touched. Everything is deleted in `finally`.
+if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  console.log("\nRow Level Security check: invites, messages, blocks (phase 7b)\n");
+  const { adminClient } = await import("./lib/admin.mjs");
+  const admin = adminClient();
+  const year = Number(today().slice(0, 4));
+  const day = (n) => new Date(Date.parse(`${today()}T00:00:00Z`) + n * 86_400_000).toISOString().slice(0, 10);
+  const vec = `[${Array(1536).fill(0.01).join(",")}]`;
+  const made = [];
+  async function person(name, { city = "Rls Checkton", ...flags } = {}) {
+    const email = `delete-test-${crypto.randomUUID().slice(0, 8)}@dazi-demo.invalid`;
+    const password = `${crypto.randomUUID()}Aa1!`;
+    const { data, error } = await admin.auth.admin.createUser({
+      email, password, email_confirm: true, user_metadata: { display_name: name, birth_year: year - 30 },
+    });
+    if (error) throw new Error(`temp user ${name}: ${error.message}`);
+    made.push(data.user.id);
+    const { error: pe } = await admin.from("profiles").update({
+      languages: ["en"], home_city: city, pref_age_min: 18, pref_age_max: 99, pref_gender: null, gender: null,
+      travel_pace: 3, day_rhythm: "flexible", travel_interests: ["cafes"],
+      onboarding_completed_at: new Date().toISOString(), ...flags,
+    }).eq("id", data.user.id);
+    if (pe) throw new Error(`temp profile ${name}: ${pe.message}`);
+    const { data: post, error: po } = await admin.from("posts").insert({
+      user_id: data.user.id, raw_text: "RLS messaging check", city, start_date: day(30), end_date: day(33),
+      interests: ["cafes"], headline: ["RLS check.", "Please ignore."], tone: "mint", embedding: vec,
+    }).select("id").single();
+    if (po) throw new Error(`temp post ${name}: ${po.message}`);
+    const client = newClient();
+    const { error: se } = await client.auth.signInWithPassword({ email, password });
+    if (se) throw new Error(`temp sign-in ${name}: ${se.message}`);
+    return { id: data.user.id, postId: post.id, client };
+  }
+  const has = (error, text) => (error?.message ?? "").includes(text);
+  const invite = (who, to, note = null) => who.client.rpc("send_invite", { p_to_post: to.postId, p_note: note });
+  const matchIds = async (who) => new Set(((await who.client.rpc("match_my_post")).data ?? []).map((m) => m.post_id));
+
+  try {
+    const [X, Y, W, M, E, Z, P, D] = [
+      await person("X"), await person("Y"), await person("W"), await person("M"), await person("E"),
+      await person("Z", { city: "Rls Elsewhere" }), await person("P (protected stand-in)", { is_protected: true }),
+      await person("D (demo)", { is_demo: true }),
+    ];
+
+    // Inviting: only people currently in my matches.
+    report((await matchIds(X)).has(Y.postId), "Positive control: Y is in X's matches (same test city and dates)", "match_my_post");
+    const { data: xy, error: xyError } = await invite(X, Y, "Coffee on Saturday?");
+    report(!xyError && Boolean(xy), "X can invite Y (in X's matches)", xyError?.message ?? "invite created");
+    const { error: zError } = await invite(X, Z);
+    report(has(zError, "Not one of your matches"), "X cannot invite Z (not in X's matches)", zError?.message ?? "invite created!");
+    const { error: noteError } = await invite(X, W, "write me: x@example.com");
+    report(has(noteError, "Contact details are not allowed in invite notes"), "An invite note with an email is refused", noteError?.message ?? "invite created!");
+
+    // No messages before acceptance.
+    const { error: earlyError } = await X.client.rpc("send_message", { p_invite: xy, p_body: "hello?" });
+    report(has(earlyError, "once the invite is accepted"), "X cannot message Y before Y accepts", earlyError?.message ?? "message sent!");
+
+    // Outsiders see nothing (and the participant does — positive control).
+    const { data: xSees } = await X.client.from("invites").select("id").eq("id", xy);
+    const { data: zSees, error: zSeesError } = await Z.client.from("invites").select("id").eq("id", xy);
+    report(xSees?.length === 1 && !zSeesError && zSees?.length === 0, "An outsider (Z) cannot read X's invite to Y (X can)", zSeesError?.message ?? `X sees ${xSees?.length}, Z sees ${zSees?.length}`);
+
+    // Accept → chat works for the two participants only.
+    const { error: acceptError } = await Y.client.rpc("respond_invite", { p_invite: xy, p_accept: true });
+    report(!acceptError, "Y can accept X's invite", acceptError?.message ?? "accepted");
+    const { error: msgError } = await X.client.rpc("send_message", { p_invite: xy, p_body: "Hi Y! My number is +49 151 23456789" });
+    report(!msgError, "After acceptance X can message Y (contact details allowed in chat)", msgError?.message ?? "sent");
+    const { data: ySeesMsgs } = await Y.client.from("messages").select("id").eq("invite_id", xy);
+    const { data: zSeesMsgs, error: zMsgsError } = await Z.client.from("messages").select("id").eq("invite_id", xy);
+    report(ySeesMsgs?.length === 1 && !zMsgsError && zSeesMsgs?.length === 0, "An outsider (Z) cannot read the X–Y chat (Y can)", zMsgsError?.message ?? `Y sees ${ySeesMsgs?.length}, Z sees ${zSeesMsgs?.length}`);
+    const { error: zSendError } = await Z.client.rpc("send_message", { p_invite: xy, p_body: "let me in" });
+    report(has(zSendError, "Chat not found"), "An outsider (Z) cannot write into the X–Y chat", zSendError?.message ?? "message sent!");
+
+    // Only the right side can act on an invite (review S6).
+    const { error: ownAccept } = await X.client.rpc("respond_invite", { p_invite: xy, p_accept: true });
+    report(has(ownAccept, "Invite not found"), "The sender cannot answer their own invite", ownAccept?.message ?? "answered!");
+    const { error: zCancel } = await Z.client.rpc("cancel_invite", { p_invite: xy });
+    const { error: yCancel } = await Y.client.rpc("cancel_invite", { p_invite: xy });
+    const { error: zBlock } = await Z.client.rpc("block_from_invite", { p_invite: xy });
+    report(has(zCancel, "Invite not found") && has(yCancel, "Invite not found") && has(zBlock, "Invite not found"),
+      "Only the sender can cancel, and an outsider cannot block through someone else's invite",
+      `${zCancel?.message ?? "Z cancelled!"} / ${yCancel?.message ?? "receiver cancelled!"} / ${zBlock?.message ?? "Z blocked!"}`);
+    // Reverse direction while connected (review M2): Y cannot open a second invite to X.
+    const { error: reverseError } = await invite(Y, X);
+    report(has(reverseError, "already connected"), "While connected, the other person cannot open a second invite for the same plans", reverseError?.message ?? "invite created!");
+
+    // Decline → no re-invite for the same plan.
+    const { data: xw } = await invite(X, W);
+    await W.client.rpc("respond_invite", { p_invite: xw, p_accept: false });
+    const { error: againError } = await invite(X, W);
+    report(has(againError, "declined an invite for this plan"), "After W declines, X cannot invite W again for the same plan", againError?.message ?? "invite created!");
+
+    // An expired invite (the receiver's plan was replaced) can't be accepted.
+    const { data: xe } = await invite(X, E);
+    await admin.from("posts").update({ status: "archived" }).eq("id", E.postId);
+    const { error: expiredError } = await E.client.rpc("respond_invite", { p_invite: xe, p_accept: true });
+    report(has(expiredError, "no longer open"), "An expired invite (plan replaced) cannot be accepted", expiredError?.message ?? "accepted!");
+
+    // Mutual invites auto-accept.
+    const { data: mx } = await invite(M, X);
+    const { data: xm, error: xmError } = await invite(X, M);
+    const { data: mxRow } = await admin.from("invites").select("status").eq("id", mx).single();
+    report(!xmError && xm === mx && mxRow?.status === "accepted", "Mutual invites (M → X, then X → M) are accepted automatically", xmError?.message ?? `status ${mxRow?.status}`);
+
+    // 30 messages per rolling hour per sender.
+    for (let i = 0; i < 29; i++) await X.client.rpc("send_message", { p_invite: xy, p_body: `rate ${i}` });
+    const { error: rateError } = await X.client.rpc("send_message", { p_invite: xy, p_body: "one too many" });
+    report(has(rateError, "At most 30 messages per hour"), "The 31st message within an hour is refused", rateError?.message ?? "message sent!");
+
+    // Block: hidden both ways, pending invites cancelled, chat closed.
+    // A pending invite the block must cancel. Planted with the service role: while X and Y are
+    // connected, send_invite (correctly) refuses a second invite between them.
+    const { data: yxRow0 } = await admin.from("invites")
+      .insert({ from_user: Y.id, to_user: X.id, from_post: Y.postId, to_post: X.postId, status: "pending" })
+      .select("id").single();
+    const yx = yxRow0?.id;
+    const { error: blockError } = await Y.client.rpc("block_from_invite", { p_invite: xy });
+    report(!blockError, "Y can block X from their chat", blockError?.message ?? "blocked");
+    const [xMatches, yMatches] = [await matchIds(X), await matchIds(Y)];
+    report(!xMatches.has(Y.postId) && !yMatches.has(X.postId), "After the block, X and Y are gone from each other's matches (were visible before)", `X sees Y: ${xMatches.has(Y.postId)}, Y sees X: ${yMatches.has(X.postId)}`);
+    const { data: yxRow } = await admin.from("invites").select("status").eq("id", yx).single();
+    report(yxRow?.status === "cancelled", "The block cancels pending invites between them", `status ${yxRow?.status}`);
+    const { error: closedError } = await X.client.rpc("send_message", { p_invite: xy, p_body: "still there?" });
+    const { data: xSeesAfter } = await X.client.from("messages").select("id").eq("invite_id", xy);
+    report(has(closedError, "This chat is closed") && xSeesAfter?.length === 0, "After the block the chat is closed: no sending, no reading", closedError?.message ?? `message sent; X sees ${xSeesAfter?.length}`);
+
+    // Demo isolation: the shared demo login (protected) only ever talks to demo profiles.
+    const { error: toProtected } = await invite(X, P);
+    report(has(toProtected, "shared demo account"), "A real user cannot invite the shared demo login", toProtected?.message ?? "invite created!");
+    const { error: fromProtected } = await invite(P, X);
+    report(has(fromProtected, "shared demo account"), "The shared demo login cannot invite a real user", fromProtected?.message ?? "invite created!");
+    const { data: pd, error: pdError } = await invite(P, D);
+    report(!pdError && Boolean(pd), "Positive control: the shared demo login can invite a demo profile", pdError?.message ?? "invite created");
+    const { data: planted } = await admin.from("invites").insert([
+      { from_user: P.id, to_user: X.id, from_post: P.postId, to_post: X.postId, status: "pending" },
+      { from_user: X.id, to_user: P.id, from_post: X.postId, to_post: P.postId, status: "accepted" },
+    ]).select("id, status");
+    const pendingPX = planted?.find((r) => r.status === "pending")?.id;
+    const acceptedXP = planted?.find((r) => r.status === "accepted")?.id;
+    const { error: acceptPX } = await X.client.rpc("respond_invite", { p_invite: pendingPX, p_accept: true });
+    report(has(acceptPX, "shared demo account"), "A real user cannot accept an invite from the shared demo login (planted row)", acceptPX?.message ?? "accepted!");
+    const { error: xToP } = await X.client.rpc("send_message", { p_invite: acceptedXP, p_body: "hi demo" });
+    const { error: pToX } = await P.client.rpc("send_message", { p_invite: acceptedXP, p_body: "hi real user" });
+    report(has(xToP, "shared demo account") && has(pToX, "shared demo account"), "No messages between a real user and the shared demo login, either direction (planted accepted row)", `${xToP?.message ?? "sent!"} / ${pToX?.message ?? "sent!"}`);
+    // Review M1: the demo login's chat is read by every visitor → no contact details there.
+    const { error: pdAccept } = await D.client.rpc("respond_invite", { p_invite: pd, p_accept: true });
+    const { error: demoContact } = await P.client.rpc("send_message", { p_invite: pd, p_body: "call me +49 151 23456789" });
+    const { error: demoOk } = await P.client.rpc("send_message", { p_invite: pd, p_body: "Hi! Flea market on Sunday?" });
+    report(!pdAccept && has(demoContact, "shared demo chat") && !demoOk, "Contact details are refused in the shared demo login's chat (a normal message is fine)", `${demoContact?.message ?? "sent!"} / ${demoOk?.message ?? "normal message sent"}`);
+
+    // Signed out: nothing.
+    const anonTables = await Promise.all(["invites", "messages", "blocks"].map((t) => anon.from(t).select("*").limit(1)));
+    report(anonTables.every((r) => has(r.error, "permission denied for table")), "Signed-out (anon) cannot read invites, messages or blocks", anonTables.map((r) => r.error?.message ?? "readable!").join(" / "));
+    const anonCalls = await Promise.all([
+      anon.rpc("send_invite", { p_to_post: Y.postId, p_note: null }),
+      anon.rpc("respond_invite", { p_invite: xy, p_accept: true }),
+      anon.rpc("cancel_invite", { p_invite: xy }),
+      anon.rpc("send_message", { p_invite: xy, p_body: "x" }),
+      anon.rpc("block_from_invite", { p_invite: xy }),
+      anon.rpc("my_invites"),
+      anon.rpc("my_pending_invite_count"),
+    ]);
+    report(anonCalls.every((r) => has(r.error, "permission denied for function")), "Signed-out (anon) cannot call any invite / chat / block function", anonCalls.map((r) => r.error?.message ?? "ok!").join(" / "));
+
+    // Delete my data: X's invites, messages and blocks go with the account.
+    const before = await admin.from("invites").select("id", { count: "exact", head: true }).or(`from_user.eq.${X.id},to_user.eq.${X.id}`);
+    const { error: delError } = await X.client.rpc("delete_my_account");
+    const [inv, msg, blk] = await Promise.all([
+      admin.from("invites").select("id", { count: "exact", head: true }).or(`from_user.eq.${X.id},to_user.eq.${X.id}`),
+      admin.from("messages").select("id", { count: "exact", head: true }).eq("sender_id", X.id),
+      admin.from("blocks").select("blocker_id", { count: "exact", head: true }).or(`blocker_id.eq.${X.id},blocked_id.eq.${X.id}`),
+    ]);
+    report(!delError && before.count > 0 && inv.count === 0 && msg.count === 0 && blk.count === 0,
+      "delete_my_account removes the user's invites, messages and blocks (cascade)",
+      delError?.message ?? `invites ${before.count} → ${inv.count}, messages ${msg.count}, blocks ${blk.count}`);
+  } finally {
+    for (const id of made) {
+      const { error } = await admin.auth.admin.deleteUser(id);
+      if (error && !/not.?found/i.test(error.message)) console.log(`      WARNING: could not remove temporary user ${id}: ${error.message}`);
+    }
+  }
+}
+
 await Promise.all([A.client.auth.signOut(), B.client.auth.signOut()]);
 
 console.log(failures === 0 ? "\nAll checks passed." : `\n${failures} check(s) FAILED.`);
