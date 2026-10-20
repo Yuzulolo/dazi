@@ -51,7 +51,7 @@ export type PostFormState = { error?: string };
 // Without this the browser reuses its copy of /posts/edit (Next 16 client cache +
 // Activity), and the editor showed the previous values (re-test bug, 18 Oct).
 function refreshPostPages() {
-  for (const path of ["/home", "/posts/edit", "/posts/new"]) revalidatePath(path);
+  for (const path of ["/plan", "/matches", "/posts/edit", "/posts/new"]) revalidatePath(path);
 }
 
 const QUOTA_MESSAGE = "You've reached today's limit of 20 saves. Please try again tomorrow — nothing you typed is lost.";
@@ -100,7 +100,7 @@ export async function publishPost(_prev: PostFormState, formData: FormData): Pro
     return { error: error.code === "23514" ? DB_REFUSED : SAVE_FAILED };
   }
   refreshPostPages();
-  redirect("/home?posted=1");
+  redirect("/matches?posted=1");
 }
 
 // Edit the active post (FLOWS 2.6) through public.update_post, which only ever touches
@@ -142,5 +142,5 @@ export async function updatePost(_prev: PostFormState, formData: FormData): Prom
     return { error: error.code === "23514" ? DB_REFUSED : SAVE_FAILED };
   }
   refreshPostPages();
-  redirect("/home?posted=1");
+  redirect("/matches?posted=1");
 }

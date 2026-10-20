@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { SiteShell } from "@/app/_components/dazi/site-shell";
 import { HomeWall } from "@/app/_components/dazi/walls";
 import type { HomeViewer } from "@/app/_components/dazi/types";
-import { ClearStoredPlan } from "@/app/home/clear-stored-plan";
+import { ClearStoredPlan } from "@/app/plan/clear-stored-plan";
 import { DEMO_MATCHES, demoTrips } from "@/lib/demo/trips";
 import { getViewer } from "@/lib/auth";
 

@@ -129,9 +129,9 @@
   .dazi-root .post-poster { min-height: 0; }
 }
 
-/* ---------- Matches: /home "For you" ---------- */
-.dazi-root .for-you { grid-column: 1 / -1; }
-.dazi-root .for-you > h2 { font-size: 28px; margin: 12px 0 14px; }
+/* ---------- Matches: /matches "For you" (members) ---------- */
+.dazi-root .matches-page { max-width: 1100px; margin: 0 auto; }
+.dazi-root .for-you > h1 { font-size: 38px; margin: 4px 0 14px; }
 .dazi-root .match-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 20px; }
 .dazi-root .match-card { display: flex; flex-direction: column; padding: 24px 22px; }
 .dazi-root .match-card h2 { font-size: clamp(28px, 2.6vw, 36px); margin: 12px 0 10px; }
@@ -145,7 +145,7 @@
 .dazi-root .score-bar { flex: 1; height: 6px; border-radius: 3px; background: #ffffff30; overflow: hidden; }
 .dazi-root .score-bar > span { display: block; height: 100%; background: #fff; }
 .dazi-root .for-you .empty-state { margin: 0; max-width: 640px; }
-.dazi-root .for-you .empty-state h3 { font-size: 24px; margin: 0 0 8px; }
+.dazi-root .for-you .empty-state h2 { font-size: 24px; margin: 0 0 8px; }
 /* Rule-based reason (no AI): distinct from the AI badge and the "Demo profile" badge (review S11). */
 .dazi-root .rule-badge { display: inline-block; font-size: 12px; line-height: 1.5; padding: 2px 8px; border-radius: 6px; border: 1px dashed currentColor; text-transform: none; letter-spacing: 0; margin-left: 6px; vertical-align: middle; }
 .dazi-root .danger-button { align-self: flex-start; min-height: 48px; padding: 12px 18px; border-radius: 12px; border: 1px solid #ffc2c2; background: #5a1f1f; color: #fff; font-size: 15px; font-weight: 600; }

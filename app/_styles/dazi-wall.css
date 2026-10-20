@@ -66,13 +66,7 @@
 /* ---------- Composer poster (homepage) ---------- */
 .dazi-root .composer { text-align: center; }
 .dazi-root .composer h1 { margin: 18px 0 20px; }
-.dazi-root .paper-wordmark {
-  font-family: var(--font-heading);
-  font-size: 34px;
-  font-weight: 800;
-  letter-spacing: -2px;
-  margin: 8px 0 18px;
-}
+.dazi-root .composer-kicker { margin: 8px 0 0; }
 .dazi-root .composer-intro { font-size: 18px; line-height: 1.45; margin: 0 0 35px; }
 .dazi-root .trip-input { margin-top: auto; text-align: left; }
 .dazi-root .trip-input label { display: block; font-size: 12px; letter-spacing: 1.6px; margin: 4px 3px 10px; }
@@ -174,7 +168,6 @@
   .dazi-root .carousel-paper :is(h1, h2) { font-size: 40px; margin-top: 20px; }
   .dazi-root .composer h1 { font-size: 39px; }
   .dazi-root .composer-intro { font-size: 17px; }
-  .dazi-root .paper-wordmark { font-size: 32px; margin: 8px 0 20px; }
   .dazi-root .trip-date { font-size: 17px; }
   .dazi-root .identity { font-size: 13px; }
   .dazi-root .identity small { font-size: 12px; }
@@ -243,7 +236,7 @@
 .dazi-root .match-reason { padding: 14px 16px; }
 .dazi-root .match-reason > p:not(.eyebrow) { font-size: 14px; margin: 8px 0 12px; }
 .dazi-root .poster-actions > * { min-height: 44px; }
-.dazi-root .paper-wordmark { font-size: 30px; margin: 2px 0 8px; }
+.dazi-root .carousel-paper .composer-kicker { margin: 6px 0 0; }
 .dazi-root .composer h1 { margin: 8px 0 10px; }
 .dazi-root .composer-intro { font-size: 17px; margin: 0 0 16px; }
 .dazi-root .trip-input textarea { min-height: 96px; }

@@ -27,7 +27,7 @@ export default function PrivacyPage() {
         <ul>
           <li><strong>Account:</strong> your email and password (handled by Supabase Auth) — to log you in.</li>
           <li><strong>Birth year:</strong> to make sure every user is 18+. Others only ever see an age range (e.g. 30–34), never the year.</li>
-          <li><strong>Profile:</strong> display name, languages, home city, bio, cities visited, hobbies, travel style — shown to other signed-in users and used for matching.</li>
+          <li><strong>Profile:</strong> display name, languages, home city, bio, cities you love to travel to, hobbies, travel style — shown to other signed-in users and used for matching.</li>
           <li><strong>Gender and matching preferences</strong> (age range, gender): private, only used for matching, never shown.</li>
           <li><strong>Plans:</strong> your one-sentence plan and its card (city, dates, interests…). Phone numbers and emails are removed before anything is stored.</li>
           <li><strong>AI usage counters:</strong> how many AI actions you used in the last 24 hours — only to cap costs.</li>

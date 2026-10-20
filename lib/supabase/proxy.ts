@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 // Pages that need a signed-in user, and pages only for signed-out users.
-const PROTECTED_PREFIXES = ["/home", "/onboarding", "/me", "/u", "/posts", "/settings"];
+const PROTECTED_PREFIXES = ["/home", "/plan", "/onboarding", "/me", "/u", "/posts", "/settings"];
 const AUTH_PAGES = ["/login", "/signup"];
 
 function matches(pathname: string, prefixes: string[]) {
@@ -47,7 +47,7 @@ export async function updateSession(request: NextRequest) {
 
   let redirectTo: string | null = null;
   if (!isSignedIn && matches(pathname, PROTECTED_PREFIXES)) redirectTo = "/login";
-  if (isSignedIn && matches(pathname, AUTH_PAGES)) redirectTo = "/home";
+  if (isSignedIn && matches(pathname, AUTH_PAGES)) redirectTo = "/plan";
 
   if (redirectTo) {
     const redirect = NextResponse.redirect(new URL(redirectTo, request.url));
