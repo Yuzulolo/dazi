@@ -330,7 +330,6 @@ try {
   // The database rejects invalid values even if the app is bypassed.
   for (const [label, values] of [
     ["A cannot set an unknown travel interest", { travel_interests: ["skydiving"] }],
-    ["A cannot set an unknown language", { languages: ["xx"] }],
     ["A cannot set pref_age_min below 18", { pref_age_min: 10 }],
     ["A cannot set pref_age_min above pref_age_max", { pref_age_min: 60, pref_age_max: 30 }],
     ["A cannot change own birth_year (locked)", { birth_year: 1990 }],
@@ -338,6 +337,30 @@ try {
   ]) {
     const { error } = await update(A.client, values);
     report(Boolean(error), label, error?.message ?? "update succeeded!");
+  }
+
+  // Languages are free text since phase 7a (migration 20261020143000_languages_custom.sql):
+  // shape check + contact-details guard, each matched on its own error text.
+  {
+    const { data: me } = await A.client.from("profiles").select("languages").eq("id", A.id).single();
+    for (const [label, languages, expected] of [
+      ["A cannot set a 31-character language", ["en", "x".repeat(31)], "profiles_languages_check"],
+      ["A cannot set 11 languages", Array.from({ length: 11 }, (_, i) => `Lang ${i}`), "profiles_languages_check"],
+      ["A cannot put an email address in languages", ["en", "me@example.com"], "Contact details"],
+    ]) {
+      const { error } = await update(A.client, { languages });
+      report(Boolean(error?.message?.includes(expected)), label, error?.message ?? "update succeeded!");
+    }
+    // Positive control: a custom language is accepted (so the refusals above aren't blanket).
+    try {
+      const custom = [...me.languages.slice(0, 7), "Klingon"];
+      const { error: okError } = await update(A.client, { languages: custom });
+      const { data: after } = await A.client.from("profiles").select("languages").eq("id", A.id).single();
+      report(!okError && after?.languages?.includes("Klingon"), "Positive control: A can add a custom language", okError?.message ?? after?.languages?.join(", "));
+    } finally {
+      const { error: restoreError } = await update(A.client, { languages: me.languages });
+      if (restoreError) console.log(`WARN  could not restore A's languages: ${restoreError.message}`);
+    }
   }
 
   // ======================= posts (phase 3) =======================

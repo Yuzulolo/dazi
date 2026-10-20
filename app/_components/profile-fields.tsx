@@ -2,12 +2,12 @@ import {
   DAY_RHYTHMS,
   GENDER_HELP,
   GENDERS,
-  LANGUAGES,
   PREF_GENDERS,
   TRAVEL_INTERESTS,
   TRAVEL_PACES,
 } from "@/lib/profile/options";
 import type { ProfileFormValues } from "@/lib/profile/types";
+import { LanguagePicker } from "./language-picker";
 
 // Plain form fields shared by /onboarding and /me/edit, styled by the calm
 // variant (app/_styles/dazi-forms.css). Checkbox and radio groups are real
@@ -73,22 +73,7 @@ export function BasicsFields({ values }: { values: ProfileFormValues }) {
         </small>
       </p>
 
-      <fieldset>
-        <legend>Languages you speak (at least one)</legend>
-        <div className="choice-group">
-          {LANGUAGES.map((o) => (
-            <label key={o.value} className="choice">
-              <input
-                type="checkbox"
-                name="languages"
-                value={o.value}
-                defaultChecked={values.languages.includes(o.value)}
-              />
-              {o.label}
-            </label>
-          ))}
-        </div>
-      </fieldset>
+      <LanguagePicker defaultValue={values.languages} />
 
       <p className="field">
         <label htmlFor="homeCity">Home city</label>

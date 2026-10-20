@@ -2,7 +2,8 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { getPublicProfile } from "@/lib/profile/queries";
-import { DAY_RHYTHMS, LANGUAGES, TRAVEL_INTERESTS, TRAVEL_PACES, labelOf } from "@/lib/profile/options";
+import { DAY_RHYTHMS, TRAVEL_INTERESTS, TRAVEL_PACES, labelOf } from "@/lib/profile/options";
+import { languageLabel } from "@/lib/profile/languages";
 import { SiteShell } from "@/app/_components/dazi/site-shell";
 import { AbstractAvatar, Tags } from "@/app/_components/dazi/primitives";
 import { InfoButton } from "@/app/_components/dazi/info-dialog";
@@ -35,7 +36,7 @@ async function PublicProfile({ params }: { params: PageProps<"/u/[id]">["params"
   const own = profile.id === viewer.id;
 
   const list = (items: string[]) => (items.length > 0 ? items.join(", ") : "—");
-  const languages = profile.languages.map((v) => labelOf(LANGUAGES, v));
+  const languages = profile.languages.map(languageLabel);
   const interests = profile.travelInterests.map((v) => labelOf(TRAVEL_INTERESTS, v));
 
   return (

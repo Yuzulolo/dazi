@@ -2,13 +2,13 @@ import "server-only";
 import {
   DAY_RHYTHMS,
   GENDERS,
-  LANGUAGES,
   PREF_GENDERS,
   TRAVEL_INTERESTS,
   isOption,
   type Option,
 } from "./options";
 import { containsContactDetails } from "./contact";
+import { MAX_LANGUAGES, MAX_LANGUAGE_LENGTH, normalizeLanguages } from "./languages";
 import type { ProfileFormValues } from "./types";
 
 // Column updates for public.profiles (snake_case = database names).
@@ -97,9 +97,16 @@ export function parseBasics(v: ProfileFormValues): Result<BasicsUpdate> {
     return { ok: false, error: "Please choose a gender from the list, or leave it empty." };
   }
 
-  const languages = pickAll(v.languages, LANGUAGES);
+  // Free text since phase 7a: known languages → codes, others → tidied names (languages.ts).
+  const languages = normalizeLanguages(v.languages);
   if (languages.length < 1) return { ok: false, error: "Please choose at least one language you speak." };
-  if (languages.length > 10) return { ok: false, error: "Please choose at most 10 languages." };
+  if (languages.length > MAX_LANGUAGES) {
+    return { ok: false, error: `Please choose at most ${MAX_LANGUAGES} languages.` };
+  }
+  if (languages.some((l) => l.length > MAX_LANGUAGE_LENGTH)) {
+    return { ok: false, error: `Languages: each up to ${MAX_LANGUAGE_LENGTH} characters.` };
+  }
+  if (languages.some(containsContactDetails)) return { ok: false, error: `${NO_CONTACTS} from your languages.` };
 
   if (v.homeCity.length < 1 || v.homeCity.length > 80) {
     return { ok: false, error: "Please enter your home city (up to 80 characters)." };

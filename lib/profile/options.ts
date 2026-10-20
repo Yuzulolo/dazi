@@ -1,30 +1,8 @@
 // Fixed profile choices. The values MUST match the CHECK lists in
 // supabase/migrations/20261016121716_profiles_onboarding_privacy.sql.
+// Languages are not a fixed list any more: see languages.ts.
 
 export type Option = { value: string; label: string };
-
-export const LANGUAGES: Option[] = [
-  { value: "en", label: "English" },
-  { value: "de", label: "German" },
-  { value: "zh", label: "Chinese" },
-  { value: "es", label: "Spanish" },
-  { value: "fr", label: "French" },
-  { value: "it", label: "Italian" },
-  { value: "pt", label: "Portuguese" },
-  { value: "ru", label: "Russian" },
-  { value: "ja", label: "Japanese" },
-  { value: "ko", label: "Korean" },
-  { value: "ar", label: "Arabic" },
-  { value: "tr", label: "Turkish" },
-  { value: "pl", label: "Polish" },
-  { value: "nl", label: "Dutch" },
-  { value: "hi", label: "Hindi" },
-  { value: "uk", label: "Ukrainian" },
-  { value: "sv", label: "Swedish" },
-  { value: "da", label: "Danish" },
-  { value: "el", label: "Greek" },
-  { value: "vi", label: "Vietnamese" },
-];
 
 export const TRAVEL_INTERESTS: Option[] = [
   { value: "museums_galleries", label: "Museums & galleries" },

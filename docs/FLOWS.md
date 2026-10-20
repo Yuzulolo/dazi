@@ -19,6 +19,7 @@
 ### 1.2 Sign-up → first match
 1. Sign up (email or Google) → confirm 18+ (Google users enter birth year on `/onboarding` first, see 2.0)
 2. Onboarding (required): basics (name, birth year, gender optional, languages, home city, avatar) → travel style quiz
+   - **Languages** (phase 7a): a searchable list of common languages; if yours isn't listed, type it and choose "Add “…”". At least 1, at most 8, each ≤ 30 characters; no email or phone numbers. Spellings are normalised ("Englisch" = English, "中文" = Chinese), so matching on a shared language still works. Unlisted languages match when spelled the same (case and spaces don't matter, accents do).
 3. Guest search auto-fills the first post → user confirms
 4. Full recommendations recalculated (all hard filters + trip + style + personality)
 5. Open a profile → read stories → send invite (optional note; AI suggests an icebreaker)

@@ -66,6 +66,53 @@
 .dazi-root .choice:has(input:checked) { background: #fff; color: #181d19; border-color: #fff; }
 .dazi-root .choice:has(input:focus-visible) { outline: 3px solid #fff; outline-offset: 3px; }
 
+/* Language picker: selected tags + search box with a listbox (language-picker.tsx). */
+.dazi-root .language-tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 12px; padding: 0; list-style: none; }
+.dazi-root .language-tags > li {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 44px;
+  padding: 0 4px 0 14px;
+  border-radius: 30px;
+  background: #fff;
+  color: #181d19;
+  font-size: 14px;
+}
+.dazi-root .language-tags button {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: inherit;
+  font-size: 20px;
+  line-height: 1;
+}
+.dazi-root .language-tags button:hover { background: #181d1914; }
+.dazi-root .language-tags button:focus-visible { outline: 3px solid #181d19; outline-offset: -3px; }
+.dazi-root .language-combo { position: relative; margin-top: 8px; }
+.dazi-root .language-options {
+  position: absolute;
+  z-index: 10;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  max-height: 264px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: #1e231f;
+  border: 1px solid #ffffff70;
+  border-radius: 12px;
+  box-shadow: 0 12px 30px #0008;
+}
+.dazi-root .language-options > li { min-height: 44px; display: flex; align-items: center; padding: 0 12px; border-radius: 8px; font-size: 15px; cursor: pointer; }
+.dazi-root .language-options > li[aria-selected="true"] { background: #fff; color: #181d19; }
+.dazi-root .language-options > li[data-custom] { font-style: italic; }
+.dazi-root .language-picker .field-help { display: block; margin-top: 8px; }
+
 .dazi-root .form-error {
   font-size: 15px;
   line-height: 1.5;
