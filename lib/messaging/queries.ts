@@ -72,6 +72,7 @@ export async function getChatMessages(inviteId: string, userId: string): Promise
     .select("id, sender_id, body, created_at")
     .eq("invite_id", inviteId)
     .order("created_at", { ascending: false })
+    .order("id", { ascending: false }) // same timestamp → keep sending order
     .limit(500); // the newest 500 (review S4), shown oldest first
   if (error) {
     console.error("messages read failed:", error.code);

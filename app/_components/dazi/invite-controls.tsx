@@ -69,7 +69,7 @@ export function MatchInviteControls({
   if (invite?.status === "accepted") {
     return (
       <div className="poster-actions">
-        <Link className="primary-button" href={`/chat/${invite.id}`}>
+        <Link className="primary-button" href={`/chat/${invite.id}`} aria-label={`Open chat with ${displayName}`}>
           Open chat →
         </Link>
       </div>
@@ -80,7 +80,7 @@ export function MatchInviteControls({
       <div className="invite-controls">
         <p className="invite-status">Invited · waiting for {displayName}</p>
         {demoNote}
-        <InviteActionButton action={cancelInvite} inviteId={invite.id}>
+        <InviteActionButton action={cancelInvite} inviteId={invite.id} label={`Cancel your invite to ${displayName}`}>
           Cancel invite
         </InviteActionButton>
       </div>

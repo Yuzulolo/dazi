@@ -52,7 +52,7 @@ Guest types one sentence on the homepage → AI trip card → 5 anonymised simil
 - Migration `20261020160000_messaging.sql`: new tables (RLS, SELECT-only policies, no client writes) + definer RPCs; `match_candidates` rebuilt from its live definition with one extra filter; review fixes in `20261020170000_messaging_review_fixes.sql` (demo chat refuses contact details, "already connected" both ways, pair lock for mutual invites, cancelled invites hidden from the receiver). RLS script: 117 checks.
 - **Accepted risk:** preview and production share one database, so the RPCs are callable from anywhere through the Data API; the kill switch only hides the UI. Every rule is enforced in SQL.
 - **Phase 7b-2 (after the defense):** Report (auto-block + admin flag), "Today" plans, rolling demo dates, Berlin-only city choice.
-- **Follow-ups:** unblock list in `/settings`; block from `/u/[id]` and hide blocked users there (`public_profiles`); `ended_trip_changed` when a plan's city/dates change (FLOWS 2.6); an RLS test for the 10-pending cap; chat read receipts / pagination beyond 500 messages.
+- **Follow-ups:** unblock list in `/settings`; block from `/u/[id]` and hide blocked users there (`public_profiles`); `ended_trip_changed` when a plan's city/dates change (FLOWS 2.6); an RLS test for the 10-pending cap; take the pair lock in `respond_invite` too (second review: accepting in one tab while inviting back in another can leave an extra pending invite for a connected pair); tell the second person when their mutual-invite note is dropped; chat read receipts / pagination beyond 500 messages.
 
 ### 0.4b Follow-ups from the PR #6 review (after the capstone)
 - Preferred age as **band dropdowns** in the profile form (matching already uses bands).
