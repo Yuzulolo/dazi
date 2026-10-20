@@ -43,13 +43,11 @@ export function PlanComposerContent({
 
   return (
     <>
-      <div className="paper-wordmark" aria-hidden="true">
-        dazi
-      </div>
+      <p className="eyebrow composer-kicker">Good plans. Better company.</p>
       <h1>
-        Good plans.<span>Better company.</span>
+        What&apos;s your<span>next plan?</span>
       </h1>
-      <p className="composer-intro">Find someone to share the little things.</p>
+      <p className="composer-intro">One sentence — we&apos;ll find your buddy.</p>
       <form className="glass trip-input" onSubmit={submit} noValidate>
         <label htmlFor="trip-plan">YOUR NEXT PLAN</label>
         <textarea

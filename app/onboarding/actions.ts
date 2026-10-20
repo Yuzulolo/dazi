@@ -72,7 +72,8 @@ export async function saveStyle(
   const text = await myProfileEmbeddingText();
   if (text) await refreshMyProfileEmbedding(text);
 
-  revalidatePath("/home");
+  revalidatePath("/plan");
+  revalidatePath("/matches");
   revalidatePath("/me/edit");
-  redirect("/home");
+  redirect("/plan");
 }

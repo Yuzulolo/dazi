@@ -50,7 +50,8 @@ export async function updateProfile(
   // Every page that shows profile data is re-rendered from the server (Next 16 client cache),
   // then a fresh /me/edit shows the stored values (trimmed, de-duplicated) and "Saved.".
   // Errors above return state instead, so nothing the user typed is lost.
-  revalidatePath("/home");
+  revalidatePath("/plan");
+  revalidatePath("/matches");
   revalidatePath(`/u/${user.id}`);
   revalidatePath("/me/edit");
   redirect("/me/edit?saved=1");

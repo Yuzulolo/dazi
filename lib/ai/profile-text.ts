@@ -12,7 +12,7 @@ export function profileEmbeddingText(profile: {
   return [
     profile.bio ? `About me: ${profile.bio}` : null,
     profile.hobbies.length ? `Hobbies: ${profile.hobbies.join(", ")}.` : null,
-    profile.visitedCities.length ? `Cities I've visited: ${profile.visitedCities.join(", ")}.` : null,
+    profile.visitedCities.length ? `Cities I love to travel to: ${profile.visitedCities.join(", ")}.` : null,
     profile.travelInterests.length
       ? `Travel interests: ${profile.travelInterests.map((v) => labelOf(TRAVEL_INTERESTS, v)).join(", ")}.`
       : null,

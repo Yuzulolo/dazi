@@ -50,9 +50,9 @@ export function HomeWall({ trips, demo, viewer }: { trips: GuestTrip[]; demo: bo
       <div className="wall-caption">
         A WALL OF LITTLE PLANS{" "}
         {demo && viewer.status === "guest" && <span>DESIGN DEMO · FICTIONAL TRIPS</span>}
-        {demo && viewer.status !== "guest" && (
-          <Link className="text-button caption-demo" href="/home">
-            Example posters — your real matches are on Home →
+        {demo && viewer.status === "member" && (
+          <Link className="text-button caption-demo" href="/matches">
+            Example posters — your real matches are on Matches →
           </Link>
         )}
         {viewer.status === "guest" && <DemoButton className="text-button caption-demo" label="Try the demo account ↗" />}

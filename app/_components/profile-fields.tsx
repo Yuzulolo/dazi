@@ -104,7 +104,7 @@ export function BasicsFields({ values }: { values: ProfileFormValues }) {
       </p>
 
       <p className="field">
-        <label htmlFor="visitedCities">Cities you&apos;ve visited (optional, comma-separated)</label>
+        <label htmlFor="visitedCities">Cities you love to travel to (optional, comma-separated)</label>
         <input id="visitedCities" name="visitedCities" defaultValue={values.visitedCities} placeholder="Lisbon, Tokyo, Mexico City" />
       </p>
 

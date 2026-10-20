@@ -12,7 +12,7 @@ type MatchRow = {
 
 // The caller's top matches. This RPC is the ONLY way other users' posts reach the app:
 // hard filters (incl. mutual age/gender preferences) and scoring run in the database.
-// null = matching failed: /home shows a message in "For you" instead of breaking (review W2).
+// null = matching failed: /matches shows a message in "For you" instead of breaking (review W2).
 export async function getMyMatches(limit = 5): Promise<Match[] | null> {
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("match_my_post");

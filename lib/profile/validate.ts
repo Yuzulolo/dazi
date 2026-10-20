@@ -113,10 +113,10 @@ export function parseBasics(v: ProfileFormValues): Result<BasicsUpdate> {
 
   const visitedCities = splitList(v.visitedCities);
   if (visitedCities.length > 50 || visitedCities.some((c) => c.length > 80)) {
-    return { ok: false, error: "Cities visited: up to 50 cities, each up to 80 characters." };
+    return { ok: false, error: "Cities you love to travel to: up to 50 cities, each up to 80 characters." };
   }
   if (visitedCities.some(containsContactDetails)) {
-    return { ok: false, error: `${NO_CONTACTS} from your cities visited.` };
+    return { ok: false, error: `${NO_CONTACTS} from your list of cities.` };
   }
   const hobbies = splitList(v.hobbies);
   if (hobbies.length > 20 || hobbies.some((h) => h.length > 30)) {

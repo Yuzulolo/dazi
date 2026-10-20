@@ -5,6 +5,9 @@ import { getPublicProfile } from "@/lib/profile/queries";
 import { DAY_RHYTHMS, LANGUAGES, TRAVEL_INTERESTS, TRAVEL_PACES, labelOf } from "@/lib/profile/options";
 import { SiteShell } from "@/app/_components/dazi/site-shell";
 import { AbstractAvatar, Tags } from "@/app/_components/dazi/primitives";
+import { InfoButton } from "@/app/_components/dazi/info-dialog";
+import { HOW_IT_WORKS } from "@/app/_components/dazi/copy";
+import { SignOutButton } from "@/app/_components/dazi/auth-buttons";
 
 export default function PublicProfilePage({ params }: PageProps<"/u/[id]">) {
   return (
@@ -14,7 +17,7 @@ export default function PublicProfilePage({ params }: PageProps<"/u/[id]">) {
           <PublicProfile params={params} />
         </Suspense>
         <p className="panel-footer">
-          <Link href="/home">← Home</Link>
+          <Link href="/plan">← My plan</Link>
         </p>
       </section>
     </SiteShell>
@@ -29,6 +32,7 @@ async function PublicProfile({ params }: { params: PageProps<"/u/[id]">["params"
   const profile = await getPublicProfile(id);
 
   if (!profile) return <h1>User not found</h1>;
+  const own = profile.id === viewer.id;
 
   const list = (items: string[]) => (items.length > 0 ? items.join(", ") : "—");
   const languages = profile.languages.map((v) => labelOf(LANGUAGES, v));
@@ -45,10 +49,21 @@ async function PublicProfile({ params }: { params: PageProps<"/u/[id]">["params"
           </p>
         </div>
       </div>
-      {profile.id === viewer.id && (
-        <p>
-          This is how other members see you. <Link href="/me/edit">Edit profile</Link>
-        </p>
+      {own && (
+        <>
+          <p>This is how other members see you.</p>
+          {/* Account links live here since phase 7a (the header has only My plan · Matches · Profile). */}
+          <div className="panel-links">
+            <Link className="outline-button" href="/me/edit">
+              Edit profile
+            </Link>
+            <Link className="text-button" href="/settings">
+              Settings
+            </Link>
+            <InfoButton content={HOW_IT_WORKS}>How it works</InfoButton>
+            <SignOutButton />
+          </div>
+        </>
       )}
 
       <dl className="profile-facts">
@@ -61,7 +76,7 @@ async function PublicProfile({ params }: { params: PageProps<"/u/[id]">["params"
           <dd>{profile.bio ?? "—"}</dd>
         </div>
         <div>
-          <dt>CITIES VISITED</dt>
+          <dt>{own ? "CITIES YOU LOVE TO TRAVEL TO" : "CITIES THEY LOVE TO TRAVEL TO"}</dt>
           <dd>{list(profile.visitedCities)}</dd>
         </div>
         <div>

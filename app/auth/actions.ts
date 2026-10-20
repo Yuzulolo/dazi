@@ -89,7 +89,7 @@ export async function signIn(
     return { error: "Invalid email or password.", email };
   }
 
-  redirect("/home");
+  redirect("/plan");
 }
 
 export async function signOut() {
@@ -109,7 +109,7 @@ export async function signInDemo() {
   const supabase = await createClient();
   // Already signed in: never silently swap someone's own session for the demo (review W6).
   const { data: claims } = await supabase.auth.getClaims();
-  if (claims?.claims?.sub) redirect("/home");
+  if (claims?.claims?.sub) redirect("/plan");
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) {
     // Wrong credentials usually means a visitor changed the demo password: say "unavailable"
@@ -118,5 +118,5 @@ export async function signInDemo() {
     console.error(wrongPassword ? "demo sign-in failed: invalid credentials — run reset-demo-account" : `demo sign-in failed: ${error.code ?? error.status}`);
     redirect(wrongPassword ? "/?demo=unavailable" : "/?demo=busy");
   }
-  redirect("/home");
+  redirect("/plan");
 }

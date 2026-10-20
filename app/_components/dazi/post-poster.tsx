@@ -3,7 +3,7 @@ import { BUDGET_LABELS, type Budget, type Tone } from "@/lib/posts/card";
 import { formatDateRange } from "@/lib/posts/format";
 import { AIBadge, Headline, Paper, Tags } from "./primitives";
 
-// A post shown as a poster: /home (my active post) and the live preview in the
+// A post shown as a poster: /plan (my active post) and the live preview in the
 // post editor. No hooks, so it renders on the server and inside client components.
 export function PostPoster({
   headline,

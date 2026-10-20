@@ -14,7 +14,7 @@
    - **Never sent to the browser:** real name, real avatar, stories, profile link, socials
 4. Guest clicks "Connect" → sign-up dialog (Sign up / Not now).
 5. Guest ranking uses **trip similarity + city + dates only** (no profile yet). Banner: *"Complete your profile for more accurate matches."*
-6. The guest's sentence is kept **only in this browser (localStorage, `dazi:plan-draft:v1`)** so it survives the sign-up email-confirmation tab. Submitting the homepage composer opens a sign-up prompt (Sign up / Try the demo account / See example matches). After onboarding, `/home` shows "Continue with your plan" and `/posts/new` is pre-filled. The draft is cleared when the first plan is published, on sign-out, after account deletion, and after 7 days at the latest. Full guest search (real anonymised results) is Roadmap.
+6. The guest's sentence is kept **only in this browser (localStorage, `dazi:plan-draft:v1`)** so it survives the sign-up email-confirmation tab. Submitting the homepage composer opens a sign-up prompt (Sign up / Try the demo account / See example matches). After onboarding, `/plan` shows "Continue with your plan" and `/posts/new` is pre-filled. The draft is cleared when the first plan is published, on sign-out, after account deletion, and after 7 days at the latest. Full guest search (real anonymised results) is Roadmap.
 
 ### 1.2 Sign-up → first match
 1. Sign up (email or Google) → confirm 18+ (Google users enter birth year on `/onboarding` first, see 2.0)
@@ -26,19 +26,21 @@
 7. In chat, either side may ask to reveal social media (see 2.4) → meet in person
 8. After the trip: post closes automatically; user can write a new story
 
-### 1.3 Returning user — `/home`
-Pending invites · my active post · **"For you"**: top 5 matches as posters, each with a reason ("AI-generated", cached per pair; rule-based "Suggested match" if the AI is unavailable) and a Trip · Style · Personality breakdown. No matches → *"No buddies yet for these dates"* + a SQL-computed suggestion (*"Try ±3 days → 4 people"*). Demo users carry a "Demo profile" badge.
+### 1.3 Returning user — `/plan` and `/matches`
+Header for members: **My plan** · **Matches** · **Profile** (the logo always goes to `/`, which keeps the composer → `/posts/new`). Sign-in, onboarding and email confirmation land on `/plan` (my active post, Edit / New plan, "Continue with your plan"). Publishing or editing a plan lands on `/matches` ("Your plan is saved."). Settings, How it works and Sign out are on your own profile page. The old `/home` address redirects to `/plan`.
+
+`/matches` for members — **"For you"**: top 5 matches as posters, each with a reason ("AI-generated", cached per pair; rule-based "Suggested match" if the AI is unavailable) and a Trip · Style · Personality breakdown. No matches → *"No buddies yet for these dates"* + a SQL-computed suggestion (*"Try ±3 days → 4 people"*). Demo users carry a "Demo profile" badge.
 
 ### 1.4 Page map
 | Page | Access | Purpose |
 |---|---|---|
 | `/` | everyone | Poster-wall homepage: plan composer + wall of plans (demo trips until part E) |
-| `/matches` | everyone | Guest results: plan summary + 5 anonymised recruitment posters (demo trips until part E) |
+| `/matches` | everyone | Guests: plan summary + anonymised demo recruitment posters. Members: **"For you"** (top 5 matches with reasons) |
 | `/plans/[id]` | everyone | Recruitment detail, anonymised; "Why this plan fits" (AI); Connect → sign-up |
 | `/login`, `/signup` | everyone | Auth |
 | `/onboarding` | new users | Basics + travel style quiz |
-| `/home` | signed in | Invites, active post, recommendations |
-| `/u/[id]` | signed in | Other user's profile (style, cities). Their active post appears only via the part D server function (posts are owner-only — see SPEC §6) |
+| `/plan` | signed in | My active plan, Edit / New plan, continue the homepage draft (`/home` redirects here) |
+| `/u/[id]` | signed in | A user's profile (style, cities they love to travel to); on your own: Edit profile, Settings, How it works, Sign out. Their active post appears only via the part D server function (posts are owner-only — see SPEC §6) |
 | `/posts/new`, `/posts/edit` | signed in, onboarded | One sentence → AI draft card (poster preview, tone picker) → publish / edit the active post |
 | `/me/edit` | owner | Edit profile, preferences, social accounts |
 | `/stories/new` | owner | Write story + photos |
@@ -84,7 +86,7 @@ active ──► archived   (user creates a new post; confirm dialog first)
 ```
 - **Max 1 active post per user.** Old posts stay visible in the user's own history.
 - Publishing while a post is active asks first: *"Replace your current plan?"* — the old one is archived in the same transaction (`publish_post`).
-- An ended plan (end date passed) shows on `/home` as "This plan has ended — post a new one"; it can't be edited. Automatic closing comes with part D.
+- An ended plan (end date passed) shows on `/plan` as "This plan has ended — post a new one"; it can't be edited. Automatic closing comes with part D.
 - **Posts are owner-only.** Nobody else can query them directly; other users only see a post through the part D matching function (hard filters incl. mutual age/gender preferences applied server-side).
 - When a post becomes closed/archived, its pending invites become `expired`.
 
@@ -156,6 +158,6 @@ none ──► requested (A asks in chat) ──► shared   (B agrees → BOTH 
 | Prompt injection in user text ("ignore previous instructions…") | User text is always treated as data inside the prompt, never as instructions |
 | Guest hits rate limit | "Sign up to keep searching" |
 | Opening the profile of someone who blocked you | "User not found" |
-| **No matches** | "No buddies yet for these dates." AI suggests widening (e.g. "±3 days → 4 people"). Post stays active; `/home` shows "New matches" when someone fitting posts. No email notifications. |
+| **No matches** | "No buddies yet for these dates." AI suggests widening (e.g. "±3 days → 4 people"). Post stays active; new fitting plans appear in `/matches` on the next visit ("New matches" notice: Roadmap). No email notifications. |
 | **Two users invite each other** | Automatically treated as mutually accepted → chat opens |
 | **Account deletion** | All of the user's rows, messages, photos and feedback deleted (GDPR). Chat partners see "This user has left". |

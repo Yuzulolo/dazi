@@ -5,7 +5,7 @@ import { todayInBerlin, type Tone } from "@/lib/posts/card";
 import { upcomingOverlap } from "@/lib/matching/overlap";
 import { AIBadge, DemoBadge, Headline, Identity, Paper, Tags } from "./primitives";
 
-// One match on /home "For you": the other person's plan as a poster, the reason
+// One match on /matches "For you": the other person's plan as a poster, the reason
 // (AI-generated or rule-based) and the three parts of the score.
 export function MatchCard({ match, reason }: { match: Match; reason: MatchReason }) {
   const parts: [string, number][] = [

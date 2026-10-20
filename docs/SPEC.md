@@ -14,9 +14,9 @@ Guest types one sentence on the homepage → AI trip card → 5 anonymised simil
 | # | Feature | Notes |
 |---|---|---|
 | A | Email auth + 18+ + `profiles` + RLS + Vercel | ✅ **Done** (PR #1, live). **No Google login.** |
-| B | Onboarding & profile | ✅ **Done** (phase 2 PR). Display name, birth year, gender (optional), languages, home city, bio, **cities visited**, **hobbies**, matching prefs (age range, gender pref), **travel style quiz** (pace, day rhythm, interests). Profile page = these fields only. **No avatar upload, no stories, no photos.** |
+| B | Onboarding & profile | ✅ **Done** (phase 2 PR). Display name, birth year, gender (optional), languages, home city, bio, **cities you love to travel to** (column `visited_cities`), **hobbies**, matching prefs (age range, gender pref), **travel style quiz** (pace, day rhythm, interests). Profile page = these fields only. **No avatar upload, no stories, no photos.** |
 | C | Intent post | ✅ **Done** (phase 3 PR). One sentence → AI extraction → editable card → save. Max 1 active post. **Covers = the 4 poster tones** (lavender / forest / mint / pink, `docs/DESIGN.md`): AI suggests a tone from the trip's mood, the user can change it — no cover images, no upload, no vision AI. The AI extraction also returns a **two-line poster headline** (`headline: [line1, line2]`, each ≤ ~22 characters ending with a full stop, e.g. "Flea markets." / "Good coffee."), editable on the card and shown on the posters. Edit allowed; changing city/dates expires pending invites and ends accepted ones (FLOWS 2.6) — **no monthly limit**. |
-| D | Matching | Hard filters (§5 step 1) + `score = 0.4 × trip + 0.35 × style + 0.25 × personality`. Personality embedding = bio + hobbies + cities visited (no stories). AI reason for top 5. Seed 30 demo users. **The seed script must always set `birth_year` (and `display_name`) in the user metadata** — the sign-up trigger refuses any email user without a birth year. **Gender "other" (decided in D):** it can't be picked as a preference, so — like "no gender" — those users are visible only to people without a gender preference (mutual rule, `private.match_candidates`). **Privacy trade-off (accepted):** a user with a gender preference only ever sees people of that gender, so gender is implicitly revealed to them; inherent to preference filtering. ✅ **Done** (phase 4 PR): personality embeddings, `match_my_post()` (the only way others' posts are shown), cached batched AI reasons, `/home` "For you", 30 demo users (`is_demo`, badge). |
+| D | Matching | Hard filters (§5 step 1) + `score = 0.4 × trip + 0.35 × style + 0.25 × personality`. Personality embedding = bio + hobbies + cities you love to travel to (no stories). AI reason for top 5. Seed 30 demo users. **The seed script must always set `birth_year` (and `display_name`) in the user metadata** — the sign-up trigger refuses any email user without a birth year. **Gender "other" (decided in D):** it can't be picked as a preference, so — like "no gender" — those users are visible only to people without a gender preference (mutual rule, `private.match_candidates`). **Privacy trade-off (accepted):** a user with a gender preference only ever sees people of that gender, so gender is implicitly revealed to them; inherent to preference filtering. ✅ **Done** (phase 4 PR): personality embeddings, `match_my_post()` (the only way others' posts are shown), cached batched AI reasons, "For you" (on `/matches` since phase 7a), 30 demo users (`is_demo`, badge). |
 | E | Homepage guest search | Anonymised server-side, trip-only ranking, rate limit per IP, search carries over after sign-up. |
 | F | Invites + messages | ⏭️ **Moved to Roadmap (§0.4)** — not built for the capstone. Invite (optional note), accept / decline / expire, max 10 pending, mutual invites auto-accept. After acceptance: **simple message thread, no realtime** (refresh to see new messages). |
 | G | Safety & compliance | ✅ **Partly done** (phase 5 PR): delete my data (`/settings`), `/privacy`, AI labels audited; block & report still open.  Block, report, safety tips page, AI-generated labels, **Delete my data**, privacy page. |
@@ -36,6 +36,11 @@ Guest types one sentence on the homepage → AI trip card → 5 anonymised simil
 
 ### 0.4 Roadmap (not in capstone — mention in "What's next")
 **Invites + messages (part F):** matching is live; mutual-accept contact is the next milestone. Google login · avatar & travel stories with photos · **trip photo upload with a vision-AI check + mood description used in matching** (FLOWS 2.7; was stretch, dropped from the capstone 17 Oct — must follow all storage rules: own `{user_id}/` folder, EXIF/GPS stripped, server-side AI call) · Facebook verification + mutual social reveal · after-meeting feedback (safety check + positive tags) · group activities · match-break limit (2 per 30 days) · realtime chat · email notifications · **overlap length in the match score** (longer shared stays rank higher; today dates are a pass/fail filter).
+
+### 0.4a Phase 7a — UX polish (20 Oct, from user feedback)
+- ✅ **PR A** (`phase-7a-ux-polish`): homepage composer asks "What's your next plan?" ("Good plans. Better company." is now a small kicker); header for members = **My plan** (`/plan`) · **Matches** (`/matches` "For you") · **Profile** (`/u/{id}`, which holds Edit profile, Settings, How it works and Sign out); the logo always goes to `/`; old `/home` redirects to `/plan`; "Cities visited" is now **"Cities you love to travel to"** in the UI and the embedding text (column unchanged).
+- **PR B** (`phase-7a-languages`): searchable language multi-select with custom entries + normalisation (aliases such as "Englisch" → English, "中文" → Chinese), one expand-only migration.
+- Follow-ups: an **AccountMenu** dropdown in the header (Settings, How it works, Sign out) instead of links on the profile page; **re-embed existing profiles** with the new wording: `scripts/backfill-profile-embeddings.mjs --all` alone covers every onboarded profile (real users, the 30 demo users and the demo login; one embedding call each) — not run yet, so until then older profiles keep vectors built from "Cities I've visited". De-duplicate the profile lookups per request (`getViewer` in the header + `getCurrentUser` on the page) and turn the `/home` stub into a `next.config.ts` redirect.
 
 ### 0.4b Follow-ups from the PR #6 review (after the capstone)
 - Preferred age as **band dropdowns** in the profile form (matching already uses bands).
@@ -64,7 +69,7 @@ None — the former stretch feature (trip photo + vision AI) moved to §0.4 Road
 | Concept | What it is |
 |---|---|
 | **Guest search** | Homepage input → AI trip card → top 5 anonymised matches. No account needed. |
-| **Profile** | Travel identity: age range, languages, travel style, hobbies, cities visited, stories with photos, verification badges, feedback tags |
+| **Profile** | Travel identity: age range, languages, travel style, hobbies, cities you love to travel to, stories with photos, verification badges, feedback tags |
 | **Intent post** (main) | 1-to-1 buddy search for a date range, with one trip photo. **Max 1 active per user.** |
 | **Activity** (group, 3+) | A specific plan others can join *(should have)* |
 
@@ -77,7 +82,7 @@ None — the former stretch feature (trip photo + vision AI) moved to §0.4 Road
    - Day rhythm: early bird / flexible / night owl
    - Travel interests (fixed list): museums & galleries, history & architecture, nature & hiking, theme parks, food & markets, cafés, nightlife & bars, shopping, photography, local life & hidden spots, sports & outdoor, festivals & concerts
    - Hobbies: free tags
-4. **Profile page:** all of the above + cities visited + travel stories (up to 3 photos each, one marked "best") + badges + feedback tags. Visible to signed-in users only.
+4. **Profile page:** all of the above + cities you love to travel to + travel stories (up to 3 photos each, one marked "best") + badges + feedback tags. Visible to signed-in users only.
 5. **Intent post:** one sentence → AI card → optional trip photo (vision-checked, mood description) or preset cover → save. Fully editable; changing city/dates ends existing matches (see FLOWS 2.6). **Max 2 match breaks per rolling 30 days**, enforced server-side (FLOWS 2.6b).
 6. **"For you" recommendations:** top 5 with AI reason; hard filters + weighted ranking (§5). No-match state with AI widening suggestion.
 7. **Invites (1-to-1):** optional note with AI-suggested icebreaker → accept / decline → private chat. Max 10 pending outgoing. Mutual invites auto-accept.
@@ -102,7 +107,7 @@ None — the former stretch feature (trip photo + vision AI) moved to §0.4 Road
 - `score = 0.4 × trip + 0.35 × style + 0.25 × personality`
   - **trip** — pgvector similarity of posts (interests, vibe, budget **+ photo mood description**)
   - **style** — structured, plain SQL: pace `1 − |a−b|/4`, interests Jaccard overlap, day rhythm (same 1 / one flexible 0.5 / opposite 0); average of the three
-  - **personality** — pgvector similarity of profile embeddings (bio + hobbies + cities visited + stories)
+  - **personality** — pgvector similarity of profile embeddings (bio + hobbies + cities you love to travel to + stories)
 - Weights are a starting point; tune during evaluation.
 
 **Guests:** only city + dates + **trip** similarity (no profile yet). After onboarding, full scoring recalculates.

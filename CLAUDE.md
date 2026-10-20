@@ -36,7 +36,8 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 - `lib/auth.ts` — `getCurrentUser()`: the single server-side gate for every protected page and server action
 - `supabase/migrations/` — all schema changes (applied by pasting into the Supabase SQL Editor)
 - `app/_components/dazi/` — design-system components (`SiteShell`, `Paper`, `PosterCarousel`, dialogs, badges); `app/_styles/dazi-*.css` — their styles, loaded once via `app/globals.css`
-- `app/matches`, `app/plans/[id]` — guest results and recruitment detail (demo trips; full guest search is Roadmap)
+- `app/plan` — signed-in hub (my active plan; sign-in/onboarding land here; `app/home` only redirects here). `app/matches` — members: "For you" (real matches); guests: demo results. `app/plans/[id]` — demo recruitment detail (full guest search is Roadmap)
+- Header for members: My plan · Matches · Profile (`NavLink`, `aria-current`); Settings, How it works and Sign out are on your own `/u/[id]`. The logo always goes to `/`
 - `app/settings` (delete my account), `app/privacy` (privacy notice; model names rendered from `lib/ai/providers.ts`)
 - `vercel.json` — server functions run in Frankfurt (`fra1`), next to Supabase (EU)
 - `lib/demo/trips.ts` — fictional, labelled demo trips + the `DEMO_MATCHES` flag
@@ -69,7 +70,7 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 - `npm test` — unit tests (`*.test.mjs`, Node's built-in test runner; e.g. the contact-details detector)
 - `node --conditions=react-server --env-file=.env.local scripts/eval-extraction.mjs` — AI extraction eval (20 real AI calls; run sparingly)
 - `node --conditions=react-server --env-file=.env.local scripts/seed-demo.mjs` — 30 demo users in Berlin (idempotent; `--cleanup` removes them; 60 embedding calls)
-- `node --conditions=react-server --env-file=.env.local scripts/backfill-profile-embeddings.mjs` — personality embeddings for older profiles
+- `node --conditions=react-server --env-file=.env.local scripts/backfill-profile-embeddings.mjs` — personality embeddings for older profiles; `--all` re-embeds every onboarded profile (after the embedding wording changes — not run for phase 7a yet, needs my OK)
 - `node --env-file=.env.local scripts/eval-matching.mjs` — matching eval (top-3 hit rate + hard filters; no AI calls)
 - `node --env-file=.env.local scripts/create-demo-account.mjs` — create the dedicated demo login (`DEMO_EMAIL` = `demo@dazi-demo.invalid`) if it does not exist; `profiles.is_protected` marks it
 - `node --conditions=react-server --env-file=.env.local scripts/reset-demo-account.mjs` — restore the public demo login (profile, plan, **password**, AI counters) before a demo or grading session. If a visitor changed the demo password, also sign out every demo session in the Supabase SQL Editor: `delete from auth.sessions where user_id = (select id from public.profiles where is_protected);`

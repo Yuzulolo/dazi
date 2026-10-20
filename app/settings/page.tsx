@@ -31,7 +31,7 @@ async function Settings() {
       </p>
       <DeleteAccountForm />
       <p className="panel-footer">
-        <Link href={user.onboarded ? "/home" : "/onboarding"}>← {user.onboarded ? "Home" : "Back to onboarding"}</Link>
+        <Link href={user.onboarded ? `/u/${user.id}` : "/onboarding"}>← {user.onboarded ? "My profile" : "Back to onboarding"}</Link>
       </p>
     </>
   );

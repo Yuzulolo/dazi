@@ -36,7 +36,7 @@ export async function getCurrentUser(
     .select("display_name, onboarding_completed_at, created_at")
     .eq("id", userId)
     .single();
-  // Signed in but no profile: sign out first, otherwise /login -> /home loops.
+  // Signed in but no profile: sign out first, otherwise /login -> /plan loops.
   if (!profile) redirect("/auth/signout");
 
   const onboarded = profile.onboarding_completed_at !== null;

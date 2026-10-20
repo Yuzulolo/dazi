@@ -26,7 +26,7 @@ async function EditProfile({ searchParams }: { searchParams: PageProps<"/me/edit
   return (
     <>
       <p className="calm-lead">
-        <Link href={`/u/${user.id}`}>View my public profile</Link> · <Link href="/home">Home</Link>
+        <Link href={`/u/${user.id}`}>View my public profile</Link> · <Link href="/plan">My plan</Link>
       </p>
       <p className="notice">
         Your bio, hobbies, cities and travel interests are turned into an AI “embedding” (a list of numbers) to find

@@ -1,9 +1,10 @@
 import { Suspense, type ReactNode } from "react";
 import Link from "next/link";
-import { connection } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { getViewer } from "@/lib/auth";
 import { InfoButton } from "./info-dialog";
 import { HOW_IT_WORKS } from "./copy";
+import { NavLink } from "./nav-link";
+import { SignOutButton } from "./auth-buttons";
 
 // Page frame for every screen (docs/DESIGN.md → Page variants):
 // "wall" = poster carousel pages, "calm" = forms and profile pages.
@@ -22,12 +23,11 @@ export function SiteShell({
     <div className="dazi-root" data-variant={variant}>
       <div className="wall-background" aria-hidden="true" />
       <header className="dazi-header">
-        <Suspense fallback={<Wordmark href="/" />}>
-          <AuthWordmark />
-        </Suspense>
+        <Link className="wordmark" href="/">
+          dazi
+        </Link>
         <span className="header-note">LITTLE PLANS, GOOD COMPANY.</span>
         <nav aria-label="Main navigation">
-          <InfoButton content={HOW_IT_WORKS}>How it works</InfoButton>
           <Suspense fallback={<SignedOutLinks />}>
             <AuthLinks />
           </Suspense>
@@ -44,25 +44,10 @@ export function SiteShell({
   );
 }
 
-function Wordmark({ href }: { href: string }) {
-  return (
-    <Link className="wordmark" href={href}>
-      dazi
-    </Link>
-  );
-}
-
-// Signed-in users go to /home (their plan and matches), not the public demo wall.
-async function AuthWordmark() {
-  await connection();
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getClaims();
-  return <Wordmark href={data?.claims ? "/home" : "/"} />;
-}
-
 function SignedOutLinks() {
   return (
     <>
+      <InfoButton content={HOW_IT_WORKS}>How it works</InfoButton>
       <Link className="text-button" href="/login">
         Log in
       </Link>
@@ -73,16 +58,26 @@ function SignedOutLinks() {
   );
 }
 
-// Reads the session cookie, so it streams in behind Suspense. Uses getClaims()
-// only — getCurrentUser() would redirect, and these links appear on public pages.
+// Reads the session cookie, so it streams in behind Suspense. Uses getViewer(),
+// which never redirects — these links appear on public pages too.
+// Members: My plan · Matches · Profile (Settings, How it works and Sign out live on
+// their own profile page). Not yet onboarded: Finish profile · Sign out.
 async function AuthLinks() {
-  await connection(); // per-request: the session check reads cookies and the clock
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getClaims();
-  if (!data?.claims) return <SignedOutLinks />;
+  const viewer = await getViewer();
+  if (viewer.status === "guest") return <SignedOutLinks />;
+  if (viewer.status === "onboarding") {
+    return (
+      <>
+        <NavLink href="/onboarding">Finish profile</NavLink>
+        <SignOutButton />
+      </>
+    );
+  }
   return (
-    <Link className="outline-button" href="/home">
-      Home
-    </Link>
+    <>
+      <NavLink href="/plan">My plan</NavLink>
+      <NavLink href="/matches">Matches</NavLink>
+      <NavLink href={`/u/${viewer.userId}`}>Profile</NavLink>
+    </>
   );
 }
