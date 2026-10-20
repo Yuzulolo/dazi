@@ -6,6 +6,8 @@ import { getMyActivePost } from "@/lib/posts/queries";
 import { SiteShell } from "@/app/_components/dazi/site-shell";
 import { PostPoster } from "@/app/_components/dazi/post-poster";
 import { ContinuePlan } from "./continue-plan";
+import { InvitesSection } from "./invites";
+import { messagingEnabled } from "@/lib/messaging/flag";
 
 export const metadata: Metadata = { title: "My plan · Dazi" };
 
@@ -65,6 +67,11 @@ async function MyPlan() {
       </section>
       {post && (
         <PostPoster {...post} ai={post.aiAssisted ? "assisted" : null} eyebrow={post.ended ? "Ended plan" : "My plan"} />
+      )}
+      {messagingEnabled() && (
+        <Suspense fallback={<p className="calm-lead">Loading invites…</p>}>
+          <InvitesSection />
+        </Suspense>
       )}
     </div>
   );

@@ -62,7 +62,9 @@ Radius: glass 20px (inner border 14px), buttons/inputs 12px, tags 30px, badges 5
 | `AbstractAvatar` | `primitives.tsx` | Two overlapping circles. **Never a face or photo** for guests or public profiles. |
 | `Identity` | `primitives.tsx` | `M••• · 25–29` + languages. Initial only, age range only. |
 | `Headline` | `primitives.tsx` | Two-line poster headline (`h1` or `h2`). |
-| `InfoDialog` / `InfoButton` | `info-dialog.tsx` | Native `<dialog>`: Escape + backdrop close, focus returns to the opener. Texts in `copy.ts`. |
+| `InfoDialog` / `InfoButton` | `info-dialog.tsx` | Native `<dialog>`: Escape + backdrop close, focus returns to the opener. Texts in `copy.ts`. `.dazi-modal` needs `margin: auto` (the global reset removed the browser's centring). Pass `children` to replace the action row (e.g. a form). |
+| `MatchInviteControls` / `InviteActionButton` | `invite-controls.tsx` | Phase 7b-1, only with `MESSAGING_ENABLED`: Invite (note dialog) / Invited · Cancel / Accept · Decline / Open chat, inside the match card's glass panel. "Demo profile — won't reply." note. |
+| Chat | `app/chat/[id]` | Calm panel: dashed safety banner, bubbles (mine = white, theirs = glass), composer (Enter sends), Block with a confirm dialog. `.nav-badge` = white count pill on "My plan". |
 | `PosterCarousel` | `poster-carousel.tsx` | Active poster frontal, neighbours angled (±14°, ±22°). Drag/swipe, arrow keys, wraparound, dots + live "2 of 5" text. Arrows at the left/right edges, vertically centred (desktop); beside the dots under the poster (≤ 800px). Non-active posters' controls are untabbable. `positionKey` remembers the poster across detail ↔ back. |
 | `LanguagePicker` | `app/_components/language-picker.tsx` | Selected languages as white removable tags (× = 44px target) + a search box (`role="combobox"`) with a dark listbox; "Add “…”" for unlisted languages. ↑/↓, Enter, Escape, Backspace. Submits hidden `languages` inputs. |
 | `NavLink` | `nav-link.tsx` | Header text link; marks the current section with `aria-current="page"` (underlined, cream instead of muted). |

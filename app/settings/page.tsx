@@ -27,7 +27,7 @@ async function Settings() {
       <h2>Delete my account</h2>
       <p>
         This permanently deletes your account and everything linked to it: your profile, your plans,
-        match explanations and AI usage records. Read more in our <Link href="/privacy">Privacy</Link> page.
+        match explanations, AI usage records, invites, messages and blocks (chats disappear for the other person too). Read more in our <Link href="/privacy">Privacy</Link> page.
       </p>
       <DeleteAccountForm />
       <p className="panel-footer">

@@ -5,6 +5,8 @@ import { InfoButton } from "./info-dialog";
 import { HOW_IT_WORKS } from "./copy";
 import { NavLink } from "./nav-link";
 import { SignOutButton } from "./auth-buttons";
+import { messagingEnabled } from "@/lib/messaging/flag";
+import { getPendingInviteCount } from "@/lib/messaging/queries";
 
 // Page frame for every screen (docs/DESIGN.md → Page variants):
 // "wall" = poster carousel pages, "calm" = forms and profile pages.
@@ -73,9 +75,21 @@ async function AuthLinks() {
       </>
     );
   }
+  // Phase 7b-1: number of open invites I received, only when messaging is enabled.
+  const invites = messagingEnabled() ? await getPendingInviteCount() : 0;
   return (
     <>
-      <NavLink href="/plan">My plan</NavLink>
+      <NavLink
+        href="/plan"
+        label={invites > 0 ? `My plan, ${invites} new ${invites === 1 ? "invite" : "invites"}` : undefined}
+      >
+        My plan
+        {invites > 0 && (
+          <span className="nav-badge" aria-hidden="true">
+            {invites}
+          </span>
+        )}
+      </NavLink>
       <NavLink href="/matches">Matches</NavLink>
       <NavLink href={`/u/${viewer.userId}`}>Profile</NavLink>
     </>

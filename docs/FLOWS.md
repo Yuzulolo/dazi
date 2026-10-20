@@ -45,8 +45,8 @@ Header for members: **My plan** · **Matches** · **Profile** (the logo always g
 | `/posts/new`, `/posts/edit` | signed in, onboarded | One sentence → AI draft card (poster preview, tone picker) → publish / edit the active post |
 | `/me/edit` | owner | Edit profile, preferences, social accounts |
 | `/stories/new` | owner | Write story + photos |
-| `/invites` | owner | Received / sent |
-| `/chat/[id]` | 2 participants | Private chat after acceptance |
+| `/plan` → "Invites" | owner | Received / sent (phase 7b-1, behind `MESSAGING_ENABLED`; no separate `/invites` page) |
+| `/chat/[id]` | 2 participants | Private chat after acceptance (15 s refresh; "Chat not found" for anyone else or when messaging is off) |
 | `/settings` | owner | **Delete my account** (type DELETE to confirm); blocked users later (part G) |
 | `/privacy` | everyone | Privacy notice (what we store, AI via OpenRouter, where data lives, retention, deletion, contact) |
 | `/safety` | everyone | Safety tips (later) |
@@ -98,13 +98,19 @@ pending ──► accepted   → private chat opens
         ──► expired    (when the related post's end_date passes, or the post is closed/archived)
         ──► cancelled  (sender withdraws)
 ```
-- **Expiry:** at the end date of the post it belongs to.
-- **After a decline:** the sender cannot invite the same person again for the same trip/post.
+- **Expiry:** computed when read (no cron): a pending invite is expired once either plan has ended or is no longer active (e.g. replaced by a new plan).
+- **Only matches:** you can invite someone only while their plan is in your current top-10 matches (`match_my_post`, hard filters incl. blocks; the page shows the top 5).
+- **Cancelled** invites disappear from the receiver's list; the sender still sees them.
+- **After a decline:** the sender cannot invite the same person again for the same pair of plans.
 - **Anti-spam:** max **10 pending outgoing invites** per user at any time.
-- Invite note is optional; AI can suggest an icebreaker (labelled AI-generated).
+- Invite note is optional (≤ 300 characters, no email / phone number). AI icebreakers: Roadmap.
+- **Demo:** the shared demo login only connects with demo profiles ("Demo profile — won't reply").
+- Built in phase 7b-1 behind `MESSAGING_ENABLED` (SPEC §0.4c).
 
 ### 2.3 Chat
-- Exists only for `accepted` invites. Only the 2 participants can read/write (RLS).
+- Exists only for `accepted` invites. Only the 2 participants can read/write (RLS + definer functions).
+- No realtime: the open chat refreshes every 15 s while the tab is visible. 1–1000 characters, 30 messages per hour. Contact details are allowed (both accepted) — except in a chat of the shared demo login, which every visitor can read. Banner: "Meet in a public place first."
+- An accepted chat stays open after the plans end (no read-only state yet). Changing a plan's city or dates does not touch its invites yet (`ended_trip_changed`, 2.6: follow-up, SPEC §0.4c).
 
 ### 2.4 Social reveal (mutual exchange)
 ```
@@ -114,7 +120,7 @@ none ──► requested (A asks in chat) ──► shared   (B agrees → BOTH 
 - Mutual only: nobody can see the other's socials without sharing their own.
 
 ### 2.5 Block & report
-- **Block** (instant): both users disappear from each other's recommendations, profiles and invites; chat closes; pending invites cancelled.
+- **Block** (instant, from the chat): both users disappear from each other's recommendations; chat closes; pending invites cancelled. (Hiding blocked users on `/u/[id]` and an unblock list: follow-ups, SPEC §0.4c.)
 - **Report**: also blocks automatically + flags the user for admin review (via Supabase dashboard).
 
 ### 2.6 Editing a post
@@ -161,4 +167,4 @@ none ──► requested (A asks in chat) ──► shared   (B agrees → BOTH 
 | Opening the profile of someone who blocked you | "User not found" |
 | **No matches** | "No buddies yet for these dates." AI suggests widening (e.g. "±3 days → 4 people"). Post stays active; new fitting plans appear in `/matches` on the next visit ("New matches" notice: Roadmap). No email notifications. |
 | **Two users invite each other** | Automatically treated as mutually accepted → chat opens |
-| **Account deletion** | All of the user's rows, messages, photos and feedback deleted (GDPR). Chat partners see "This user has left". |
+| **Account deletion** | All of the user's rows, invites, messages, blocks, photos and feedback deleted (GDPR). The chat disappears for the other person too (cascade). |
