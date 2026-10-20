@@ -204,3 +204,44 @@
 .dazi-root .privacy ul { padding-left: 20px; margin: 0 0 12px; display: grid; gap: 6px; font-size: 15px; line-height: 1.6; }
 .dazi-root .privacy code { font-size: 13px; background: #ffffff1a; padding: 1px 6px; border-radius: 4px; }
 .dazi-root .shared-demo { border: 1px dashed #ffffff80; border-radius: 12px; padding: 10px 14px; color: var(--cream); }
+
+/* ---------- Invites + chat (phase 7b-1, behind MESSAGING_ENABLED) ---------- */
+.dazi-root .invite-controls { display: grid; gap: 8px; margin-top: 12px; }
+.dazi-root .match-reason .poster-actions { margin-top: 12px; }
+.dazi-root .invite-status { font-size: 14px; margin: 12px 0 0; }
+.dazi-root .invite-demo-note { font-size: 13px; color: var(--muted); margin: 0; }
+.dazi-root .invite-action { display: grid; gap: 6px; }
+.dazi-root .invite-action .form-error { font-size: 13px; margin: 0; }
+.dazi-root .invite-form { gap: 14px; }
+.dazi-root .invite-form textarea { min-height: 96px; }
+.dazi-root .invites { grid-column: 1 / -1; }
+.dazi-root .invites > h2 { font-size: 28px; margin: 12px 0 8px; }
+.dazi-root .invite-list h3 { font-size: 18px; margin: 18px 0 10px; }
+.dazi-root .invite-list ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.dazi-root .invite-item { display: flex; justify-content: space-between; gap: 18px; padding: 16px 18px; flex-wrap: wrap; }
+.dazi-root .invite-who { flex: 1 1 280px; min-width: 0; }
+.dazi-root .invite-who p { margin: 0 0 6px; }
+.dazi-root .invite-name { font-weight: 600; font-size: 16px; }
+.dazi-root .invite-plan { font-size: 14px; color: var(--muted); }
+.dazi-root .invite-note { font-size: 15px; }
+.dazi-root .invite-note .eyebrow { display: block; margin: 6px 0 2px; }
+.dazi-root .invite-side { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+.dazi-root .invite-buttons { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.dazi-root .invite-chip { font-size: 12px; letter-spacing: 1px; text-transform: uppercase; padding: 3px 10px; border-radius: 20px; border: 1px solid #ffffff80; }
+.dazi-root .invite-chip[data-status="accepted"] { background: #fff; color: #181d19; border-color: #fff; }
+.dazi-root .nav-badge { display: inline-grid; place-items: center; min-width: 20px; height: 20px; margin-left: 6px; padding: 0 6px; border-radius: 10px; background: #fff; color: #181d19; font-size: 12px; font-weight: 700; }
+.dazi-root .chat-panel { display: grid; gap: 4px; }
+.dazi-root .chat-back { margin: 0; }
+.dazi-root .chat-banner { margin: 6px 0 12px; }
+.dazi-root .chat-messages { list-style: none; margin: 8px 0 16px; padding: 0; display: grid; gap: 10px; }
+.dazi-root .chat-message { max-width: 80%; padding: 10px 14px; border-radius: 14px; background: #ffffff14; border: 1px solid #ffffff30; }
+.dazi-root .chat-message[data-mine] { justify-self: end; background: #fff; color: #181d19; border-color: #fff; }
+.dazi-root .chat-message p { margin: 2px 0 4px; font-size: 15px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+.dazi-root .chat-sender { font-size: 12px; font-weight: 600; letter-spacing: 0.5px; }
+.dazi-root .chat-message time { font-size: 12px; opacity: 0.8; }
+.dazi-root .chat-composer { gap: 10px; }
+@media (max-width: 800px) {
+  .dazi-root .invite-side { align-items: stretch; width: 100%; }
+  .dazi-root .invite-buttons { justify-content: stretch; }
+  .dazi-root .chat-message { max-width: 92%; }
+}

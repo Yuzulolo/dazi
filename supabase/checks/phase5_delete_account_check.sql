@@ -12,7 +12,7 @@ select 'FK ' || src_ns.nspname || '.' || src.relname || ' → ' || dst_ns.nspnam
   join pg_class dst on dst.oid = c.confrelid
   join pg_namespace dst_ns on dst_ns.oid = dst.relnamespace
   where c.contype = 'f'
-    and (dst_ns.nspname, dst.relname) in (('auth', 'users'), ('public', 'profiles'), ('public', 'posts'))
+    and (dst_ns.nspname, dst.relname) in (('auth', 'users'), ('public', 'profiles'), ('public', 'posts'), ('public', 'invites'))
     and src_ns.nspname in ('public', 'private')
 union all
 -- 2. Exactly one protected account (the public demo login).

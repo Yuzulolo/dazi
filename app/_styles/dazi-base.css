@@ -266,6 +266,9 @@
 
 /* ---------- Dialog ---------- */
 .dazi-root .dazi-modal {
+  /* The global CSS reset sets margin: 0 on everything, which removes the browser's own
+     centring of a modal <dialog> (it opened in the top-left corner). */
+  margin: auto;
   width: min(460px, calc(100% - 32px));
   max-height: calc(100dvh - 40px);
   padding: 34px;

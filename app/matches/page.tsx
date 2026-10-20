@@ -11,6 +11,9 @@ import { getMyMatches, getMatchSuggestion } from "@/lib/matching/queries";
 import { getMatchReasons } from "@/lib/ai/match-reasons";
 import { DEMO_MATCHES, demoTrips } from "@/lib/demo/trips";
 import type { MyPost } from "@/lib/posts/queries";
+import { messagingEnabled } from "@/lib/messaging/flag";
+import { getMyInvites, type Invite } from "@/lib/messaging/queries";
+import { MatchInviteControls } from "@/app/_components/dazi/invite-controls";
 
 export const metadata: Metadata = { title: "Matches · Dazi" };
 
@@ -64,7 +67,7 @@ async function MatchesForViewer({ searchParams }: { searchParams: PageProps<"/ma
             </p>
             {/* Own boundary: the page never waits for the AI reasons. */}
             <Suspense fallback={<p className="calm-lead">Finding your matches…</p>}>
-              <ForYou post={active} />
+              <ForYou post={active} demoLogin={user.isDemoLogin} />
             </Suspense>
           </>
         ) : (
@@ -83,7 +86,7 @@ async function MatchesForViewer({ searchParams }: { searchParams: PageProps<"/ma
 
 // Top 5 from public.match_my_post() (hard filters + scoring in the database) with
 // cached / batched AI reasons. No matches → a date-widening suggestion computed in SQL.
-async function ForYou({ post }: { post: MyPost }) {
+async function ForYou({ post, demoLogin }: { post: MyPost; demoLogin: boolean }) {
   const matches = await getMyMatches(5);
   if (matches === null) {
     return <p className="calm-lead">Matches are unavailable right now. Please try again in a moment.</p>;
@@ -104,12 +107,39 @@ async function ForYou({ post }: { post: MyPost }) {
       </div>
     );
   }
-  const reasons = await getMatchReasons(post, matches);
+  const messaging = messagingEnabled();
+  const [reasons, invites] = await Promise.all([
+    getMatchReasons(post, matches),
+    messaging ? getMyInvites() : Promise.resolve(null),
+  ]);
   return (
     <div className="match-grid">
       {matches.map((m) => (
-        <MatchCard key={m.postId} match={m} reason={reasons.get(m.postId)!} />
+        <MatchCard
+          key={m.postId}
+          match={m}
+          reason={reasons.get(m.postId)!}
+          actions={
+            messaging && (
+              <MatchInviteControls
+                postId={m.postId}
+                displayName={m.displayName}
+                isDemo={m.isDemo}
+                invite={inviteFor(invites, m.postId)}
+                demoLogin={demoLogin}
+              />
+            )
+          }
+        />
       ))}
     </div>
   );
+}
+
+// The newest open or accepted invite (either direction) with this plan. A decline / cancel /
+// expiry shows the Invite button again: the database decides whether a new invite is allowed
+// (e.g. not again after a decline for the same pair of plans) and says why (review S1).
+function inviteFor(invites: Invite[] | null, postId: string) {
+  const hit = invites?.find((i) => i.postId === postId && ["pending", "accepted", "closed"].includes(i.status));
+  return hit ? { id: hit.id, direction: hit.direction, status: hit.status } : null;
 }

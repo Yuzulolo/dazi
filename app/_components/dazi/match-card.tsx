@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { TRAVEL_INTERESTS, labelOf } from "@/lib/profile/options";
 import { languageLabel } from "@/lib/profile/languages";
 import { formatDateRange } from "@/lib/posts/format";
@@ -7,8 +8,9 @@ import { upcomingOverlap } from "@/lib/matching/overlap";
 import { AIBadge, DemoBadge, Headline, Identity, Paper, Tags } from "./primitives";
 
 // One match on /matches "For you": the other person's plan as a poster, the reason
-// (AI-generated or rule-based) and the three parts of the score.
-export function MatchCard({ match, reason }: { match: Match; reason: MatchReason }) {
+// (AI-generated or rule-based) and the three parts of the score. `actions` = the invite
+// controls (phase 7b), only passed when messaging is enabled.
+export function MatchCard({ match, reason, actions }: { match: Match; reason: MatchReason; actions?: ReactNode }) {
   const parts: [string, number][] = [
     ["Trip", match.tripScore],
     ["Style", match.styleScore],
@@ -48,6 +50,7 @@ export function MatchCard({ match, reason }: { match: Match; reason: MatchReason
             </div>
           ))}
         </dl>
+        {actions}
       </div>
     </Paper>
   );
