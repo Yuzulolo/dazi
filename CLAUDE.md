@@ -27,7 +27,7 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 - Demo city: Berlin (data model must still support any city)
 
 ## Live app
-- Production: https://dazi-five-tau.vercel.app (Vercel deploys `main` from the personal repo `Yuzulolo/dazi`). Since the capstone submission (20 Oct 2026) **personal `main` is ahead of origin `main`** — see Git workflow.
+- Production: https://dazi-five-tau.vercel.app (Vercel deploys `main` from the personal repo `Yuzulolo/dazi`). Origin and personal `main` were brought **back in sync on 20 Oct 2026** (origin PR #13 + a fast-forward of personal); after the capstone deadline personal `main` moves ahead again — see Git workflow.
 
 ## Project structure
 - `app/` — pages (App Router). `app/auth/` = sign-up/login/sign-out server actions (`actions.ts`), email-confirmation landing (`callback/route.ts`), forced sign-out (`signout/route.ts`)
@@ -121,9 +121,10 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 ### Git workflow
 - `main` is always deployable. One feature branch + one PR per build phase (see `docs/SPEC.md` §8).
 - Branch names: `phase-1-scaffold-auth`, `phase-2-posting`, etc.
-- **Post-submission work goes to `personal` only** (`Yuzulolo/dazi`): push the branch to `personal` (Vercel builds a preview from it) and open the PR there. `origin` (course repo) only gets something when I explicitly ask (e.g. a bug fix of the submitted version).
-- **Personal `main` is ahead of origin `main`. Never push origin `main` to personal** (`git push personal origin/main:main` would rewind production). **Never force-push** any branch.
-- If a fix must reach both repos: branch from origin `main`, PR on origin, then merge it into personal `main` with a normal merge (no force) — ask me first.
+- **Both remotes are in sync as of 20 Oct 2026** (origin = the course repo with the submission; personal = `Yuzulolo/dazi`, which Vercel deploys).
+- **Work after the capstone deadline (20 Oct 2026, 24:00) goes to `personal` only**: push the branch to `personal` (Vercel builds a preview from it) and open the PR there. `origin` only gets something when I explicitly ask.
+- From then on personal `main` is ahead of origin `main`: **never push origin `main` to personal** (it could rewind production) — the only exception is a fast-forward I explicitly ask for, verified first with `git merge-base --is-ancestor personal/main origin/main`. **Never force-push** any branch.
+- If a fix must reach both repos: PR on origin, merged with "Create a merge commit", then fast-forward personal — ask me first.
 - Small, descriptive commits. Run `npm run lint` and `npm run build` before opening a PR.
 - Every PR is reviewed (ai-code-reviewer subagent + me) before merging.
 
