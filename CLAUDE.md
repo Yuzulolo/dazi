@@ -27,7 +27,7 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 - Demo city: Berlin (data model must still support any city)
 
 ## Live app
-- Production: https://dazi-five-tau.vercel.app (Vercel deploys `main` from the personal repo `Yuzulolo/dazi`; PRs go to the course repo `origin`)
+- Production: https://dazi-five-tau.vercel.app (Vercel deploys `main` from the personal repo `Yuzulolo/dazi`). Since the capstone submission (20 Oct 2026) **personal `main` is ahead of origin `main`** — see Git workflow.
 
 ## Project structure
 - `app/` — pages (App Router). `app/auth/` = sign-up/login/sign-out server actions (`actions.ts`), email-confirmation landing (`callback/route.ts`), forced sign-out (`signout/route.ts`)
@@ -56,7 +56,7 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 ## Environment variables
 - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` — public
 - `OPENROUTER_API_KEY` — server-only (Production + Preview in Vercel, marked Sensitive). School key: **no spending limit**, so quotas are the only protection
-- `MESSAGING_ENABLED` — server-only kill switch for invites + chat: `true` on Preview, unset on Production until tested. Read only in `lib/messaging/flag.ts` (`tests/messaging-env.test.mjs`)
+- `MESSAGING_ENABLED` — server-only kill switch for invites + chat: `true` on **Preview**; on **Production** it is switched on/off **manually** by me in Vercel (redeploy after changing it). Anything other than `"true"` = hidden + actions refuse. Read only in `lib/messaging/flag.ts` (`tests/messaging-env.test.mjs`)
 - `DEMO_EMAIL`, `DEMO_PASSWORD` — server-only (Production + Preview in Vercel, Sensitive): the "Try the demo account" button signs in on the server (`signInDemo` in `app/auth/actions.ts`). `tests/demo-env.test.mjs` keeps them out of client code.
 - `SUPABASE_SERVICE_ROLE_KEY` — **local scripts only** (seed, backfill, eval via `scripts/lib/admin.mjs`). It bypasses RLS: **never** imported by `app/` or `lib/`, **never** added to Vercel, **never** `NEXT_PUBLIC_`. `tests/secrets.test.mjs` fails if app or lib code mentions it.
 - `SITE_URL` — server-only; where auth emails send people back to (`http://localhost:3000` locally, the Vercel URL in production / the branch URL in preview)
@@ -121,7 +121,9 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 ### Git workflow
 - `main` is always deployable. One feature branch + one PR per build phase (see `docs/SPEC.md` §8).
 - Branch names: `phase-1-scaffold-auth`, `phase-2-posting`, etc.
-- Push every feature branch to **both** remotes: `origin` (course repo, PRs) and `personal` (Vercel builds from it, so only branches pushed there get a preview URL). After merging on origin: `git push personal origin/main:main`.
+- **Post-submission work goes to `personal` only** (`Yuzulolo/dazi`): push the branch to `personal` (Vercel builds a preview from it) and open the PR there. `origin` (course repo) only gets something when I explicitly ask (e.g. a bug fix of the submitted version).
+- **Personal `main` is ahead of origin `main`. Never push origin `main` to personal** (`git push personal origin/main:main` would rewind production). **Never force-push** any branch.
+- If a fix must reach both repos: branch from origin `main`, PR on origin, then merge it into personal `main` with a normal merge (no force) — ask me first.
 - Small, descriptive commits. Run `npm run lint` and `npm run build` before opening a PR.
 - Every PR is reviewed (ai-code-reviewer subagent + me) before merging.
 
