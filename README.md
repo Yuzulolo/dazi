@@ -3,6 +3,7 @@
 **🔗 Live app:** https://dazi-five-tau.vercel.app
 
 **🔑 Demo login for reviewers:** email `demo@dazi-demo.invalid` · password `88888888` (a dedicated, shared demo account, 18+, already confirmed) — or just click **"Try the demo account"** on the homepage or the login page. The demo account can't be deleted and is reset before demos; anything you enter there is visible to other visitors. Privacy notice: [/privacy](https://dazi-five-tau.vercel.app/privacy)
+**newest version at personal repo: https://github.com/Yuzulolo/dazi
 
 ---
 
