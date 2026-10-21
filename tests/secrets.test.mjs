@@ -23,3 +23,15 @@ test("app/ and lib/ never mention the service role key", async () => {
     assert.ok(!/SERVICE_ROLE|service_role|scripts\/lib\/admin/.test(source), `${file} must not use the service role key`);
   }
 });
+
+// The ElevenLabs key (phase 8 speech input) is server-only: no client component may mention it
+// or import the server-only speech files that use it.
+test("client components never touch the ElevenLabs key", async () => {
+  for (const file of [...(await files("app")), ...(await files("lib"))]) {
+    const source = await readFile(join(root, file), "utf8");
+    assert.ok(!/NEXT_PUBLIC_ELEVENLABS/.test(source), `${file} must not expose the ElevenLabs key`);
+    if (/^["']use client["']/.test(source)) {
+      assert.ok(!/ELEVENLABS_API_KEY|lib\/speech\/(elevenlabs|flag)/.test(source), `${file} (client) must not use the ElevenLabs key`);
+    }
+  }
+});

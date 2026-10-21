@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { SiteShell } from "@/app/_components/dazi/site-shell";
 import { AI_MODELS } from "@/lib/ai/providers";
+import { SPEECH_MODEL } from "@/lib/speech/elevenlabs";
 
 export const metadata = { title: "Privacy · Dazi" };
 
@@ -30,7 +31,8 @@ export default function PrivacyPage() {
           <li><strong>Profile:</strong> display name, languages, home city, bio, cities you love to travel to, hobbies, travel style — shown to other signed-in users and used for matching.</li>
           <li><strong>Gender and matching preferences</strong> (age range, gender): private, only used for matching, never shown.</li>
           <li><strong>Plans:</strong> your one-sentence plan and its card (city, dates, interests…). Phone numbers and emails are removed before anything is stored.</li>
-          <li><strong>AI usage counters:</strong> how many AI actions you used in the last 24 hours — only to cap costs.</li>
+          <li><strong>AI usage counters:</strong> how many AI actions (including voice inputs) you used in the last 24 hours — only to cap costs.</li>
+          <li><strong>Voice recordings: never stored.</strong> If you use voice input, your recording is passed straight to ElevenLabs and dropped; Dazi keeps only the text you then choose to send.</li>
           <li><strong>Embeddings:</strong> number lists computed by AI from your plan and from your bio, hobbies, cities and travel interests — used only to rank matches, never shown.</li>
           <li><strong>Match explanations:</strong> AI-written reasons why a plan fits yours, cached so reloading costs nothing.</li>
           <li><strong>Invites, messages and blocks</strong> (when invites are switched on): who invited whom for which plan, your optional note, the answer, the messages of a chat both of you accepted, and the people you blocked. Only the two people of an invite can read it; nobody can read a chat before it is accepted or after a block. Messages are limited to 30 per hour. Exception: the public demo account is shared, so every visitor using it can read its chat (contact details are refused there).</li>
@@ -45,9 +47,18 @@ export default function PrivacyPage() {
         <ul>
           <li><strong>Turning your sentence into a plan card</strong> and <strong>writing match reasons:</strong> {model(primary)}{fallback && <>, falling back to {model(fallback)}</>}.</li>
           <li><strong>Matching</strong> (comparing plans and profiles as numbers, “embeddings”): {model(AI_MODELS.embedding)} — from your plan card and your bio, hobbies, cities and travel interests.</li>
+          <li>
+            <strong>Voice input</strong> (signed-in users, until 21 Nov 2026): your recording (up to 45 seconds) is sent to{" "}
+            <strong>ElevenLabs</strong> (speech-to-text, <code>{SPEECH_MODEL}</code>), which returns the text. ElevenLabs may
+            process the audio <strong>outside the EU</strong> and keeps it according to its own retention policy. Dazi never
+            stores the audio. Only use it if you&rsquo;re happy with that — typing always works.
+          </li>
           <li>Match reasons only use safe fields (plan headlines, shared interests, overlapping days, pace) — never your birth year, gender or preferences.</li>
         </ul>
-        <p>Every AI-written text in Dazi is labelled “AI-generated” (EU AI Act, Art. 50).</p>
+        <p>
+          Every AI-written text in Dazi is labelled “AI-generated”, and dictated text is labelled “Transcribed by ElevenLabs
+          Scribe (AI)” (EU AI Act, Art. 50).
+        </p>
 
         <h2>Where your data lives</h2>
         <ul>

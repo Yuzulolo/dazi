@@ -4,7 +4,7 @@
 //
 // Run from the project folder:
 //   node --env-file=.env.local scripts/rls-check.mjs
-//   (add --quota to also test the 20-per-day AI limit; spends test account B's quota for 24 h)
+//   (add --quota to also test the 20-per-day draft and 10-per-day speech limits; spends test account B's quota for 24 h)
 //
 // Needs two confirmed 18+ test accounts in .env.local:
 //   TEST_A_EMAIL, TEST_A_PASSWORD, TEST_B_EMAIL, TEST_B_PASSWORD
@@ -472,6 +472,8 @@ try {
     {
       const { data: bogus } = await B.client.rpc("consume_ai_quota", { p_kind: "free_money" });
       report(bogus === false, "consume_ai_quota refuses an unknown kind", `returned ${bogus}`);
+      const { error: anonSpeech } = await anon.rpc("consume_ai_quota", { p_kind: "speech" });
+      report(/permission denied for function/.test(anonSpeech?.message ?? ""), "Signed-out (anon) cannot take a speech quota slot", anonSpeech?.message ?? "call succeeded!");
       if (process.argv.includes("--quota")) {
         // Opt-in: spends test account B's draft quota for 24 hours.
         let calls = 0;
@@ -482,6 +484,14 @@ try {
           if (ok) calls++;
         }
         report(!ok && calls <= 20, "consume_ai_quota stops at 20 drafts per 24 h (--quota)", `refused after ${calls} successful calls`);
+        // Phase 8: speech input — exactly 10 per user per 24 h (spends B's speech quota too).
+        let speech = 0;
+        while (speech < 15) {
+          const { data } = await B.client.rpc("consume_ai_quota", { p_kind: "speech" });
+          if (data !== true) break;
+          speech++;
+        }
+        report(speech === 10, "consume_ai_quota allows exactly 10 transcriptions per 24 h (--quota)", `${speech} successful calls`);
       }
     }
   } finally {

@@ -40,7 +40,7 @@ Full product spec: [`docs/SPEC.md`](docs/SPEC.md) · flows and rules: [`docs/FLO
 | AI extraction (20 sentences EN/DE/ZH, incl. missing info, contact details, a prompt-injection attempt) | **98.8%** of fields correct (target ≥ 90%; 97.5% before relative dates were computed in code) | [`evals/EXTRACTION-RESULTS.md`](evals/EXTRACTION-RESULTS.md) |
 | Matching hard filters (10 crafted exclusions + a positive control; age bands) | **10/10** excluded, control found; "31–31" narrows only to 30–34 | [`evals/MATCHING-RESULTS.md`](evals/MATCHING-RESULTS.md) |
 | Matching ranking (hand-picked best buddy in the top 3) | **9/9 scored cases hit, 1 case not scored** (pool of 2) — target met, but the trip/style/personality ablation is inconclusive because the test set is too easy | [`evals/MATCHING-RESULTS.md`](evals/MATCHING-RESULTS.md) |
-| Security (two-account RLS test + temporary users) | **117/117** checks pass | [`docs/SECURITY-AUDIT.md`](docs/SECURITY-AUDIT.md) |
+| Security (two-account RLS test + temporary users) | **118/118** checks pass | [`docs/SECURITY-AUDIT.md`](docs/SECURITY-AUDIT.md) |
 
 ## Build status (capstone scope, deadline 20 Oct 2026 — [`docs/SPEC.md`](docs/SPEC.md) §0)
 | Part | Status |
@@ -86,7 +86,7 @@ Apply the migrations in `supabase/migrations/` in filename order via the Supabas
 | Command | What it does |
 |---|---|
 | `npm run dev` / `npm run build` / `npm run lint` / `npm test` | dev server / production build / lint / unit tests |
-| `node --env-file=.env.local scripts/rls-check.mjs` | security test (117 checks) |
+| `node --env-file=.env.local scripts/rls-check.mjs` | security test (118 checks) |
 | `node --conditions=react-server --env-file=.env.local scripts/eval-extraction.mjs` | AI extraction eval (20 real AI calls) |
 | `node --env-file=.env.local scripts/eval-matching.mjs` | matching eval (no AI calls) |
 | `node --conditions=react-server --env-file=.env.local scripts/seed-demo.mjs [--cleanup]` | 30 demo users in Berlin |

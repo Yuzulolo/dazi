@@ -5,6 +5,7 @@ import type { HomeViewer } from "@/app/_components/dazi/types";
 import { ClearStoredPlan } from "@/app/plan/clear-stored-plan";
 import { DEMO_MATCHES, demoTrips } from "@/lib/demo/trips";
 import { getViewer } from "@/lib/auth";
+import { speechEnabled } from "@/lib/speech/flag";
 
 const NOTICES: Record<string, string> = {
   deleted: "Your account and data have been deleted.",
@@ -29,13 +30,15 @@ export default function LandingPage({ searchParams }: PageProps<"/">) {
   );
 }
 
-function Wall({ viewer }: { viewer: HomeViewer }) {
-  return <HomeWall trips={DEMO_MATCHES ? demoTrips.slice(0, 2) : []} demo={DEMO_MATCHES} viewer={viewer} />;
+function Wall({ viewer, speech = false }: { viewer: HomeViewer; speech?: boolean }) {
+  return <HomeWall trips={DEMO_MATCHES ? demoTrips.slice(0, 2) : []} demo={DEMO_MATCHES} viewer={viewer} speech={speech} />;
 }
 
 async function WallForViewer() {
   const v = await getViewer();
-  return <Wall viewer={v.status === "guest" ? v : { status: v.status, userId: v.userId }} />;
+  // Speech input (phase 8) is for signed-in users only; guests never get the mic.
+  if (v.status === "guest") return <Wall viewer={v} />;
+  return <Wall viewer={{ status: v.status, userId: v.userId }} speech={speechEnabled()} />;
 }
 
 async function Notice({ searchParams }: { searchParams: PageProps<"/">["searchParams"] }) {

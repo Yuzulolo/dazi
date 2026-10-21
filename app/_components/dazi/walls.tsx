@@ -31,7 +31,17 @@ function connectContent(demo: boolean): DialogContent {
 }
 
 // Homepage: the composer poster first, then the wall of plans.
-export function HomeWall({ trips, demo, viewer }: { trips: GuestTrip[]; demo: boolean; viewer: HomeViewer }) {
+export function HomeWall({
+  trips,
+  demo,
+  viewer,
+  speech = false,
+}: {
+  trips: GuestTrip[];
+  demo: boolean;
+  viewer: HomeViewer;
+  speech?: boolean;
+}) {
   const [dialog, setDialog] = useState<DialogContent | null>(null);
   const [prompt, setPrompt] = useState(false);
   const items: CarouselItem[] = [
@@ -40,7 +50,7 @@ export function HomeWall({ trips, demo, viewer }: { trips: GuestTrip[]; demo: bo
       tone: "mint",
       label: "Your next plan",
       className: "composer",
-      content: (current) => <PlanComposerContent current={current} viewer={viewer} onGuestSubmit={() => setPrompt(true)} />,
+      content: (current) => <PlanComposerContent current={current} viewer={viewer} speech={speech} onGuestSubmit={() => setPrompt(true)} />,
     },
     ...tripItems(trips, demo, () => setDialog(connectContent(demo))),
   ];

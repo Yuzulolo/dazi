@@ -140,7 +140,7 @@ None — the former stretch feature (trip photo + vision AI) moved to §0.4 Road
 | `blocks` | blocker_id, blocked_id | Owner only |
 | `reports` | reporter_id, reported_user_id, reason | Reporter inserts; admin via dashboard |
 | `guest_search_log` | ip_hash, created_at | No client access (server-only, for rate limiting) |
-| `private.ai_calls` | user_id, kind (extract/embed), created_at | Unexposed schema, no client access. `consume_ai_quota()` allows per user **20 AI drafts + 20 saves (embeddings) per rolling 24 h**, and **1,000 AI calls per 24 h site-wide** (the school OpenRouter key has no spending limit) |
+| `private.ai_calls` | user_id, kind (extract/embed/reason/profile/speech), created_at | Unexposed schema, no client access. `consume_ai_quota()` allows per user **20 AI drafts + 20 saves (embeddings) per rolling 24 h**, and **1,000 AI calls per 24 h site-wide** (the school OpenRouter key has no spending limit) |
 | `match_breaks` | id, user_id, post_id, created_at | Owner can read own count; inserted only by the server when an accepted match is ended |
 | `activities`, `activity_members` *(should)* | see v0.4 | Host / members |
 
