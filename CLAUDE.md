@@ -39,6 +39,7 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 - `app/plan` — signed-in hub (my active plan; sign-in/onboarding land here; `app/home` only redirects here). `app/matches` — members: "For you" (real matches); guests: demo results. `app/plans/[id]` — demo recruitment detail (full guest search is Roadmap)
 - Header for members: My plan · Matches · Profile (`NavLink`, `aria-current`); Settings, How it works and Sign out are on your own `/u/[id]`. The logo always goes to `/`
 - `lib/messaging/` (`flag.ts` kill switch, `queries.ts`), `app/messaging/actions.ts`, `app/chat/[id]` (chat, 15 s refresh), `app/plan/invites.tsx`, `app/_components/dazi/invite-controls.tsx` — invites + chat + block (phase 7b-1), all hidden unless `MESSAGING_ENABLED=true`
+- `lib/speech/` (`flag.ts` kill switch + retirement date, `window.ts`, `limits.ts` upload rules, `elevenlabs.ts` Scribe v2 call), `app/api/speech/route.ts`, `app/_components/dazi/mic-button.tsx` — speech input for the plan composer (phase 8, personal repo only; homepage for signed-in users + `/posts/new`). Audio is never stored
 - `app/settings` (delete my account), `app/privacy` (privacy notice; model names rendered from `lib/ai/providers.ts`)
 - `vercel.json` — server functions run in Frankfurt (`fra1`), next to Supabase (EU)
 - `lib/demo/trips.ts` — fictional, labelled demo trips + the `DEMO_MATCHES` flag
@@ -57,6 +58,8 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` — public
 - `OPENROUTER_API_KEY` — server-only (Production + Preview in Vercel, marked Sensitive). School key: **no spending limit**, so quotas are the only protection
 - `MESSAGING_ENABLED` — server-only kill switch for invites + chat: `true` on **Preview**; on **Production** it is switched on/off **manually** by me in Vercel (redeploy after changing it). Anything other than `"true"` = hidden + actions refuse. Read only in `lib/messaging/flag.ts` (`tests/messaging-env.test.mjs`)
+- `ELEVENLABS_API_KEY` — server-only (Preview, Sensitive; Production once I switch speech on there), read only in `lib/speech/elevenlabs.ts`
+- `SPEECH_ENABLED`, `SPEECH_UNTIL` — server-only: speech input is on only if `SPEECH_ENABLED=true` **and** today (Berlin) ≤ `SPEECH_UNTIL` (`2026-11-21`; missing/invalid = off). Read only in `lib/speech/flag.ts` (`tests/speech-env.test.mjs`)
 - `DEMO_EMAIL`, `DEMO_PASSWORD` — server-only (Production + Preview in Vercel, Sensitive): the "Try the demo account" button signs in on the server (`signInDemo` in `app/auth/actions.ts`). `tests/demo-env.test.mjs` keeps them out of client code.
 - `SUPABASE_SERVICE_ROLE_KEY` — **local scripts only** (seed, backfill, eval via `scripts/lib/admin.mjs`). It bypasses RLS: **never** imported by `app/` or `lib/`, **never** added to Vercel, **never** `NEXT_PUBLIC_`. `tests/secrets.test.mjs` fails if app or lib code mentions it.
 - `SITE_URL` — server-only; where auth emails send people back to (`http://localhost:3000` locally, the Vercel URL in production / the branch URL in preview)
@@ -67,7 +70,7 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 - `npm run dev` — local dev server at http://localhost:3000
 - `npm run build` — production build (run before every PR)
 - `npm run lint` — lint (run before every PR)
-- `node --env-file=.env.local scripts/rls-check.mjs` — RLS / security test, 117 checks (two test accounts + temporary users via the service role key; run after every migration)
+- `node --env-file=.env.local scripts/rls-check.mjs` — RLS / security test, 118 checks (two test accounts + temporary users via the service role key; run after every migration)
 - `/security-audit` (Claude Code command) — three-scanner security audit, report only
 - `npm test` — unit tests (`*.test.mjs`, Node's built-in test runner; e.g. the contact-details detector)
 - `node --conditions=react-server --env-file=.env.local scripts/eval-extraction.mjs` — AI extraction eval (20 real AI calls; run sparingly)
@@ -82,7 +85,7 @@ Full product spec: `docs/SPEC.md`. User flows, states, rules and edge cases: `do
 - **Secrets never go in the repo.** Keys live in `.env.local` (git-ignored) and in Vercel env vars. Never print or commit them.
 - Only `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` may be exposed to the browser. The service-role key and `OPENROUTER_API_KEY` are **server-only**.
 - **Every AI call (chat + embeddings) runs server-side** (route handlers / server actions), never from client components.
-- **Every AI call is rate-limited** through `consume_ai_quota()` before the call: per user per rolling 24 h 20 drafts (`extract`), 20 plan saves (`embed`), 20 match-reason calls (`reason`), 10 profile embeddings (`profile`); 1,000 calls per day site-wide. No AI call without a quota check. (Guests make no AI calls; full guest search is Roadmap.)
+- **Every AI call is rate-limited** through `consume_ai_quota()` before the call: per user per rolling 24 h 20 drafts (`extract`), 20 plan saves (`embed`), 20 match-reason calls (`reason`), 10 profile embeddings (`profile`), 10 transcriptions (`speech`, ElevenLabs; also max 100/day site-wide); 1,000 calls per day site-wide. No AI call without a quota check. (Guests make no AI calls; full guest search is Roadmap.)
 - **"Delete my data":** `/settings` → `public.delete_my_account()` (security definer, pinned to `auth.uid()`, no service role key). Every user table must cascade from `auth.users` — add `on delete cascade` to any new table and extend `supabase/checks/phase5_delete_account_check.sql`. The public demo login (`profiles.is_protected`) and demo users (`is_demo`) can't be deleted.
 - **Posts are written only through `publish_post()` / `update_post()`** (security definer, pinned to `auth.uid()`); users have no direct INSERT/UPDATE, and the `posts_guard` trigger rejects contact details, past start dates and illegal status changes in the database itself.
 - **Row Level Security is enabled on every table that holds user data**, with explicit policies for select / insert / update / delete. Use `USING` + `WITH CHECK` scoped to `auth.uid()`.

@@ -5,7 +5,9 @@ import { PostPoster } from "@/app/_components/dazi/post-poster";
 import { InfoDialog } from "@/app/_components/dazi/info-dialog";
 import { AIBadge } from "@/app/_components/dazi/primitives";
 import { draftBelongsTo, usePlanDraft } from "@/app/_components/dazi/plan-draft";
+import { MicButton } from "@/app/_components/dazi/mic-button";
 import { FormError } from "@/app/_components/profile-fields";
+import { appendTranscript } from "@/lib/speech/limits";
 import { TRAVEL_INTERESTS } from "@/lib/profile/options";
 import {
   BUDGETS,
@@ -48,12 +50,14 @@ export function PostEditor({
   action,
   initial,
   hasActivePost = false,
+  speech = false,
   user,
 }: {
   mode: "new" | "edit";
   action: (state: PostFormState, formData: FormData) => Promise<PostFormState>;
   initial?: Draft;
   hasActivePost?: boolean;
+  speech?: boolean; // speech input on (server-side kill switch + retirement date)
   user: { id: string; accountCreatedAt: string };
 }) {
   const [planDraft] = usePlanDraft();
@@ -112,6 +116,9 @@ export function PostEditor({
               processed by AI via OpenRouter (see Privacy).
             </small>
           </p>
+          {speech && (
+            <MicButton disabled={extracting} onText={(spoken) => setSentence(appendTranscript(text, spoken, RAW_TEXT_MAX))} />
+          )}
           <FormError error={notice} />
           <button type="button" className="primary-button" disabled={extracting} onClick={() => makePoster(true)}>
             {extracting ? "Making your poster…" : "Make my poster ↗"}

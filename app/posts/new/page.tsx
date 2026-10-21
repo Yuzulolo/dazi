@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { getCurrentUser } from "@/lib/auth";
+import { speechEnabled } from "@/lib/speech/flag";
 import { getMyActivePost } from "@/lib/posts/queries";
 import { SiteShell } from "@/app/_components/dazi/site-shell";
 import { PostEditor } from "../post-editor";
@@ -29,6 +30,7 @@ async function NewPost() {
       mode="new"
       action={publishPost}
       hasActivePost={active !== null && !active.ended}
+      speech={speechEnabled()}
     />
   );
 }

@@ -245,3 +245,29 @@
   .dazi-root .invite-buttons { justify-content: stretch; }
   .dazi-root .chat-message { max-width: 92%; }
 }
+
+/* ---------- Speech input (phase 8): mic button under the plan textarea ---------- */
+.dazi-root .sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+.dazi-root .speech-input { margin-top: 10px; }
+.dazi-root .trip-input .speech-input { padding-right: 56px; } /* clear of the ↗ send button */
+.dazi-root .speech-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.dazi-root .mic-button {
+  display: inline-flex; align-items: center; gap: 8px;
+  min-width: 44px; min-height: 44px; padding: 8px 14px;
+  border: 1px solid #fff9; border-radius: 10px;
+  background: #ffffff09; color: inherit;
+  font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.dazi-root .mic-button:hover { background: #ffffff26; }
+.dazi-root .mic-button:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.dazi-root .mic-button:is([data-recording], [data-stop]) { background: var(--cream); color: var(--ink); border-color: var(--cream); }
+.dazi-root .mic-button:disabled { opacity: 0.6; cursor: default; }
+.dazi-root .speech-clock { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-variant-numeric: tabular-nums; }
+.dazi-root .rec-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--error); animation: dazi-rec 1.2s ease-in-out infinite; }
+@keyframes dazi-rec { 50% { opacity: 0.3; } }
+@media (prefers-reduced-motion: reduce) { .dazi-root .rec-dot { animation: none; } }
+.dazi-root .speech-error { color: var(--error); font-size: 14px; font-weight: 600; line-height: 1.5; margin: 8px 0 0; }
+.dazi-root .speech-label { font-size: 13px; line-height: 1.5; margin: 8px 0 0; color: var(--ai); }

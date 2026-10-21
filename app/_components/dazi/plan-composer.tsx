@@ -2,6 +2,8 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { appendTranscript } from "@/lib/speech/limits";
+import { MicButton } from "./mic-button";
 import { usePlanDraft } from "./plan-draft";
 import type { HomeViewer } from "./types";
 
@@ -10,13 +12,17 @@ import type { HomeViewer } from "./types";
 // and onboarding it pre-fills the first plan (FLOWS 1.1). Full guest search: Roadmap.
 // Signed-in members go straight to /posts/new (pre-filled), not-yet-onboarded users to
 // /onboarding; only guests get the sign-up prompt. Signed-in state comes from the server.
+const PLAN_MAX = 500;
+
 export function PlanComposerContent({
   current,
   viewer,
+  speech,
   onGuestSubmit,
 }: {
   current: boolean;
   viewer: HomeViewer;
+  speech: boolean; // speech input on (server-side kill switch + retirement date); signed-in only
   onGuestSubmit: () => void;
 }) {
   const router = useRouter();
@@ -27,6 +33,11 @@ export function PlanComposerContent({
   const [error, setError] = useState("");
   const plan = draft ?? storedPlan ?? "";
   const tab = current ? 0 : -1;
+
+  function setPlan(text: string) {
+    setDraft(text);
+    storePlan(text);
+  }
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -53,11 +64,8 @@ export function PlanComposerContent({
         <textarea
           id="trip-plan"
           value={plan}
-          onChange={(event) => {
-            setDraft(event.target.value);
-            storePlan(event.target.value);
-          }}
-          maxLength={500}
+          onChange={(event) => setPlan(event.target.value)}
+          maxLength={PLAN_MAX}
           placeholder="Berlin this weekend. Food & flea markets."
           disabled={!current}
           tabIndex={tab}
@@ -67,6 +75,9 @@ export function PlanComposerContent({
         <button className="send-button" type="submit" disabled={!current} tabIndex={tab} aria-label="Find my buddy">
           ↗
         </button>
+        {speech && viewer.status !== "guest" && (
+          <MicButton disabled={!current} tabIndex={tab} onText={(text) => setPlan(appendTranscript(plan, text, PLAN_MAX))} />
+        )}
       </form>
       {error && (
         <p id="plan-error" className="composer-error" role="alert">
