@@ -48,7 +48,7 @@ export default function PrivacyPage() {
           <li><strong>Turning your sentence into a plan card</strong> and <strong>writing match reasons:</strong> {model(primary)}{fallback && <>, falling back to {model(fallback)}</>}.</li>
           <li><strong>Matching</strong> (comparing plans and profiles as numbers, “embeddings”): {model(AI_MODELS.embedding)} — from your plan card and your bio, hobbies, cities and travel interests.</li>
           <li>
-            <strong>Voice input</strong> (signed-in users, until 21 Nov 2026): your recording (up to 45 seconds) is sent to{" "}
+            <strong>Voice input</strong> (signed-in users, a limited-time feature): your recording (up to 45 seconds) is sent to{" "}
             <strong>ElevenLabs</strong> (speech-to-text, <code>{SPEECH_MODEL}</code>), which returns the text. ElevenLabs may
             process the audio <strong>outside the EU</strong> and keeps it according to its own retention policy. Dazi never
             stores the audio. Only use it if you&rsquo;re happy with that — typing always works.

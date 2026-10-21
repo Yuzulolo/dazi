@@ -82,3 +82,10 @@ test("dictated text is appended within the limit", () => {
   assert.equal(appendTranscript("Hi ", "Berlin", 500), "Hi Berlin");
   assert.equal(appendTranscript("abc", "defgh", 6), "abc de");
 });
+
+test("Permissions-Policy lets only our own pages ask for the microphone", async () => {
+  const config = await readFile(join(root, "next.config.ts"), "utf8");
+  assert.match(config, /microphone=\(self\)/, "microphone=() would block getUserMedia everywhere");
+  assert.match(config, /camera=\(\)/);
+  assert.match(config, /geolocation=\(\)/);
+});

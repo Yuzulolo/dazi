@@ -14,11 +14,14 @@ function reply(result: SpeechResult, status: number) {
 export async function POST(request: Request) {
   if (!speechEnabled()) return reply({ ok: false, reason: "off" }, 404);
 
+  // Not getCurrentUser(): that redirects, which is wrong for a JSON API. Any signed-in user
+  // (also mid-onboarding) may transcribe; the quota function pins the slot to auth.uid().
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   if (!data?.claims?.sub) return reply({ ok: false, reason: "auth" }, 401);
 
-  // Refuse big bodies before reading them (multipart adds a little overhead).
+  // Refuse declared big bodies before reading them (multipart adds a little overhead). A body
+  // without Content-Length is read and then checked below; Vercel caps requests at 4.5 MB.
   const declared = Number(request.headers.get("content-length") ?? 0);
   if (declared > SPEECH_MAX_BYTES + 16 * 1024) return reply({ ok: false, reason: "too_large" }, 413);
 
@@ -43,6 +46,7 @@ export async function POST(request: Request) {
   }
   if (allowed !== true) return reply({ ok: false, reason: "quota" }, 429);
 
+  // A failed or silent transcription still used its slot (as for the other AI kinds).
   const text = await transcribe(file, type === "audio/mp4" ? "plan.m4a" : "plan.webm");
   if (text === null) return reply({ ok: false, reason: "unavailable" }, 502);
   if (!text) return reply({ ok: false, reason: "empty" }, 200);

@@ -263,7 +263,7 @@
 }
 .dazi-root .mic-button:hover { background: #ffffff26; }
 .dazi-root .mic-button:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
-.dazi-root .mic-button[data-recording] { background: var(--cream); color: var(--ink); border-color: var(--cream); }
+.dazi-root .mic-button:is([data-recording], [data-stop]) { background: var(--cream); color: var(--ink); border-color: var(--cream); }
 .dazi-root .mic-button:disabled { opacity: 0.6; cursor: default; }
 .dazi-root .speech-clock { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-variant-numeric: tabular-nums; }
 .dazi-root .rec-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--error); animation: dazi-rec 1.2s ease-in-out infinite; }

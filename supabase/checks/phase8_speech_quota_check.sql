@@ -37,7 +37,7 @@ select 'AI calls in the last 24 h by kind (live counters)',
 -- temporary filler rows from a demo user, then raises an error ON PURPOSE so every change is
 -- undone. Expected: an ERROR whose message is
 --   CHECK RESULTS (rolled back): per user extract=20 embed=20 reason=20 profile=10 speech=10 |
---   speech site ceiling: at 100 refused=true, at 99 allowed=true |
+--   speech site ceiling: at 100 refused=true (extract still allowed=true), at 99 allowed=true |
 --   site ceiling: at 1000 refused=true, at 999 allowed=true | bogus kind refused=true
 do $$
 declare
@@ -50,6 +50,11 @@ declare
 begin
   if me is null or filler is null then
     raise exception 'Need the protected demo login and at least one demo user';
+  end if;
+  -- Precondition: live traffic must leave room for the test (else the numbers would lie).
+  if (select count(*) from private.ai_calls where user_id <> me and created_at > now() - interval '24 hours') > 800
+     or (select count(*) from private.ai_calls where user_id <> me and kind = 'speech' and created_at > now() - interval '24 hours') > 80 then
+    raise exception 'Live AI traffic is too high for a fair test right now — run part C later';
   end if;
   perform set_config('request.jwt.claims', json_build_object('sub', me, 'role', 'authenticated')::text, true);
 
@@ -72,7 +77,10 @@ begin
   insert into private.ai_calls (user_id, kind) select filler, 'speech' from generate_series(1, missing);
   execute 'set local role authenticated';
   r := r || ' | speech site ceiling: at 100 refused=' || (not public.consume_ai_quota('speech'))::text;
+  -- Control: the refusal comes from the speech cap, not the 1,000 ceiling.
+  r := r || ' (extract still allowed=' || public.consume_ai_quota('extract')::text || ')';
   execute 'reset role';
+  delete from private.ai_calls where user_id = me;
   delete from private.ai_calls
    where id = (select max(id) from private.ai_calls where user_id = filler and kind = 'speech');
   execute 'set local role authenticated';

@@ -5,7 +5,8 @@
 -- ceiling for all AI calls.
 --
 -- 1. The kind CHECK on private.ai_calls gains 'speech'. The old CHECK is looked up in
---    pg_constraint and the migration stops unless exactly one matches.
+--    pg_constraint (name ai_calls_kind_check, definition with 'profile') and the migration
+--    stops unless exactly one matches.
 -- 2. consume_ai_quota gains the 'speech' cap and the 100/day speech site ceiling. Everything
 --    else is copied from the live definition (pg_get_functiondef, last changed in
 --    20261019101105_matching_age_bands.sql): extract 20, embed 20, reason 20, profile 10,
@@ -31,7 +32,8 @@ begin
   for c in
     select conname from pg_constraint
     where conrelid = 'private.ai_calls'::regclass and contype = 'c'
-      and pg_get_constraintdef(oid) like '%kind%'
+      and conname = 'ai_calls_kind_check'
+      and pg_get_constraintdef(oid) like '%kind%''profile''%'
   loop
     execute format('alter table private.ai_calls drop constraint %I', c.conname);
     n := n + 1;

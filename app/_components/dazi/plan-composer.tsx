@@ -12,6 +12,8 @@ import type { HomeViewer } from "./types";
 // and onboarding it pre-fills the first plan (FLOWS 1.1). Full guest search: Roadmap.
 // Signed-in members go straight to /posts/new (pre-filled), not-yet-onboarded users to
 // /onboarding; only guests get the sign-up prompt. Signed-in state comes from the server.
+const PLAN_MAX = 500;
+
 export function PlanComposerContent({
   current,
   viewer,
@@ -20,7 +22,7 @@ export function PlanComposerContent({
 }: {
   current: boolean;
   viewer: HomeViewer;
-  speech: boolean; // speech input on (server-side kill switch + retirement date); members only
+  speech: boolean; // speech input on (server-side kill switch + retirement date); signed-in only
   onGuestSubmit: () => void;
 }) {
   const router = useRouter();
@@ -63,7 +65,7 @@ export function PlanComposerContent({
           id="trip-plan"
           value={plan}
           onChange={(event) => setPlan(event.target.value)}
-          maxLength={500}
+          maxLength={PLAN_MAX}
           placeholder="Berlin this weekend. Food & flea markets."
           disabled={!current}
           tabIndex={tab}
@@ -74,7 +76,7 @@ export function PlanComposerContent({
           ↗
         </button>
         {speech && viewer.status !== "guest" && (
-          <MicButton disabled={!current} tabIndex={tab} onText={(text) => setPlan(appendTranscript(plan, text, 500))} />
+          <MicButton disabled={!current} tabIndex={tab} onText={(text) => setPlan(appendTranscript(plan, text, PLAN_MAX))} />
         )}
       </form>
       {error && (
