@@ -21,17 +21,27 @@ Dazi (搭子, "a casual companion for a specific activity") helps solo traveller
    - **Score = 0.4 × trip** (cosine similarity of the plans) **+ 0.35 × style** (pace, day rhythm, interests overlap) **+ 0.25 × personality** (cosine similarity of the profiles).
 4. **"For you".** Your top 5 appear as posters with a Trip · Style · Personality breakdown and a reason — written by AI in **one** batched call, cached per pair (reloads are free), labelled "AI-generated", with a rule-based fallback.
 
-**AI models** (exactly as configured in [`lib/ai/openrouter.ts`](lib/ai/openrouter.ts), all calls server-side via OpenRouter): trip cards and match reasons — `google/gemini-2.5-flash-lite`, falling back to `openai/gpt-4.1-nano`; embeddings — `openai/text-embedding-3-small`. Every AI call takes a slot from a database-enforced quota (per user: 20 drafts, 20 saves, 20 reason calls, 10 profile embeddings per 24 h; 1,000 per day site-wide).
+### Voice input (ElevenLabs Scribe, time-limited)
+Signed-in users can **speak** their plan instead of typing it — on the homepage composer and on `/posts/new`.
+- Tap **Speak**, talk for up to **45 seconds** (it stops by itself; a clock and a **Stop** button show while recording), and the text appears in the box, labelled **"Transcribed by ElevenLabs Scribe (AI)"**. You check or edit it, then continue exactly as with typed text (contact details are still removed, the AI still makes the poster).
+- The browser records with `MediaRecorder` (WebM in Chrome/Firefox, MP4 on Safari/iPhone) and uploads to Dazi's own server route [`app/api/speech/route.ts`](app/api/speech/route.ts), which calls **ElevenLabs Scribe v2** (`scribe_v2`, batch). The language is detected automatically — tested with English, German and Chinese.
+- **Guardrails:** signed-in only (guests never see the mic); uploads over 2 MB or that aren't real WebM/MP4 audio are refused; a database-enforced quota of **10 transcriptions per user and 100 site-wide per day**; the ElevenLabs key is server-only.
+- **Privacy:** Dazi **never stores the audio** — it is passed through to ElevenLabs and dropped. ElevenLabs may process it outside the EU ([/privacy](https://dazi-five-tau.vercel.app/privacy)).
+- **Kill switch + automatic retirement:** voice input is on only while `SPEECH_ENABLED=true` **and** today (Berlin time) is on or before `SPEECH_UNTIL` (21 Nov 2026). After that the mic disappears and the route refuses — typing always works.
+- **Accessible:** 44px buttons, `aria-pressed`, screen-reader announcements when recording starts and stops, full keyboard use; clear messages when the mic is blocked, the browser can't record, the daily limit is reached, or ElevenLabs is down.
+
+**AI models** (exactly as configured in [`lib/ai/openrouter.ts`](lib/ai/openrouter.ts), all calls server-side via OpenRouter): trip cards and match reasons — `google/gemini-2.5-flash-lite`, falling back to `openai/gpt-4.1-nano`; embeddings — `openai/text-embedding-3-small`. Voice input: ElevenLabs Scribe v2 (`scribe_v2`), called directly from the server. Every AI call takes a slot from a database-enforced quota (per user: 20 drafts, 20 saves, 20 reason calls, 10 profile embeddings, 10 transcriptions per 24 h; 100 transcriptions and 1,000 AI calls in total per day site-wide).
 
 Full product spec: [`docs/SPEC.md`](docs/SPEC.md) · flows and rules: [`docs/FLOWS.md`](docs/FLOWS.md) · design system: [`docs/DESIGN.md`](docs/DESIGN.md)
 
 ## Security & privacy
 - **Row Level Security on every table**; plans are owner-only and only written through two database functions pinned to the signed-in user; private columns (birth year, gender, preferences, embeddings) can't be selected by any client.
 - **The database enforces the safety rules itself:** 18+ (birth year only, shown as an age range), no phone numbers or emails in plans or profiles, valid dates and statuses.
-- **Secrets are server-only:** only the Supabase URL and publishable key reach the browser; the OpenRouter key is server-only; the "Try the demo account" button reads its credentials from server-only env vars (the demo login itself is public by design, see the top of this page); the service role key is used only by local scripts (enforced by tests). No secret was ever committed.
+- **Secrets are server-only:** only the Supabase URL and publishable key reach the browser; the OpenRouter and ElevenLabs keys are server-only; the "Try the demo account" button reads its credentials from server-only env vars (the demo login itself is public by design, see the top of this page); the service role key is used only by local scripts (enforced by tests). No secret was ever committed.
+- **Voice recordings are never stored** by Dazi (see Voice input above).
 - **Delete my data:** Settings → Delete my account removes the account and every row linked to it, immediately.
 - **AI labels (EU AI Act Art. 50):** every AI-written text is labelled; inputs say when they are processed by AI.
-- **Browser hardening:** framing blocked, `nosniff`, strict referrer and permissions policies.
+- **Browser hardening:** framing blocked, `nosniff`, strict referrer and permissions policies (camera and location off; the microphone only for Dazi's own pages, for voice input).
 - Full audit, accepted risks and follow-ups: [`docs/SECURITY-AUDIT.md`](docs/SECURITY-AUDIT.md) · privacy notice: [/privacy](https://dazi-five-tau.vercel.app/privacy)
 
 ## Evaluation
@@ -54,12 +64,13 @@ Full product spec: [`docs/SPEC.md`](docs/SPEC.md) · flows and rules: [`docs/FLO
 | G. Delete my data ✅, privacy page ✅, AI labels ✅ (block / report → Roadmap) | 🟡 partly |
 | Design system (poster wall — [`docs/DESIGN.md`](docs/DESIGN.md)) | ✅ done |
 | H. Security audit, evaluation, documentation | ✅ done |
+| Post-capstone: voice input (ElevenLabs Scribe v2, until 21 Nov 2026) | ✅ done |
 
 ### Roadmap
 Invites and mutual-accept messaging · full anonymised guest search (rate-limited per IP) · block & report · Google login · travel stories with photos · trip photo with vision-AI check · social verification and mutual social reveal · overlap length in the match score · full Content-Security-Policy. Details: [`docs/SPEC.md`](docs/SPEC.md) §0.4.
 
 ## Tech stack
-**Next.js 16** (App Router, TypeScript, Tailwind) on **Vercel** (Frankfurt) · **Supabase** (Auth, Postgres, `pgvector`, Row Level Security; EU) · **OpenRouter** for all AI calls.
+**Next.js 16** (App Router, TypeScript, Tailwind) on **Vercel** (Frankfurt) · **Supabase** (Auth, Postgres, `pgvector`, Row Level Security; EU) · **OpenRouter** for all text AI calls · **ElevenLabs** Scribe v2 for voice input.
 
 ## Run it locally
 Requirements: Node.js 22+ and a Supabase project.
@@ -79,6 +90,8 @@ Apply the migrations in `supabase/migrations/` in filename order via the Supabas
 | `SITE_URL` | server (auth email links) | server-only |
 | `OPENROUTER_API_KEY` | server (AI calls) | server-only, Sensitive in Vercel |
 | `DEMO_EMAIL`, `DEMO_PASSWORD` | server ("Try the demo account") | server-only, Sensitive in Vercel |
+| `ELEVENLABS_API_KEY` | server (voice input) | server-only, Sensitive in Vercel |
+| `SPEECH_ENABLED`, `SPEECH_UNTIL` | server (voice input on only if `true` and today ≤ the date, e.g. `2026-11-21`) | server-only |
 | `SUPABASE_SERVICE_ROLE_KEY` | local scripts only (seed, reset, eval) | never in Vercel or app code |
 | `TEST_A_*`, `TEST_B_*` | `scripts/rls-check.mjs` | local only |
 
@@ -94,4 +107,4 @@ Apply the migrations in `supabase/migrations/` in filename order via the Supabas
 | `node --conditions=react-server --env-file=.env.local scripts/reset-demo-account.mjs` | restore the public demo login |
 
 ## AI disclosure: built with Claude Code
-This capstone was built by **Yuze Li (product owner / "director")** together with **Claude Code** (Anthropic's coding agent, model Claude Opus 5.5), which wrote most of the code, SQL migrations, tests and documentation under the director's instructions. The director set the product scope and rules, made every product and privacy decision, reviewed and applied every database migration by hand, ran all browser tests, and picked independent "best buddy" answers for the matching evaluation. Every pull request was reviewed by an AI code-reviewer subagent and by the director before merging; the security audit used three specialised scanner subagents (now in [`.claude/`](.claude/)). The visual design kit and the paper texture were made with OpenAI tools (GPT / Codex). In the app itself, AI is used only where labelled (trip cards, match reasons, embeddings).
+This capstone was built by **Yuze Li (product owner / "director")** together with **Claude Code** (Anthropic's coding agent, model Claude Opus 5.5), which wrote most of the code, SQL migrations, tests and documentation under the director's instructions. The director set the product scope and rules, made every product and privacy decision, reviewed and applied every database migration by hand, ran all browser tests, and picked independent "best buddy" answers for the matching evaluation. Every pull request was reviewed by an AI code-reviewer subagent and by the director before merging; the security audit used three specialised scanner subagents (now in [`.claude/`](.claude/)). The visual design kit and the paper texture were made with OpenAI tools (GPT / Codex). In the app itself, AI is used only where labelled (trip cards, match reasons, embeddings, voice transcription).
